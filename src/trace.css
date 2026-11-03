@@ -96,7 +96,7 @@
 .os-split i { display: block; height: 100%; }
 .os-fr { display: flex; flex-direction: column; gap: 2px; }
 .os-fr i { display: block; height: 4px; border-radius: 2px; min-width: 2px; }
-.os-fr .fa { background: var(--os-tool); } .os-fr .fb { background: var(--os-agent); } .os-fr .fc { background: var(--os-bad); }
+.os-fr .os-fa { background: var(--os-tool); } .os-fr .os-fb { background: var(--os-agent); } .os-fr .os-fc { background: var(--os-bad); }
 .os-btn { border: 1px solid var(--os-line-2); background: var(--h-card-solid); color: var(--os-ink-1); border-radius: var(--r); padding: 4px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; }
 .os-btn:hover { border-color: var(--os-line-3); }
 .os-btn:disabled { opacity: .5; cursor: default; }
