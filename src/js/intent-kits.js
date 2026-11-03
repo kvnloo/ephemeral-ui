@@ -48,7 +48,7 @@ export function buildIntent({ catalog, setSpec, target = document.getElementById
     } catch (e) { out.replaceChildren(h("p", {}, `Source unavailable: ${e.message}. No fallback data generated.`)); }
     if (updateHash) history.replaceState(null, "", `#intent=${kit.id}`);
   }
-  for (const k of INTENT_KITS) nav.append(h("button", { type: "button", role: "tab", "data-kit": k.id, "aria-selected": "false", onclick: () => pick(k.id) }, k.title));
+  for (const k of INTENT_KITS) nav.append(h("button", { type: "button", role: "tab", "aria-label": k.title, "data-kit": k.id, "aria-selected": "false", onclick: () => pick(k.id) }, k.title));
   target.append(nav, context, hostnote, out,
     h("p", { class: "ik-caption" }, "Real, sanitized snapshots: a pending AODL contract from the background-work triage, z0intelligence receipt aggregates captured 3 Nov 2026, and the existing OMP trace fixture. These are separate sources: no contract↔trace relationship is claimed. Full runtime adapters, live refresh and formal approval remain host responsibilities. Type / Draw / Talk names the Ripple input seam, not a working microphone in this gallery."));
   window.__intent = { pick, kits: INTENT_KITS, KINDS: KINDS_I, cards: [] };

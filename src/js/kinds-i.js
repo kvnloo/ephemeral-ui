@@ -14,7 +14,7 @@ const stats = cells => h("div", { class: "ic-stats" }, cells.map(([l, v, f]) => 
 function tabs(labels, cb) {
   const el = h("div", { class: "ic-tabs", role: "tablist" });
   labels.forEach((l, i) => el.append(btn(l, () => { [...el.children].forEach((b, j) => b.setAttribute("aria-selected", i === j ? "true" : "false")); cb(i); })));
-  [...el.children].forEach((b, i) => { b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === 0 ? "true" : "false"); });
+  [...el.children].forEach((b, i) => { b.setAttribute("role", "tab"); b.setAttribute("aria-label", labels[i]); b.setAttribute("aria-selected", i === 0 ? "true" : "false"); });
   return el;
 }
 function bars(rows, { unit = "", onPick } = {}) {

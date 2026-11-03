@@ -9,34 +9,71 @@
     "2": "Native catalog component in the host (OpenUI catalog, Luau, RN, Flutter, SwiftUI)."
   },
   "surfaces": [
-    { "id": "hermes-desktop", "priority": 1, "repo": "kvnloo/hermes-agent", "path": "apps/desktop",
-      "tier0": "Assistant emits one ```html fence (or writes a .html and links it). The artifact pane renders it in iframe sandbox=allow-scripts, srcdoc, forced light scheme: export with a light Hermes theme (hermes-nous).",
-      "tier0_theme": "hermes-nous", "tier0_limits": "opaque origin: no localStorage/fetch to the kit; the export embeds its data",
+    {
+      "id": "hermes-desktop",
+      "priority": 1,
+      "repo": "kvnloo/hermes-agent",
+      "path": "apps/desktop",
+      "tier0": "Agent writes cards.html with a file tool -> status-stack preview row opens it; or a large ```html fence becomes an artifact card rendered in iframe sandbox=allow-scripts srcdoc, forced light (artifact-detect.ts, preview-artifact.tsx on main). A model will not stream a 117 KB fence: use the file path.",
+      "tier0_theme": "hermes-nous",
+      "tier0_limits": "opaque origin: no localStorage/fetch to the kit; the export embeds its data",
       "tier1": "none yet (no postMessage channel from the artifact frame back to chat)",
       "tier2": "no OpenUI catalog in apps/desktop on main",
-      "status": "tier0 export built + DOM-checked; not yet viewed in the real desktop app" },
-    { "id": "hermes-tern", "priority": 1, "repo": "kvnloo/hermes-agent (ui-tsp lane) + kvnloo/hermes-tern plugin", "path": "ui-tsp",
+      "status": "frame contract verified in Chromium via tools/desktop-frame-harness.mjs: eui:ready {cards:8, failed:0} across the sandbox, 520px rail, light. Not yet seen in a running desktop build (local checkout is 2026-08-17; main needs a build + backend)."
+    },
+    {
+      "id": "hermes-tern",
+      "priority": 1,
+      "repo": "kvnloo/hermes-agent (ui-tsp lane) + kvnloo/hermes-tern plugin",
+      "path": "ui-tsp",
       "tier0": "tern browser '{\"op\":\"open\",\"owner\":<block>,\"url\":\"file:///…/cards.html\",\"how\":\"beside\"}' docks the export beside the session pane.",
       "tier0_theme": "hermes-nous-dark",
-      "tier1": "tern browser snapshot/pick on that block returns the clicked card element: the selection-to-chat path exists in the host",
+      "tier1": "pick -> {selector}; eval document.querySelector(selector).closest('[data-kind]').dataset -> {app,kind}. Verified.",
       "tier2": "OpenUI v2 on feat/tern-openui-v2 (worktree hermes-wt/openui-v2): bounded catalog, fixed Luau renderers (treemap, tables, charts). No kit cards in it.",
-      "status": "tier0/1 path identified, not exercised; tier2 not started" },
-    { "id": "t3-web-desktop", "priority": 2, "repo": "kvnloo/t3code", "path": "apps/web",
+      "status": "tier0+tier1 verified on groot 2026-11-03: z0 playlist (8 cards, hermes-nous-dark) in a tern browser block; ref clicks switch tabs; pick returned the clicked element, resolved via closest('[data-kind]') to ripple/intent-declare. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/tern-proof/. Pitfall: snapshot names role=tab only via aria-label (kit fixed). tier2 not started"
+    },
+    {
+      "id": "t3-web-desktop",
+      "priority": 2,
+      "repo": "kvnloo/t3code",
+      "path": "apps/web",
       "tier0": "html_render with tools/export-cards.mjs --host-vars (T3 frame tokens); 512 KB cap",
       "tier2": "OpenUI app-card catalog: experiment/openui-app-cards, exp/openui-gallery, merged into channels/nightly; upstream pingdotgg/t3code#29141 open",
-      "status": "tier2 for everyday app cards on the fork nightly; owner's main server runs official nightly, so real chats don't get them; intent/intel/trace kinds not in the native catalog" },
-    { "id": "t3-mobile", "priority": 2, "repo": "kvnloo/t3code", "path": "apps/mobile",
+      "status": "tier2 for everyday app cards on the fork nightly; owner's main server runs official nightly, so real chats don't get them; intent/intel/trace kinds not in the native catalog"
+    },
+    {
+      "id": "t3-mobile",
+      "priority": 2,
+      "repo": "kvnloo/t3code",
+      "path": "apps/mobile",
       "tier2": "native RN app cards on the fork nightly; verified on S25 light/dark in a real free-model chat",
-      "status": "tier2 for everyday app cards on nightly; no brand/plain toggle; html_render cards may not show on Android" },
-    { "id": "dash", "priority": 3, "repo": "kvnloo/dash", "path": "app (Expo/RN, native install on S25)",
-      "tier0": "WebView already used by the visual-review surface; load the export file",
+      "status": "tier2 for everyday app cards on nightly; no brand/plain toggle; html_render cards may not show on Android"
+    },
+    {
+      "id": "dash",
+      "priority": 3,
+      "repo": "kvnloo/dash",
+      "path": "app (Expo/RN, native install on S25)",
+      "tier0": "react-native-webview 13.16.1 is a dependency; host the export in a WebView. Phone-width WebView render proven on s22 (below).",
       "tier2": "native OpenUI catalog replies (#484, #488) exist; no kit cards",
-      "status": "not started for the kit" },
-    { "id": "hermes-android", "priority": 3, "repo": "kvnloo/hermes-android", "path": "lib/ (Flutter)",
-      "tier0": "webview_flutter or an attachment-document preview of the export (unverified)",
-      "status": "not started" },
-    { "id": "hermex", "priority": 4, "repo": "kvnloo/hermex", "path": "HermesMobile (iOS, SwiftUI)",
+      "status": "not started for the kit"
+    },
+    {
+      "id": "hermes-android",
+      "priority": 3,
+      "repo": "kvnloo/hermes-android",
+      "path": "lib/ (Flutter)",
+      "tier0": "none: attachment_document_service.dart forbids WebView/active content by policy. Tier 2 (native Flutter) only.",
+      "status": "tier0 not possible by design; native port is the only path"
+    },
+    {
+      "id": "hermex",
+      "priority": 4,
+      "repo": "kvnloo/hermex",
+      "path": "HermesMobile (iOS, SwiftUI)",
       "tier0": "WKWebView preview of the export (unverified)",
-      "status": "not started (fork from 2026-11-01; annotation/turbo ask came first)" }
-  ]
+      "status": "not started (fork from 2026-11-01; annotation/turbo ask came first)"
+    }
+  ],
+  "phone_webview_proof": "s22 (SM-S906U1), focus-safe agent display 1080x2340/420, plain Android WebView (dev.z0.agentscreen OverviewActivity, JS on, no DOM storage): 8 cards single column to footer, Evidence tab tap works, PAGE_DOWN scrolls; owner focus stayed on display 0 for all 64 steps. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/s22-proof/webview/. Chrome on an agent display left an empty IntentDispatcher task (black); use a WebView host instead."
 }

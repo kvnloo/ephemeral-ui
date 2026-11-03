@@ -91,7 +91,7 @@ export function burst(at, color = "var(--a)", n = 12) {
 export function seg(options, onPick, active = 0) {
   const ind = h("span", { class: "ind" });
   const s = h("div", { class: "eu-seg", role: "tablist" }, ind);
-  const btns = options.map((o, i) => h("button", { type: "button", role: "tab", "aria-selected": i === active ? "true" : "false", onclick: () => go(i) }, o));
+  const btns = options.map((o, i) => h("button", { type: "button", role: "tab", "aria-label": typeof o === "string" ? o : (o.textContent || "").trim(), "aria-selected": i === active ? "true" : "false", onclick: () => go(i) }, o));
   s.append(...btns);
   const place = (i, animate) => {
     const b = btns[i];
@@ -109,7 +109,7 @@ export function seg(options, onPick, active = 0) {
 function ttlRing() {
   const c = svg("circle", { cx: 9, cy: 9, r: 7, pathLength: 100, class: "run" });
   const s = svg("svg", { viewBox: "0 0 18 18" }, svg("circle", { cx: 9, cy: 9, r: 7, class: "trk" }), c);
-  const b = h("button", { class: "eu-ttl", type: "button", title: "Ephemeral: this card dissolves when the task is done. Click to pin it." }, s);
+  const b = h("button", { class: "eu-ttl", type: "button", "aria-label": "Pin card", "aria-pressed": "false", title: "Ephemeral: this card dissolves when the task is done. Click to pin it." }, s);
   return { b, c };
 }
 
@@ -126,7 +126,7 @@ export function shell(a, kind, { verb, status, body, foot = [], summary, cls = "
   card.summary = summary || `${a.name} · ${verb}`;
   let pinned = false, ttlAnim = null;
   ring.b.addEventListener("click", () => {
-    pinned = !pinned; card.classList.toggle("pinned", pinned);
+    pinned = !pinned; card.classList.toggle("pinned", pinned); ring.b.setAttribute("aria-pressed", String(pinned));
     if (pinned) ttlAnim?.pause(); else ttlAnim?.play();
     anim(ring.b, [{ transform: "scale(.8)" }, { transform: "scale(1)" }], { spring: "bouncy" });
   });

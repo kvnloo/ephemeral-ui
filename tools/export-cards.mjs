@@ -70,15 +70,20 @@ const ITEMS = ${JSON.stringify(items)}, NOTES = ${JSON.stringify(notes)};
   state.base = state.themes.find((t) => t.id === ${JSON.stringify(themeId)}); state.over = {}; apply(false);
   await loadApps();
   const grid = document.getElementById("cards");
+  const settled = [];
+  let failed = 0;
   for (const [app, kind] of ITEMS) {
     const c = KINDS[kind].make(catalog.byId[app], rng(app + kind));
     const note = NOTES[app + "/" + kind];
     const cell = document.createElement("div"); cell.className = "xc-cell"; cell.dataset.kind = kind;
     if (note) { const n = document.createElement("p"); n.className = "xc-note"; n.textContent = note; cell.append(n); }
     cell.append(c.el); grid.append(cell);
-    Promise.resolve(c.done).then(() => c.play?.(new Run())).catch((e) => { cell.append(Object.assign(document.createElement("p"), { className: "xc-note", textContent: "Card failed: " + e.message })); });
+    settled.push(Promise.resolve(c.done).then(() => c.play?.(new Run())).catch((e) => { failed++; cell.append(Object.assign(document.createElement("p"), { className: "xc-note", textContent: "Card failed: " + e.message })); }));
   }
+  await Promise.all(settled);
   document.documentElement.dataset.ready = "1";
+  // A framing host (sandboxed iframe, WebView) can't read this document; one message tells it the cards mounted.
+  if (window.parent && window.parent !== window) window.parent.postMessage({ type: "eui:ready", cards: ITEMS.length - failed, failed }, "*");
 })();`;
 fs.writeFileSync(path.join(dir, "entry.js"), entry);
 const esbuild = process.env.ESBUILD || "esbuild";
