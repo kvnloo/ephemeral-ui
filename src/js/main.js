@@ -9,9 +9,11 @@ import { KINDS_3D } from "./kinds-3d.js";
 import { KINDS_E } from "./kinds-e.js";
 import { KINDS_P } from "./kinds-p.js";
 import { KINDS_F } from "./kinds-f.js";
+import { KINDS_T } from "./kinds-t.js";
+import { buildAsk } from "./ask.js";
 import { buildCombos, COMBOS } from "./combos.js";
 
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F };
+export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_T };
 const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P), ...Object.keys(KINDS_F)]);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -365,10 +367,10 @@ function buildPalette() {
   let items = [], sel = 0;
   const all = () => [
     ...catalog.apps.map((a) => ({ type: "App", label: a.name, sub: catLabel(a.cat), ico: a, go: () => openDrawer(a.id) })),
-    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById("kinds").scrollIntoView({ behavior: "smooth" }); const cell = $(`#kindgrid .eu-card[data-kind="${k}"]`)?.closest(".kcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
+    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
     ...T.themes.map((t) => ({ type: "Theme", label: `${t.label} · ${t.sub}`, sub: t.host, go: () => setTheme(t.id) })),
     ...COMBOS.map((c, i) => ({ type: "Combo", label: c.label, sub: c.tag, go: () => { document.getElementById("combos").scrollIntoView({ behavior: "smooth" }); document.querySelectorAll(".cb-tab")[i]?.click(); } })),
-    ...[["Kit", "kit"], ["Combos", "combos"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
+    ...[["Kit", "kit"], ["Combos", "combos"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
   ];
   const render = () => {
     const q = inp.value.trim().toLowerCase();
@@ -428,6 +430,7 @@ async function boot() {
   $("#srchermes").textContent = T.sources.hermes;
   buildStore(); buildKinds(); buildThemes(); buildFlows(); buildPalette(); buildOSS();
   buildCombos({ catalog, icon, openDrawer });
+  buildAsk({ catalog, setSpec });
   const pairs = catalog.apps.reduce((n, a) => n + a.kinds.length, 0);
   $$("[data-count=\"310\"]").forEach((e) => (e.dataset.count = catalog.apps.length));
   $("#ninter") && ($("#ninter").dataset.count = pairs);

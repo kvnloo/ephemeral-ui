@@ -28,6 +28,54 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
 - **Spec**: the card JSON of whatever you last clicked; draft schema at `src/schema/card.v0.json`.
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
+## Trace cards and "Ask the trace"
+
+Eight card kinds (`src/js/kinds-t.js`, styles in `src/trace.css`) that look like results from the
+omp `/stats` dashboard (`@oh-my-pi/omp-stats`, MIT) and take its API JSON unchanged:
+
+| kind | takes | inline interaction |
+| --- | --- | --- |
+| `trace` | `/api/session/trace` SessionTrace | canvas waterfall (Input/Model/Tools/Agents/Bg lanes per track), minimap scrub, drag pan, ±/Fit, ⌘/ctrl-wheel zoom, compress idle, filter, click a span → drawer, click a track to collapse |
+| `trace-span` | TraceSpan + `/api/session/entry` | model / tool / subagent drawer: duration, TTFT, tokens in/out/cached, cost, provider, stop reason, args shape |
+| `trace-summary` | SessionTrace | wall, model, tool, idle, requests, tool calls, agents, tokens, cost, errors; per-track cost table |
+| `trace-usage` | `/api/stats`, `/api/stats/providers` | 24h/7d/30d; models, providers, billing components, main vs subagents |
+| `trace-tools` | `/api/stats/tools` (+ traces) | sort by calls/errors/rate/p95; open a tool → its spans → span drawer or the composed timeline |
+| `trace-errors` | `/api/stats/errors` (+ traces) | request signatures or span failures; jump to the failing span |
+| `trace-compare` | two SessionTraces | pick any two sessions; mirrored bars with deltas, mini waterfalls, top tools |
+| `trace-frustration` | `/api/stats/frustration` | annoyed / at assistant / angry by model |
+
+Layers (`spans`, `tokens`, `cost`, `errors`, `subagents`, `transcript`) are a card option; toggling
+one re-renders from data already fetched. `src/schema/card.v0.json` lists the kinds, inputs and layers.
+
+**Ask the trace** (`src/js/ask.js`, section `#ask`) turns a question into a typed plan,
+`src/schema/trace-query.v0.json`:
+
+    { v: 0, q, intent, scope: { session, harness, range, count },
+      calls: [{ id, get: "/api/...", select? }], cards: [{ kind, input: <call id>, why, options }], layers }
+
+Intents: `explain_slowness`, `tool_failures`, `compare_sessions`, `subagent_cost`, `errors`,
+`cost_breakdown`, `frustration`, `walkthrough`, `session_overview`. On the site the phrase → plan step
+is deterministic regex matching (no model). A Hermes or T3 agent follows the same contract live:
+emit the plan, run the calls against `omp stats` (or a Hermes-fed stats server), render the cards,
+and write the one-paragraph answer from the same data. The resolver adds `notes` when it had to
+substitute (e.g. fewer Hermes sessions than asked for). Deep link: `#ask=<question>`.
+
+**Data.** `src/data/trace-fixture.json` holds four real sessions (three omp, one Hermes) and 24h/7d/30d
+dashboard payloads, exported from a running `omp stats` and sanitized by `tools/sanitize-trace.mjs`:
+timings, token counts, costs, tool names, models and error kinds stay; prompts, messages, tool output,
+args values, paths, hosts, titles, track and project names do not (neutral labels; args become typed
+placeholders like `‹path›`; error messages become kinds). Unknown tools/models/providers become
+`custom_*`. Regenerate and check:
+
+    omp stats -p <port> &                                   # stop it by its PID afterwards
+    node tools/sanitize-trace.mjs --base http://127.0.0.1:<port> --sessions <file>,<file> \
+         [--hermes <trace.json>] --deny-out <private>/raw-denylist.json
+    node tools/leak-check.mjs src/data/trace-fixture.json --deny <private>/raw-denylist.json
+    node tools/trace-shot.mjs http://127.0.0.1:<port>/ out/trace-shots --theme t3-dark --w 412
+
+The leak check greps for paths, emails, URLs, IPs, hosts, secrets and owner/repo names, then for
+every raw string the sanitizer refused to copy. Deploy only when it is clean.
+
 ## Build, check, deploy
 
     python3 tools/catalog.py > out/catalog.json && node tools/build-apps.mjs   # src/data/apps.json

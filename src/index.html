@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Courier+Prime:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="studio.css">
+<link rel="stylesheet" href="trace.css">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -20,7 +21,7 @@
   <div class="bar">
     <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
     <nav class="nav">
-      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
     </nav>
     <span class="grow"></span>
     <button class="search open-palette" type="button"><span>Search <b id="napps">490</b> apps</span><kbd>⌘K</kbd></button>
@@ -86,6 +87,20 @@
   <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Fifty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme.</p></div></div>
   <div id="kindbar" class="kindbar"></div>
   <div id="kindgrid" class="kindgrid"></div>
+</section>
+
+<section id="ask" class="sec">
+  <div class="sechead"><div><span class="kicker">Ask the trace</span><h2>Ask your agent's event trace.</h2><p class="dim">Type a question about a session. It becomes a small typed query plan: which omp-stats endpoints to call, which trace cards to show, with which layers. The cards look like the <code>/stats</code> dashboard and take its JSON as is, so you can scrub the timeline, open spans, sort tools and jump from a failure to the span that failed. Toggle layers to change what every card shows.</p></div></div>
+  <div class="ask">
+    <form id="askform" class="ask-bar" autocomplete="off"><span class="dim">⌕</span><input id="askq" type="search" placeholder="why was this session slow?" aria-label="Ask the trace"><button class="eu-btn primary" type="submit">Ask</button></form>
+    <div id="asksugg" class="ask-sugg"></div>
+    <div id="asklayers" class="ask-layers"></div>
+    <div id="askans" class="ask-answer"><span class="who">→</span><p class="dim">Pick a question.</p></div>
+    <details class="ask-plan"><summary>Query plan · <code>trace-query.v0</code> (what an agent emits to answer this live)</summary><pre id="askplan"></pre></details>
+    <div id="askout" class="ask-out"></div>
+    <p class="ask-src">Data: four real sessions (three omp, one Hermes) and 24h/7d/30d dashboard payloads exported from omp-stats, sanitized for the web: no prompts, messages, tool output, paths, hosts or project names; titles, tracks and projects get neutral labels and errors keep only their kind. Contract: <a href="schema/trace-query.v0.json">trace-query.v0.json</a> · cards: <a href="schema/card.v0.json">card.v0.json</a>.</p>
+  </div>
+  <div id="tracekinds" class="tracegrid" aria-label="Trace card kinds"></div>
 </section>
 
 <section id="oss" class="sec">

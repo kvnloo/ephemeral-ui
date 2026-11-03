@@ -244,6 +244,8 @@ STUDIO_APPS = [
     ("Daytona", None, "agents", ["sandbox", "deploy"], D(oss=True, alt=["Codespaces"], ui="code", docs="https://www.daytona.io/docs")),
     ("Agent Desktop", None, "agents", ["screen"], D(oss=True, alt=["Operator"], ui="code", docs="https://github.com/vercel-labs/agent-desktop")),
     ("phone-harness", None, "hermes", ["plugin", "screen", "review"], D(ui="code")),
+    # ---- event-trace dashboards: cards take the omp-stats API JSON (see kinds-t.js)
+    ("omp stats", None, "agents", ["trace", "trace-tools", "trace-errors", "trace-usage", "trace-compare", "trace-summary", "trace-span", "trace-frustration"], D(oss=True, ui="code", docs="https://github.com/can1357/oh-my-pi")),
     # ---- Hermes plugins & skills people actually install
     ("Hermes Talk", None, "hermes", ["plugin", "timeline", "chat"], D(oss=True, alt=["ChatGPT voice"], ui="code", docs="https://github.com/TheSmokeDev/hermes-talk")),
     ("Firecrawl", None, "hermes", ["plugin", "search", "file"], D(oss=True, alt=["ScrapingBee"], ui="code", docs="https://docs.firecrawl.dev/")),
