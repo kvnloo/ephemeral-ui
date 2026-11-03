@@ -30,6 +30,24 @@ Tier 0 the same day and only needs host code for Tier 1/2. Per-surface state liv
 5. **Tier 1/2** only when Tier 0 shows the card is worth it in that host. Reuse the export as the
    reference rendering for native ports; the card's `spec` is the props contract.
 
+## Tier 2 = OpenUI (after the Tier 0 visual sign-off)
+
+Native integration goes through each host's OpenUI catalog, not bespoke renderers:
+the model emits one `openui-v2` fence (`root = Board(...)`) naming registered components, and the
+host renders them natively. One shared definition, per-host renderers:
+
+1. **Shared catalog entry per kit kind**: name, positional props (from the card's `spec`), bounds,
+   and an export-rendered reference PNG. Dependency-free runtime (validation, counters) shared by
+   every host; schemas bound to each client's own OpenUI/zod instance.
+2. **Hosts, in order** (owner priority: Tern and Hermes desktop first): Tern (`feat/tern-openui-v2`
+   Luau catalog, fixed host renderers, no generated code) and Hermes desktop (no OpenUI yet: add a
+   catalog renderer beside the artifact pane, reusing the Tern lane's generation/compiler side);
+   then the T3 fork (extend `experiment/openui-app-cards` / `exp/openui-gallery`, already on
+   `channels/nightly`), Dash (native OpenUI replies exist), hermes-android, Hermex.
+3. **Proof per host**: the stock parser accepts the literal fence; the component matches the
+   Tier 0 reference at desktop/phone width; a real model turn emits it and it renders in that client.
+   Everything lands on each repo's nightly branch first.
+
 ## Priority surfaces
 
 - **Hermes desktop (Tier 0, no code change).** The artifact pane renders an assistant ```html
