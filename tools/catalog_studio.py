@@ -235,4 +235,12 @@ STUDIO_APPS = [
     ("Google Ads", "googleads", "analytics", ["metric", "approve", "review"], D()),
     ("Meta Ads Manager", "meta", "analytics", ["metric", "approve", "gallery"], D()),
     ("Maze", "maze", "analytics", ["review", "metric"], D()),
+    # ---- agent compute: computer use, virtual displays, sandboxes
+    ("Cua", None, "agents", ["screen", "sandbox", "metric"], D(oss=True, alt=["OpenAI Operator", "Anthropic computer use VMs"], ui="code", docs="https://github.com/trycua/cua")),
+    ("scrcpy", None, "agents", ["screen", "review"], D(oss=True, alt=["Vysor", "Samsung DeX"], ui="code", docs="https://github.com/Genymobile/scrcpy/blob/master/doc/virtual_display.md")),
+    ("boat", None, "agents", ["sandbox", "screen", "deploy"], D(alt=["E2B", "Daytona"], ui="code", docs="https://boat.dev")),
+    ("E2B", None, "agents", ["sandbox", "screen"], D(oss=True, alt=["boat", "Modal sandboxes"], ui="code", docs="https://e2b.dev/docs")),
+    ("Daytona", None, "agents", ["sandbox", "deploy"], D(oss=True, alt=["Codespaces"], ui="code", docs="https://www.daytona.io/docs")),
+    ("Agent Desktop", None, "agents", ["screen"], D(oss=True, alt=["Operator"], ui="code", docs="https://github.com/vercel-labs/agent-desktop")),
+    ("phone-harness", None, "agents", ["screen", "review"], D(ui="code")),
 ]

@@ -6,10 +6,11 @@ import { KINDS_A } from "./kinds-a.js";
 import { KINDS_B } from "./kinds-b.js";
 import { KINDS_C } from "./kinds-c.js";
 import { KINDS_3D } from "./kinds-3d.js";
+import { KINDS_E } from "./kinds-e.js";
 import { buildCombos, COMBOS } from "./combos.js";
 
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C };
-const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C)]);
+export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E };
+const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E)]);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -143,7 +144,7 @@ async function hostLoop(ui, from = host.scene) {
 export function runInHost(appId, kind) {
   const a = catalog.byId[appId];
   const k = KINDS[kind];
-  const prompts = { inbox: `Find the Acme invoice in ${a.name}`, receipt: `Pay the Acme invoice with ${a.name}`, merge: `Merge #128 on ${a.name} when it's green`, ride: `Get me a ${a.name} to SFO`, route: `Route me to Oracle Park in ${a.name}`, slots: `Find 30 minutes this week in ${a.name}`, deploy: `Deploy main to ${a.name}`, chat: `Catch me up on ${a.name}`, metric: `How are we doing on ${a.name} this week?`, sculpt: `Sculpt a helmet blockout in ${a.name}`, city: `Block out a city in ${a.name}`, fly: `Fly the camera through the scene in ${a.name}`, fpv: `Fly the gate line in ${a.name}`, light: `Light the bust Rembrandt-style in ${a.name}`, trigger: `Make the door open when the player walks in (${a.name})`, nodes: `Build the graph in ${a.name} and run it`, timeline: `Cut the pause and punch in (${a.name})`, review: `Collect review notes in ${a.name}`, layers: `Add a red barn to the selection in ${a.name}`, gallery: `Show me the renders in ${a.name}`, cad: `Draft a two-room plan in ${a.name}`, board: `Map this lecture in ${a.name}`, daw: `Write an Am–F–C–G progression in ${a.name}`, flash: `Quiz me in ${a.name}`, stage: `Why is the gripper red? (${a.name})`, globe: `Follow the flight into Tokyo`, gen3d: `Turn this photo into a 3D asset with ${a.name}`, sim: `Train a pick-and-place policy in ${a.name}` };
+  const prompts = { inbox: `Find the Acme invoice in ${a.name}`, receipt: `Pay the Acme invoice with ${a.name}`, merge: `Merge #128 on ${a.name} when it's green`, ride: `Get me a ${a.name} to SFO`, route: `Route me to Oracle Park in ${a.name}`, slots: `Find 30 minutes this week in ${a.name}`, deploy: `Deploy main to ${a.name}`, chat: `Catch me up on ${a.name}`, metric: `How are we doing on ${a.name} this week?`, sculpt: `Sculpt a helmet blockout in ${a.name}`, city: `Block out a city in ${a.name}`, fly: `Fly the camera through the scene in ${a.name}`, fpv: `Fly the gate line in ${a.name}`, light: `Light the bust Rembrandt-style in ${a.name}`, trigger: `Make the door open when the player walks in (${a.name})`, nodes: `Build the graph in ${a.name} and run it`, timeline: `Cut the pause and punch in (${a.name})`, review: `Collect review notes in ${a.name}`, layers: `Add a red barn to the selection in ${a.name}`, gallery: `Show me the renders in ${a.name}`, cad: `Draft a two-room plan in ${a.name}`, board: `Map this lecture in ${a.name}`, daw: `Write an Am–F–C–G progression in ${a.name}`, flash: `Quiz me in ${a.name}`, stage: `Why is the gripper red? (${a.name})`, globe: `Follow the flight into Tokyo`, gen3d: `Turn this photo into a 3D asset with ${a.name}`, sim: `Train a pick-and-place policy in ${a.name}`, screen: `Test the mobile build on a virtual display (${a.name})`, sandbox: `Try three runtimes in parallel on ${a.name}` };
   const sc = { id: "custom", label: `${a.name} · ${k.label}`, prompt: prompts[kind] || `Use ${a.name}: ${k.label.toLowerCase()}`, steps: [{ app: appId, tool: k.verb(a).split(" · ")[0], detail: a.name, kind, auto: !!KINDS[kind].make, hold: false, ttl: 6000 }], reply: `Done in ${a.name}. The card stays until you're finished with it.` };
   document.getElementById("top").scrollIntoView({ behavior: "smooth" });
   host.run?.stop();
@@ -226,7 +227,7 @@ function closeDrawer() {
 }
 
 /* ---------------- kinds gallery ---------------- */
-const SHOW_STUDIO = { sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
+const SHOW_STUDIO = { screen: "scrcpy", sandbox: "boat", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
 const SHOW = { inbox: "gmail", thread: "proton-mail", approve: "1password", chat: "discord", notify: "telegram", slots: "google-calendar", kanban: "trello", triage: "linear", file: "google-drive", graph: "obsidian", search: "yelp", feed: "bluesky", frames: "figma", sign: "docusign", context: "claude", receipt: "stripe", metric: "posthog", track: "fedex", crm: "hubspot", ride: "uber", route: "waze", boarding: "united", player: "spotify", workout: "strava", home: "philips-hue", merge: "github", ci: "github-actions", deploy: "vercel", incident: "pagerduty", migrate: "supabase" };
 function buildKinds() {
   const g = $("#kindgrid");
