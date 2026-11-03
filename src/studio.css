@@ -491,3 +491,21 @@
 .sb-vm.win { border-color: #22c55e; box-shadow: 0 0 0 3px #22c55e33; }
 .sb-term { max-height: 120px; border-left: 0; }
 @media (max-width: 720px) { .cu { grid-template-columns: minmax(0, 1fr); } .sb { aspect-ratio: 560 / 330; } .sb-vm { width: 36%; font-size: 9.5px; padding: 4px 6px; } }
+
+/* ---------- hermes plugin chain ---------- */
+.pl-task { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--ap-panel); }
+.pl-task b { font-size: 13px; }
+.pl-steps { list-style: none; margin: 0; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.pl-steps li { display: grid; grid-template-columns: auto auto 1fr auto; grid-template-areas: "d t a c" ". r r r"; gap: 1px 8px; align-items: center; padding: 6px 8px; border-radius: 6px; background: color-mix(in srgb, var(--ap-fg) 5%, transparent); font-size: 11px; transition: background .3s; }
+.pl-dot { grid-area: d; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--ap-fg) 40%, transparent); }
+.pl-steps code { grid-area: t; font: 600 10.5px var(--h-mono); }
+.pl-args { grid-area: a; font: 10px var(--h-mono); opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pl-cost, .pl-free { grid-area: c; font: 600 10px var(--h-mono); padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, #f5a524 22%, transparent); color: #f5a524; }
+.pl-free { background: color-mix(in srgb, #22c55e 18%, transparent); color: #22c55e; }
+.pl-res { grid-area: r; font: 10px var(--h-mono); color: #22c55e; }
+.pl-res:empty { display: none; }
+.pl-steps li.on { background: color-mix(in srgb, var(--ap-acc) 22%, transparent); }
+.pl-steps li.on .pl-dot { border-color: var(--ap-acc); background: var(--ap-acc); box-shadow: 0 0 8px var(--ap-acc); }
+.pl-steps li.done .pl-dot { background: #22c55e; border-color: #22c55e; }
+.pl-view .ap { border-radius: 0; border: 0; border-top: 1px solid color-mix(in srgb, var(--ap-fg) 10%, transparent); }
+.pl-view .g3-p { display: none; }

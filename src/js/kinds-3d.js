@@ -386,8 +386,11 @@ function gen3dMake(a, r) {
   let phase = 0, P = 0, pick = 0;
   const V = stage3d(vp, (T, v) => {
     v.orbit = { yaw: 0.4, pitch: 0.2, dist: 3.4, target: [0, 0.1, 0] };
-    const shapes = [new T.TorusKnotGeometry(0.62, 0.22, 220, 32), new T.DodecahedronGeometry(0.9, 2), new T.CapsuleGeometry(0.5, 0.8, 12, 32), new T.TorusGeometry(0.7, 0.3, 48, 96)];
-    const mats = [0xb08d57, 0x8fa3b8, 0xc06b4a, 0x6aa36f].map((c) => new T.MeshStandardMaterial({ color: c, roughness: 0.38, metalness: 0.65 }));
+    const merge = (...gs) => { const parts = gs.map((g) => g.toNonIndexed()); const n = parts.reduce((s, g) => s + g.attributes.position.count, 0); const pos = new Float32Array(n * 3); let o = 0; for (const g of parts) { pos.set(g.attributes.position.array, o); o += g.attributes.position.array.length; } const m = new T.BufferGeometry(); m.setAttribute("position", new T.BufferAttribute(pos, 3)); m.computeVertexNormals(); return m; };
+    // low-poly treasure chest (what the Meshy plugin task asks for): body, barrel lid, two bands, lock
+    const chest = (k = 0) => { const body = new T.BoxGeometry(1.5, 0.8, 0.95); body.translate(0, -0.2, 0); const lid = new T.CylinderGeometry(0.475, 0.475, 1.5, 7 + k, 1, false, 0, Math.PI); lid.rotateZ(Math.PI / 2); lid.translate(0, 0.2, 0); const bands = [-0.5, 0.5].map((x) => { const b = new T.BoxGeometry(0.1, 0.84, 1.0); b.translate(x, -0.2, 0); return b; }); const lock = new T.BoxGeometry(0.22, 0.28, 0.08); lock.translate(0, 0.12, 0.5); return merge(body, lid, ...bands, lock); };
+    const shapes = /meshy|tripo|rodin/i.test(a.name) ? [chest(0), chest(2), chest(4), chest(1)] : [new T.TorusKnotGeometry(0.62, 0.22, 220, 32), new T.DodecahedronGeometry(0.9, 2), new T.CapsuleGeometry(0.5, 0.8, 12, 32), new T.TorusGeometry(0.7, 0.3, 48, 96)];
+    const mats = (/meshy|tripo|rodin/i.test(a.name) ? [0x9a6b3c, 0x7a4f2c, 0x5f6b7a, 0xb08d57] : [0xb08d57, 0x8fa3b8, 0xc06b4a, 0x6aa36f]).map((c) => new T.MeshStandardMaterial({ color: c, roughness: /meshy|tripo|rodin/i.test(a.name) ? 0.7 : 0.38, metalness: /meshy|tripo|rodin/i.test(a.name) ? 0.1 : 0.65, flatShading: /meshy|tripo|rodin/i.test(a.name) }));
     let mesh = new T.Mesh(shapes[0], mats[0]);
     const wire = new T.Mesh(shapes[0], new T.MeshBasicMaterial({ color: parseInt((ui.acc || "#c4f042").slice(1), 16), wireframe: true, transparent: true, opacity: 0 }));
     v.scene.add(mesh, wire);
@@ -419,7 +422,7 @@ function gen3dMake(a, r) {
   variants.addEventListener("click", (e) => { const b = e.target.closest(".g3-v"); if (!b) return; variants.querySelectorAll(".g3-v").forEach((x) => x.classList.toggle("on", x === b)); G3.swap?.(+b.dataset.i); });
   const surface = appSurface(a, [prompt, h("div", { class: "ap-split g3" }, h("div", { class: "ap-vpwrap" }, vp), list), variants], { cls: "gen3d" });
   const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: "Generating", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Send to Blender"), h("button", { class: "eu-btn ghost" }, "Download .glb")], summary: `Generated a 3D asset with ${a.name}` });
-  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb" } };
+  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb" } };
 }
 
 /* ---------------- sim: robot arm pick-and-place with parallel envs ---------------- */

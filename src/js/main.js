@@ -7,10 +7,11 @@ import { KINDS_B } from "./kinds-b.js";
 import { KINDS_C } from "./kinds-c.js";
 import { KINDS_3D } from "./kinds-3d.js";
 import { KINDS_E } from "./kinds-e.js";
+import { KINDS_P } from "./kinds-p.js";
 import { buildCombos, COMBOS } from "./combos.js";
 
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E };
-const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E)]);
+export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P };
+const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P)]);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -227,7 +228,7 @@ function closeDrawer() {
 }
 
 /* ---------------- kinds gallery ---------------- */
-const SHOW_STUDIO = { screen: "scrcpy", sandbox: "boat", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
+const SHOW_STUDIO = { plugin: "meshy", screen: "scrcpy", sandbox: "boat", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
 const SHOW = { inbox: "gmail", thread: "proton-mail", approve: "1password", chat: "discord", notify: "telegram", slots: "google-calendar", kanban: "trello", triage: "linear", file: "google-drive", graph: "obsidian", search: "yelp", feed: "bluesky", frames: "figma", sign: "docusign", context: "claude", receipt: "stripe", metric: "posthog", track: "fedex", crm: "hubspot", ride: "uber", route: "waze", boarding: "united", player: "spotify", workout: "strava", home: "philips-hue", merge: "github", ci: "github-actions", deploy: "vercel", incident: "pagerduty", migrate: "supabase" };
 function buildKinds() {
   const g = $("#kindgrid");

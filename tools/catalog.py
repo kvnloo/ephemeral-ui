@@ -83,7 +83,7 @@ APPS = [
     ("Microsoft Teams", None, "chat"), ("Matrix", "matrix", "chat"), ("iMessage", None, "chat"),
     ("WeChat", "wechat", "chat"), ("LINE", "line", "chat"), ("Zulip", "zulip", "chat"),
     # meet & calendar
-    ("Google Calendar", "googlecalendar", "meet"), ("Zoom", "zoom", "meet"), ("Google Meet", "googlemeet", "meet"),
+    ("Google Calendar", "googlecalendar", "meet"), ("Zoom", "zoom", "meet"), ("Google Meet", "googlemeet", "meet", ["plugin", "slots", "chat"]),
     ("Calendly", "calendly", "meet"), ("Cal.com", "caldotcom", "meet"), ("Cron", None, "meet"),
     ("Loom", "loom", "meet", ["player", "chat", "notify"]), ("Fireflies", None, "meet", ["file", "chat", "search"]),
     # work

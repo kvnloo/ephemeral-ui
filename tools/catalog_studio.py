@@ -23,6 +23,7 @@ STUDIO_CATEGORIES = {
     "learn": ("Learning & study", ["flash", "board", "graph"]),
     "sim": ("Simulation, USD & 3D gen", ["gen3d", "sim", "light"]),
     "ours": ("Built by us", ["review", "timeline", "nodes"]),
+    "hermes": ("Hermes plugins & skills", ["plugin", "context", "approve"]),
 }
 
 D = dict  # brevity
@@ -207,7 +208,7 @@ STUDIO_APPS = [
     ("MuJoCo", None, "sim", ["sim"], D(oss=True, alt=["Isaac Sim"], ui="omni", docs="https://mujoco.readthedocs.io/")),
     ("Gazebo", None, "sim", ["sim", "city"], D(oss=True, alt=["Isaac Sim"], ui="omni")),
     ("Open3D", None, "sim", ["gen3d", "sculpt"], D(oss=True, alt=["PCL"], ui="code", docs="https://www.open3d.org/docs/")),
-    ("Meshy", None, "sim", ["gen3d", "gallery", "light"], D(ui="meshy", docs="https://docs.meshy.ai/")),
+    ("Meshy", None, "sim", ["plugin", "gen3d", "gallery", "light"], D(ui="meshy", docs="https://docs.meshy.ai/")),
     ("TRELLIS", None, "sim", ["gen3d", "light"], D(oss=True, alt=["Meshy", "Tripo"], ui="code", docs="https://github.com/microsoft/TRELLIS")),
     ("Hunyuan3D", None, "sim", ["gen3d", "layers"], D(oss=True, alt=["Meshy"], ui="code")),
     ("Tripo", None, "sim", ["gen3d", "gallery"], D(ui="meshy")),
@@ -242,5 +243,14 @@ STUDIO_APPS = [
     ("E2B", None, "agents", ["sandbox", "screen"], D(oss=True, alt=["boat", "Modal sandboxes"], ui="code", docs="https://e2b.dev/docs")),
     ("Daytona", None, "agents", ["sandbox", "deploy"], D(oss=True, alt=["Codespaces"], ui="code", docs="https://www.daytona.io/docs")),
     ("Agent Desktop", None, "agents", ["screen"], D(oss=True, alt=["Operator"], ui="code", docs="https://github.com/vercel-labs/agent-desktop")),
-    ("phone-harness", None, "agents", ["screen", "review"], D(ui="code")),
+    ("phone-harness", None, "hermes", ["plugin", "screen", "review"], D(ui="code")),
+    # ---- Hermes plugins & skills people actually install
+    ("Hermes Talk", None, "hermes", ["plugin", "timeline", "chat"], D(oss=True, alt=["ChatGPT voice"], ui="code", docs="https://github.com/TheSmokeDev/hermes-talk")),
+    ("Firecrawl", None, "hermes", ["plugin", "search", "file"], D(oss=True, alt=["ScrapingBee"], ui="code", docs="https://docs.firecrawl.dev/")),
+    ("Exa", None, "hermes", ["plugin", "search", "feed"], D(ui="code", docs="https://docs.exa.ai/")),
+    ("fal", None, "hermes", ["plugin", "gallery", "gen3d"], D(ui="code", docs="https://docs.fal.ai/")),
+    ("Bend", None, "hermes", ["plugin", "ci"], D(oss=True, ui="code")),
+    ("Hermes Handoff", None, "hermes", ["plugin", "context"], D(oss=True, ui="code")),
+    ("Tavily", None, "hermes", ["plugin", "search"], D(ui="code", docs="https://docs.tavily.com/")),
+    ("SearXNG", None, "hermes", ["plugin", "search"], D(oss=True, alt=["Google Search API", "Tavily"], ui="code", docs="https://docs.searxng.org/")),
 ]
