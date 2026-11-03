@@ -246,6 +246,10 @@ STUDIO_APPS = [
     ("phone-harness", None, "hermes", ["plugin", "screen", "review"], D(ui="code")),
     # ---- event-trace dashboards: cards take the omp-stats API JSON (see kinds-t.js)
     ("omp stats", None, "agents", ["trace", "trace-tools", "trace-errors", "trace-usage", "trace-compare", "trace-summary", "trace-span", "trace-frustration"], D(oss=True, ui="code", docs="https://github.com/can1357/oh-my-pi")),
+    # ---- intent and evidence: AODL owns IR; Ripple owns interaction; z0int owns cognition
+    ("Ripple", None, "agents", ["intent-declare"], D(oss=True, ui="code", docs="https://github.com/kvnloo/ripple")),
+    ("AODL", None, "agents", ["intent-contract", "intent-work", "intent-proof"], D(oss=True, ui="code", docs="https://github.com/kvnloo/aodl")),
+    ("z0intelligence", None, "agents", ["intel-decisions", "intel-value", "intel-context", "intel-health"], D(oss=True, ui="code", docs="https://github.com/kvnloo/z0intelligence")),
     # ---- Hermes plugins & skills people actually install
     ("Hermes Talk", None, "hermes", ["plugin", "timeline", "chat"], D(oss=True, alt=["ChatGPT voice"], ui="code", docs="https://github.com/TheSmokeDev/hermes-talk")),
     ("Firecrawl", None, "hermes", ["plugin", "search", "file"], D(oss=True, alt=["ScrapingBee"], ui="code", docs="https://docs.firecrawl.dev/")),

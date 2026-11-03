@@ -1,0 +1,582 @@
+{
+ "v": 0,
+ "contract": {
+  "spec": "0.2",
+  "revision": 3,
+  "protocol": "intent-contract",
+  "topology": "sequence",
+  "termination": "verified-or-reasoned-drop",
+  "approval": "pending",
+  "contractHash": "f072a99a0b6c1d99dfdd027e6a03fbea527e1cac96f3c6f06c0c38ba47673c5b",
+  "sourceHash": "d79b95ab528b45e21387f2d9706e6b0f295cf004637e6daf737b4714f1f23608",
+  "askedAt": "2026-11-01T00:01Z",
+  "sentences": [
+   {
+    "text": "when im using hermes in t3code app, it doesn't show work as ongoing even if subagents are still working.",
+    "cls": "add",
+    "reason": null
+   },
+   {
+    "text": "like the ui ux is misleading",
+    "cls": "not-an-ask",
+    "reason": "Restates the impact of the first sentence."
+   }
+  ],
+  "task": {
+   "status": "open",
+   "interpretation": "A Hermes thread in T3 stays Working while work Hermes started and is waiting on is still running, and settles when it ends. A dev server left running must not hold Working (T3 maintainers kept the opt-in awaited rule; #27355 was closed for reversing it). Do not write new protocol: Hermes PR #130898 already designed ACP background-process reports, but only on the in-process server.py path that main no longer runs, so the Hermes work is porting that design onto GatewayACPAgent. On T3, use the generic ACP adapter's existing per-flavor background-task hooks (as Grok does) through a new acpRegistry Hermes flavor, not a Hermes-only status channel. T3-MCP delegate_task children are already tracked. Hermes-native subagents wait until the background-job path is proven. Done = a real-turn receipt.",
+   "target": "‹receipt.json›",
+   "executor": "self + T3 delegate_task workers in fork worktrees"
+  },
+  "acceptance": {
+   "type": "command_exit_zero",
+   "clauses": [
+    ".working_while_running == true",
+    ".settled_after_exit == true",
+    ".dev_server_left_idle == true",
+    "(.thread_id|type==\"string\")"
+   ],
+   "receipt": "missing"
+  },
+  "pre": [
+   {
+    "type": "command_exit_zero",
+    "ref": "fleet-build",
+    "cmd": "fleet-build --help >/dev/null",
+    "want": "exit 0",
+    "observed": "pass",
+    "claim": "Owner rule: CPU-heavy verification runs off the host via fleet-build."
+   },
+   {
+    "type": "pr_state",
+    "ref": "pingdotgg/t3code#24610",
+    "head": "1d989a7862",
+    "want": "merged",
+    "observed": "merged",
+    "observedHead": "1d989a7862",
+    "claim": "T3 awaited-background-work PR is merged at the observed head."
+   },
+   {
+    "type": "pr_state",
+    "ref": "NousResearch/hermes-agent#130898",
+    "head": "d7c51b494c",
+    "want": "open",
+    "observed": "open",
+    "observedHead": "d7c51b494c",
+    "claim": "The Hermes background-report design to port is still open and unchanged."
+   }
+  ],
+  "facts": [
+   {
+    "text": "T3 already ships the awaited model; Hermes is the unsupported provider.",
+    "evidence": [
+     "observed"
+    ],
+    "n": 2
+   },
+   {
+    "text": "The data exists in Hermes; the ACP projection drops it.",
+    "evidence": [
+     "observed"
+    ],
+    "n": 1
+   },
+   {
+    "text": "The observed failure was a background job, not subagents.",
+    "evidence": [
+     "observed"
+    ],
+    "n": 1
+   },
+   {
+    "text": "Upstream already has the Hermes design (#130898) and the T3 ACP hooks; only the live-path wiring is missing.",
+    "evidence": [
+     "observed"
+    ],
+    "n": 2
+   },
+   {
+    "text": "Owner rule: CPU-heavy verification runs off the host via fleet-build.",
+    "evidence": [
+     "claimed"
+    ],
+    "n": 1
+   }
+  ],
+  "conflicts": [
+   "Hermes PRs #118701/#142400/#134730 and #134407's off mode hold the prompt open or join children inline. That makes every background job, dev servers included, look like an unfinished turn, against T3's opt-in awaited rule. Do not adopt them.",
+   "T3 #28450 (open) edits the same generic ACP adapter background-task code; rebase T1 after it if it merges first."
+  ],
+  "slices": [
+   {
+    "id": "H1",
+    "title": "port #130898 background reports to the gateway path",
+    "repo": "fork/hermes-agent",
+    "branch": "feat/acp-gateway-background-process",
+    "base": "fresh origin/main",
+    "after": [],
+    "work": "Carry #130898's process lifecycle (running, then exited with exit code, keyed by the launching toolCallId) into GatewayACPAgent's projection from the gateway's agent.terminal.output/terminal.close events. Expose it on the launching tool call (tool_call_update with the process id in _meta) so generic ACP clients can track it; keep #130898's semantics and credit it. No turn hold, no new async-delivery mode.",
+    "check": "targeted pytest tests/acp_adapter via fleet-build --light",
+    "state": "built",
+    "head": "1a6cd607d9",
+    "note": "PR blocked: per-author open-PR cap upstream; on fork"
+   },
+   {
+    "id": "T1",
+    "title": "acpRegistry Hermes flavor",
+    "repo": "fork/t3code",
+    "branch": "feat/acp-registry-hermes-background",
+    "base": "fresh origin/main",
+    "after": [],
+    "work": "Add hermesAcp.ts beside claude/copilot/devin/droid with extractBackgroundTaskId/isBackgroundCommandTool reading H1's metadata, mirroring provider-grok. First check whether a tracked ACP background task already holds Working; if it does not, add awaitBackgroundTasks to the generic ACP adapter (benefits Grok too), not a Hermes-only path.",
+    "check": "vp test run on the touched provider-acp/provider-acp-registry tests; targeted typecheck",
+    "state": "not-started",
+    "head": null,
+    "note": null
+   },
+   {
+    "id": "P1",
+    "title": "real-turn proof",
+    "repo": null,
+    "branch": null,
+    "base": null,
+    "after": [
+     "H1",
+     "T1"
+    ],
+    "work": "Isolated worktree dev server seeded with VACUUM INTO. A Hermes thread starts `sleep 90` and marks it awaited, plus a dev server it does not await. Sample thread status; write the receipt with thread_id, working_while_running, settled_after_exit, dev_server_left_idle and the samples.",
+    "check": "the task verifier",
+    "state": "blocked",
+    "head": null,
+    "note": null
+   },
+   {
+    "id": "later",
+    "deferred": true,
+    "work": "Hermes-native subagents: #130898 (delegation lifecycle), #137380 (standard subagent_update) and the NateWeav/t3code-hermes fork's HermesDelegation.ts already cover it in three shapes. Pick one after P1 instead of writing a fourth."
+   },
+   {
+    "id": "out",
+    "out": true,
+    "work": "Upstream PRs or comments (needs Kevin's explicit ask; T3 also requires maintainer scope approval first); mobile in-progress indicators (thread deb78a21); T3 Idle/settle fixes already open upstream (#29887, #29820, #25585); turn-holding designs."
+   }
+  ],
+  "checkedAt": "2026-11-03T19:01:36Z"
+ },
+ "z0": {
+  "tokenomics": {
+   "rows": 7518,
+   "frontier_tokens_avoided_est": 107971,
+   "baseline_tokens_sum": 1902925,
+   "measured_frontier_tokens_sum": 206,
+   "actual_tokens_saved": 87471,
+   "rows_with_baseline_and_measured": 224,
+   "rows_with_outcome": 240,
+   "verified_tasks": 0,
+   "tokens_per_verified_task": null,
+   "by_tier": {
+    "execution": 224,
+    "soft": 16
+   },
+   "by_capability": {
+    "intelligence.provider_admission": 1362,
+    "codex.delegated_text": 1361,
+    "intelligence.dispatch": 2273,
+    "coding.generic": 1165,
+    "coding.next_action": 10,
+    "coding.edit": 91,
+    "coding.file_relevance": 81,
+    "coding.delegate": 10,
+    "coding.web": 48,
+    "coding.verify_needed": 3,
+    "coding.abstain": 7,
+    "coding.needs_verification": 874,
+    "coding.recovery_action": 181,
+    "coding.review": 52
+   }
+  },
+  "decisions": {
+   "rows": 28157,
+   "last": "2026-10-28T21:47Z",
+   "days": [
+    {
+     "day": "2026-10-05",
+     "orchestration": 170,
+     "model": 133
+    },
+    {
+     "day": "2026-10-06",
+     "orchestration": 87,
+     "model": 450
+    },
+    {
+     "day": "2026-10-07",
+     "orchestration": 210,
+     "model": 138
+    },
+    {
+     "day": "2026-10-08",
+     "orchestration": 368,
+     "model": 413
+    },
+    {
+     "day": "2026-10-09",
+     "model": 445,
+     "orchestration": 32
+    },
+    {
+     "day": "2026-10-10",
+     "escalate": 15,
+     "orchestration": 2,
+     "local": 4
+    },
+    {
+     "day": "2026-10-11",
+     "model": 252,
+     "orchestration": 364
+    },
+    {
+     "day": "2026-10-12",
+     "model": 126,
+     "orchestration": 199
+    },
+    {
+     "day": "2026-10-14",
+     "model": 12,
+     "orchestration": 12
+    },
+    {
+     "day": "2026-10-16",
+     "orchestration": 22,
+     "model": 20
+    },
+    {
+     "day": "2026-10-18",
+     "orchestration": 2
+    },
+    {
+     "day": "2026-10-19",
+     "orchestration": 34,
+     "model": 9
+    },
+    {
+     "day": "2026-10-20",
+     "model": 3,
+     "orchestration": 6
+    },
+    {
+     "day": "2026-10-21",
+     "model": 5,
+     "orchestration": 9
+    },
+    {
+     "day": "2026-10-22",
+     "model": 145,
+     "orchestration": 255
+    },
+    {
+     "day": "2026-10-23",
+     "model": 674,
+     "orchestration": 1085
+    },
+    {
+     "day": "2026-10-24",
+     "model": 1351,
+     "orchestration": 2125
+    },
+    {
+     "day": "2026-10-25",
+     "orchestration": 4957,
+     "model": 2100
+    },
+    {
+     "day": "2026-10-26",
+     "orchestration": 4544,
+     "model": 1590
+    },
+    {
+     "day": "2026-10-27",
+     "orchestration": 1437,
+     "model": 631
+    },
+    {
+     "day": "2026-10-28",
+     "escalate": 1
+    }
+   ],
+   "providers": [
+    {
+     "provider": "groq",
+     "model": "openai/gpt-oss-20b",
+     "n": 4434
+    },
+    {
+     "provider": "groq",
+     "model": null,
+     "n": 4411
+    },
+    {
+     "provider": "kerdoios_plan",
+     "model": null,
+     "n": 4148
+    },
+    {
+     "provider": "xai-oauth",
+     "model": "grok-4.7",
+     "n": 488
+    },
+    {
+     "provider": "openai-codex",
+     "model": "gpt-6.1-sol",
+     "n": 403
+    },
+    {
+     "provider": "cerebras",
+     "model": "qwen-coder",
+     "n": 246
+    },
+    {
+     "provider": "openrouter",
+     "model": null,
+     "n": 195
+    },
+    {
+     "provider": "openrouter",
+     "model": "nvidia/nemotron-3-super-120b-a12b:free",
+     "n": 194
+    },
+    {
+     "provider": "cerebras",
+     "model": "qwen-3.8-27b",
+     "n": 172
+    },
+    {
+     "provider": "custom",
+     "model": "custom",
+     "n": 170
+    }
+   ],
+   "execution": {
+    "orchestration": 16967,
+    "log_only": 6229,
+    "live": 4934,
+    "unknown": 23,
+    "canary": 2,
+    "shadow": 2
+   },
+   "status": {
+    "started": 6448,
+    "completed": 6361,
+    "none": 6256,
+    "rejected": 5343,
+    "delivered_to_hook": 1547,
+    "acquired": 1055,
+    "released": 1054,
+    "failed": 62
+   },
+   "capabilities": {
+    "intelligence.dispatch": 12180,
+    "intelligence.provider_admission": 4787,
+    "codex.delegated_text": 4724,
+    "coding.generic": 3098,
+    "coding.needs_verification": 1821,
+    "coding.recovery_action": 365,
+    "coding.edit": 269,
+    "custom": 255
+   },
+   "confidence": [
+    0,
+    0,
+    9,
+    58,
+    90,
+    163,
+    49,
+    70,
+    51,
+    288
+   ]
+  },
+  "context": {
+   "live": {
+    "context_episodes": 4440,
+    "closed_episodes": 4439,
+    "shadow_predictions": 4608,
+    "prediction_horizons": 18432,
+    "routine_candidates": 37
+   },
+   "imported": {
+    "episodes": 96,
+    "shadow": 107,
+    "horizons": 236,
+    "routines": 2,
+    "automation_utility": 2,
+    "automation_receipts": 2
+   },
+   "operators": {
+    "open_context": 95,
+    "noop": 1
+   },
+   "flow": {
+    "rows": 30303,
+    "top1": {
+     "stay": 25449,
+     "switch_app": 4449,
+     "resume_previous": 287,
+     "switch_workspace": 78,
+     "harness": 39
+    },
+    "committed": 3,
+    "judged": 8149,
+    "hit": 1227,
+    "last": "2026-11-03",
+    "days": [
+     {
+      "day": "2026-10-14",
+      "n": 832
+     },
+     {
+      "day": "2026-10-15",
+      "n": 698
+     },
+     {
+      "day": "2026-10-16",
+      "n": 581
+     },
+     {
+      "day": "2026-10-17",
+      "n": 352
+     },
+     {
+      "day": "2026-10-18",
+      "n": 286
+     },
+     {
+      "day": "2026-10-19",
+      "n": 39
+     },
+     {
+      "day": "2026-10-20",
+      "n": 249
+     },
+     {
+      "day": "2026-10-21",
+      "n": 90
+     },
+     {
+      "day": "2026-10-22",
+      "n": 100
+     },
+     {
+      "day": "2026-10-23",
+      "n": 290
+     },
+     {
+      "day": "2026-10-24",
+      "n": 308
+     },
+     {
+      "day": "2026-10-25",
+      "n": 285
+     },
+     {
+      "day": "2026-10-26",
+      "n": 20
+     },
+     {
+      "day": "2026-10-27",
+      "n": 4
+     },
+     {
+      "day": "2026-10-28",
+      "n": 9
+     },
+     {
+      "day": "2026-10-29",
+      "n": 90
+     },
+     {
+      "day": "2026-10-30",
+      "n": 663
+     },
+     {
+      "day": "2026-10-31",
+      "n": 553
+     },
+     {
+      "day": "2026-11-01",
+      "n": 235
+     },
+     {
+      "day": "2026-11-02",
+      "n": 66
+     },
+     {
+      "day": "2026-11-03",
+      "n": 81
+     }
+    ]
+   }
+  },
+  "doctor": {
+   "ok": false,
+   "gpu": "NVIDIA GeForce RTX 3080 Ti",
+   "vram": 12.0,
+   "omp": {
+    "linked": [
+     "flyforge-jev",
+     "flyforge-recovery",
+     "local-cognition",
+     "openjev",
+     "openjev-06b"
+    ],
+    "missing": [
+     "vllm-jev",
+     "z0int-bridge",
+     "z0int-intelligence"
+    ]
+   },
+   "backends": [
+    {
+     "id": "decider_2b",
+     "kind": "calibrated_decision",
+     "local": true,
+     "ready": false,
+     "why": "torch not installed"
+    },
+    {
+     "id": "jev_typesafe",
+     "kind": "typed_decision",
+     "local": false,
+     "ready": true,
+     "why": "Credential presence only; live readiness requires execution"
+    },
+    {
+     "id": "laya_421m",
+     "kind": "typed_decision",
+     "local": true,
+     "ready": false,
+     "why": "laya package not installed"
+    },
+    {
+     "id": "nanojev",
+     "kind": "semantic_model",
+     "local": true,
+     "ready": true,
+     "why": "checkpoint complete; not loaded"
+    }
+   ],
+   "unresolved": [
+    "py.numpy: missing"
+   ],
+   "evolutionLab": {
+    "found": true,
+    "importable": false
+   },
+   "kerdoios": {
+    "found": true,
+    "importable": false
+   }
+  }
+ }
+}

@@ -35,6 +35,15 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
 - **Spec**: the card JSON of whatever you last clicked; draft schema at `src/schema/card.v0.json`.
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
+## Ripple intent kits
+
+Three new compositions at `#intent=declare`, `#intent=operate`, and `#intent=understand`:
+exact-ask and pending-contract review; dependency slices and real-turn proof; z0intelligence
+receipt/context/value/health cards composed with the existing OMP trace cards. Eight new kinds,
+all read-only, with source drill-down, local filters, Seen/Reopen and a **review request**, never
+an approval. These are kit prototypes on sanitized real snapshots, not a live T3 integration.
+See [INTENT-KITS.md](INTENT-KITS.md) for the host seam, truth labels and tests.
+
 ## Trace cards and "Ask the trace"
 
 Eight card kinds (`src/js/kinds-t.js`, styles in `src/trace.css`) that look like results from the
