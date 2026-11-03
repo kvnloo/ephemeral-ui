@@ -112,7 +112,7 @@ const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefin
 /* ---------------- dashboard payloads ---------------- */
 const AGG = ["totalRequests", "successfulRequests", "failedRequests", "errorRate", "totalInputTokens", "totalOutputTokens", "totalCacheReadTokens", "totalCacheWriteTokens", "cacheRate", "cacheSavings", "totalCost", "unpricedRequests", "totalPremiumRequests", "avgDuration", "avgTtft", "avgTokensPerSecond", "firstTimestamp", "lastTimestamp"];
 const sanStats = (d) => d && ({
-  overall: pick(d.overall, AGG),
+  overall: pick(d.overall ?? {}, AGG),
   byModel: (d.byModel || []).map((m) => ({ model: model(m.model), provider: provider(m.provider), ...pick(m, AGG) })),
   byFolder: (d.byFolder || []).map((f) => ({ folder: folder(f.folder), ...pick(f, AGG) })),
   byAgentType: (d.byAgentType || []).map((a) => ({ agentType: agent(a.agentType), ...pick(a, ["totalRequests", "totalInputTokens", "totalOutputTokens", "totalCacheReadTokens", "totalCacheWriteTokens", "totalCost"]) })),
@@ -220,6 +220,8 @@ async function sanTrace(raw, idx, harness, withEntries) {
 }
 
 /* ---------------- main ---------------- */
+// Imported by sanitize-stats.mjs for the mappers: only run when executed directly.
+if (import.meta.url === new URL(`file://${path.resolve(process.argv[1] ?? "")}`).href) {
 const out = { $schema: "https://ephemeralui.vercel.app/schema/trace-query.v0.json#/$defs/fixture", source: "omp-stats 18.9.2 API responses, sanitized by tools/sanitize-trace.mjs", generatedAt: Date.now(), sessions: [], traces: {}, entries: {}, api: {} };
 const sessions = await get("/api/sessions?limit=300");
 const rawTraces = [];
@@ -256,3 +258,6 @@ out.api["/api/sessions"] = out.sessions;
 fs.writeFileSync(OUT, JSON.stringify(out));
 console.error(`wrote ${OUT} (${(fs.statSync(OUT).size / 1024).toFixed(0)} KB); ${toolMap.size} tools, ${modelMap.size} models, ${provMap.size} providers renamed`);
 if (RAW_DENY) fs.writeFileSync(RAW_DENY, JSON.stringify([...rawStrings]));
+}
+
+export { seen, rawStrings, tool, model, provider, agent, folder, sessionFile, entry, ms, num, r6, pick, AGG, TU, FR, sanStats, sanTools, sanUsage, sanErrors, sanProviders, sanFrustration, MODEL_RE };

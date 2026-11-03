@@ -32,6 +32,38 @@
         "trace-frustration": { "description": "FrustrationDashboardStats from /api/stats/frustration?range=<r>." }
       }
     },
+    "statsComponent": {
+      "description": "Stats library component (src/js/stats-lib.js, stats-trace.js, stats-routes.js): make(data, opts) returns { el, spec, getSelection(), on(type, cb) → off }. data is the omp-stats API JSON for that component, unchanged. This object describes c.spec.",
+      "type": "object",
+      "required": ["v", "kind"],
+      "properties": {
+        "v": { "const": 0 },
+        "kind": { "type": "string", "description": "Stat, StatGrid, Sparkline, ShareBar, BarList, Legend, Chart, TimeChart, Segmented, RangeControl, SearchInput, Table, Drawer, Modal, JsonBlock, Badge, LiveChip, RequestDrawer, TimelineCanvas, Minimap, SpanDrawer, SummaryStrip, AggregatesPanel, TranscriptList, TraceView, OverviewView, ModelsView, ProvidersView, CostsView, RequestsView, ErrorsView, TracesView, ToolsView, FrustrationView, ProjectsView, GainView, StatsDashboard (tables may name themselves, e.g. RequestLog)." },
+        "range": { "enum": ["1h", "24h", "7d", "30d", "90d", "all", null] },
+        "session": { "type": ["string", "null"] },
+        "selected": {},
+        "layers": { "type": "array", "items": { "$ref": "#/$defs/layer" } }
+      },
+      "additionalProperties": true,
+      "$comment": "opts: range, now, layers, highlight {model, provider, tool, folder, request, span}, density, request(id), trace(file), entry(file, id), windows(provider). Events: see statsEvent."
+    },
+    "statsEvent": {
+      "description": "What a stats component emits (c.on and the bubbling DOM 'stats:event'). Ids only, never DOM or raw text.",
+      "type": "object",
+      "required": ["v", "type", "component", "entities", "ids"],
+      "properties": {
+        "v": { "const": 0 },
+        "type": { "enum": ["select", "pin", "brush", "filter"] },
+        "component": { "type": "string" },
+        "part": { "type": "string", "description": "Child that produced it, e.g. timeline, minimap, drawer, totals." },
+        "session": { "type": "string" },
+        "entities": { "type": "object", "properties": { "span": { "type": "string" }, "entry": { "type": "string" }, "request": { "type": ["integer", "string"] }, "track": { "type": "string" }, "tool": { "type": "string" }, "model": { "type": "string" }, "provider": { "type": "string" }, "signature": { "type": "string" }, "folder": { "type": "string" }, "window": { "type": "string" }, "account": { "type": "string" }, "key": { "type": "string" } } },
+        "ids": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]+:" } },
+        "range": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[t0, t1] in ms epoch." },
+        "filter": { "type": "object" },
+        "label": { "type": "string", "description": "One readable line for the agent." }
+      }
+    },
     "publicFixtureExtensions": {
       "description": "Fields the sanitized public fixture adds on top of the omp-stats shapes. A live host may omit them.",
       "type": "object",

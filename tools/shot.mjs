@@ -27,7 +27,7 @@ for (const s of steps) {
   if (s === "hero") { await page.waitForTimeout(+opt("t", 9000)); await shot("hero"); }
   if (s === "hero2") { await page.waitForTimeout(16000); await shot("hero2"); }
   if (s === "kit") { await page.locator("#kit").scrollIntoViewIfNeeded(); await page.evaluate(() => document.getElementById("kit").scrollIntoView()); await page.waitForTimeout(1200); await shot("kit"); await page.fill("#q", "merge"); await page.waitForTimeout(900); await shot("kit-filter"); await page.fill("#q", ""); }
-  if (s === "kinds") { const cells = await page.locator(".kcell").count(); for (let i = 0; i < cells; i += 6) { await page.locator(".kcell").nth(i).scrollIntoViewIfNeeded(); await page.evaluate((i) => document.querySelectorAll(".kcell")[i].scrollIntoView({ block: "start" }), i); await page.waitForTimeout(2600); await shot(`kinds-${i}`); } }
+  if (s === "kinds") { const cells = await page.locator(".kcell:not([hidden])").count(); for (let i = 0; i < cells; i += 6) { await page.locator(".kcell:not([hidden])").nth(i).scrollIntoViewIfNeeded(); await page.evaluate((i) => document.querySelectorAll(".kcell:not([hidden])")[i].scrollIntoView({ block: "start" }), i); await page.waitForTimeout(2600); await shot(`kinds-${i}`); } }
   if (s === "theme") { await page.evaluate(() => document.getElementById("theme").scrollIntoView()); await page.waitForTimeout(2200); await shot("theme"); }
   if (s === "flows") { await page.evaluate(() => document.getElementById("flows").scrollIntoView()); await page.waitForTimeout(900); await page.click("#runflow"); await page.waitForTimeout(2200); await shot("flows"); }
   if (s === "spec") { await page.evaluate(() => document.getElementById("spec").scrollIntoView()); await page.waitForTimeout(600); await shot("spec"); }

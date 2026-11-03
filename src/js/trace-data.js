@@ -14,8 +14,10 @@ export async function api(path) {
   if (u.pathname === "/api/session/trace") return d.traces[u.searchParams.get("file")] ?? null;
   if (u.pathname === "/api/session/entry") { const e = d.entries[`${u.searchParams.get("file")}#${u.searchParams.get("id")}`]; return e ? { entry: e } : null; }
   if (u.pathname === "/api/sessions") return d.sessions;
-  const range = u.searchParams.get("range") ?? "7d";
-  return d.api[`${u.pathname}?range=${range}`] ?? null;
+  if (u.pathname.startsWith("/api/request/") || u.pathname === "/api/status") return d.api[u.pathname] ?? null;
+  if (u.pathname === "/api/stats/recent") { const lim = +(u.searchParams.get("limit") ?? 50); return (d.api[u.pathname] ?? []).slice(0, lim); }
+  const range = u.searchParams.get("range") ?? "7d", p = u.searchParams.get("provider");
+  return (p && d.api[`${u.pathname}?range=${range}&provider=${p}`]) ?? d.api[`${u.pathname}?range=${range}`] ?? null;
 }
 /** The fixture, once loaded; cards render synchronously from it after `ready()`. */
 export async function ready() { return loadFixture(); }

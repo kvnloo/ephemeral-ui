@@ -14,8 +14,10 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="studio.css">
 <link rel="stylesheet" href="trace.css">
+<link rel="stylesheet" href="stats.css">
 <link rel="stylesheet" href="reel.css">
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/stats-section.js"></script>
 <script type="module" src="js/reel.js"></script>
 </head>
 <body>
@@ -23,7 +25,7 @@
   <div class="bar">
     <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
     <nav class="nav">
-      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#stats">Stats</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
     </nav>
     <span class="grow"></span>
     <button class="search open-palette" type="button"><span>Search <b id="napps">490</b> apps</span><kbd>⌘K</kbd></button>
@@ -111,6 +113,11 @@
     <p class="ask-src">Data: four real sessions (three omp, one Hermes) and 24h/7d/30d dashboard payloads exported from omp-stats, sanitized for the web: no prompts, messages, tool output, paths, hosts or project names; titles, tracks and projects get neutral labels and errors keep only their kind. Contract: <a href="schema/trace-query.v0.json">trace-query.v0.json</a> · cards: <a href="schema/card.v0.json">card.v0.json</a>.</p>
   </div>
   <div id="tracekinds" class="tracegrid" aria-label="Trace card kinds"></div>
+</section>
+
+<section id="stats" class="sec" aria-label="Stats library">
+  <div class="sechead"><div><span class="kicker">Stats library</span><h2>Every /stats control, as a component.</h2><p class="dim">The omp-stats dashboard taken apart: 18 primitives, 7 trace pieces, 11 route views and the whole app. Each one takes the <code>/stats</code> API JSON unchanged plus an options object, and reports what you click, pin, drag or filter as small typed events with entity ids (session, span, tool, model, request, time range), so a chat host can hand the selection to the agent for the next turn. Link one with <code>#stats=&lt;component&gt;</code>; the API is <code>make(data, opts) → {el, spec, getSelection(), on(event, cb)}</code> (<a href="schema/card.v0.json">card.v0.json</a> → <code>$defs.statsComponent</code>).</p></div></div>
+  <div class="sl-lib-mount"></div>
 </section>
 
 <section id="oss" class="sec">

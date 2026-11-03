@@ -83,6 +83,46 @@ placeholders like `‹path›`; error messages become kinds). Unknown tools/mode
 The leak check greps for paths, emails, URLs, IPs, hosts, secrets and owner/repo names, then for
 every raw string the sanitizer refused to copy. Deploy only when it is clean.
 
+## Stats library
+
+The omp `/stats` dashboard taken apart into components (section `#stats`, styles `src/stats.css`):
+
+- **Primitives** (`src/js/stats-lib.js`, `PRIMITIVES`): Stat, StatGrid, Sparkline, ShareBar, BarList,
+  Legend, Chart, TimeChart, Segmented, RangeControl, SearchInput, Table, Drawer, Modal, JsonBlock,
+  Badge, LiveChip, RequestDrawer.
+- **Trace pieces** (`src/js/stats-trace.js`, `TRACE_PIECES`): TimelineCanvas, Minimap, SpanDrawer,
+  SummaryStrip, AggregatesPanel, TranscriptList and TraceView, sharing one viewport (`createView`).
+- **Route views** (`src/js/stats-routes.js`, `ROUTES`): Overview, Models, Providers, Costs, Requests,
+  Errors, Traces, Tools, Frustration, Projects, Gain, plus `StatsDashboard` (nav, G-letter jumps,
+  range keys 1–6, live chip). `ROUTES[id].load(api, range)` fetches exactly the payloads a route reads.
+
+Every component has the same API, and it is stable from v0 on:
+
+    const c = X.make(data, opts)   // data: the omp-stats API JSON, unchanged
+    c.el                           // root element (c.el.statsComponent === c)
+    c.spec                         // { v: 0, kind, ...view state } — enough to re-create the view
+    c.getSelection()               // last select/pin event, or null
+    c.on("select" | "pin" | "brush" | "filter" | "*", cb) → off
+
+`opts` carries `range`, `now`, `layers`, `highlight` ({model, tool, folder, request, span, …}),
+`density`, and loaders: `request(id)`, `trace(file)`, `entry(file, id)`, `windows(provider)`
+(`hostOptions(api, range)` builds them from one `api(path)` function). Events carry entity ids, never
+DOM, and also bubble as a DOM `stats:event` CustomEvent, so a host bridge listens once:
+
+    { v: 0, type, component, part?, session?, entities: { span, entry, request, track, tool, model,
+      provider, signature, folder, window, account, key }, ids: ["span:…", "tool:…"],
+      range?: [t0, t1], filter?: {…}, label }
+
+`label` is a one-line, human-readable summary an agent can read as context. Schema:
+`src/schema/card.v0.json` → `$defs.statsComponent` and `$defs.statsEvent`.
+
+Deep links: `#stats` (the section), `#stats=<component>` (a route id like `models`, or a kind like
+`TimelineCanvas`), `#ask` and `#ask=<question>` (runs the question). They resolve after the page's
+async boot. The section's demos run on the sanitized fixture; `tools/sanitize-stats.mjs --from <dir>`
+adds the dashboard payloads (overview, model-dashboard, costs, folders, providers, provider-windows,
+tools, errors, recent, frustration, gain, status, request details) with the same allowlists, then
+run the leak check. DOM suite: `EUI_DOM_MODULE=<linkedom>/worker.js node --test tools/stats.test.mjs`.
+
 ## Build, check, deploy
 
     python3 tools/catalog.py > out/catalog.json && node tools/build-apps.mjs   # src/data/apps.json
