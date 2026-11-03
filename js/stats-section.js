@@ -113,12 +113,19 @@ async function build() {
 }
 
 /* ---------------- deep links ---------------- */
-/** Scroll to an element once layout above it has settled (images, the reel and lazy sections shift it). */
+/** Scroll to an element and keep it there while layout above it shifts (images, the reel, sections that
+ *  other modules fill in after boot) for up to 5 s; the first wheel, touch, key or pointer press lets go. */
 function settleScroll(el, { block = "start" } = {}) {
   if (!el) return;
-  let last = -1, n = 0;
-  const tick = () => { const y = el.getBoundingClientRect().top + scrollY; if (Math.abs(y - last) < 2 || n > 20) { el.scrollIntoView({ block, behavior: "instant" }); return; } last = y; n++; el.scrollIntoView({ block, behavior: "instant" }); setTimeout(tick, 120); };
-  tick();
+  const pin = () => el.scrollIntoView({ block, behavior: "instant" });
+  if (typeof ResizeObserver !== "function") return pin();
+  const kinds = ["wheel", "touchstart", "keydown", "pointerdown"];
+  const ro = new ResizeObserver(pin);
+  const stop = () => { ro.disconnect(); clearTimeout(timer); for (const k of kinds) removeEventListener(k, stop, true); };
+  const timer = setTimeout(stop, 5000);
+  for (const k of kinds) addEventListener(k, stop, { capture: true, passive: true });
+  ro.observe(document.body);
+  pin();
 }
 export async function followHash() {
   const raw = location.hash.slice(1);
