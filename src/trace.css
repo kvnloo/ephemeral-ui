@@ -48,6 +48,7 @@
 .os-pd { font-size: 12px; color: var(--os-ink-3); max-width: 70ch; }
 .os-panel > svg, .os-panel > .os-empty, .os-panel > div:not(.os-ph) { padding: 4px 12px 12px; }
 .os-panel > .os-tw { padding: 0; }
+.os-panel > ul { padding: 0 12px 6px; }
 .os-tw { overflow-x: auto; }
 .os-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .os-table th { text-align: left; font-weight: 500; color: var(--os-ink-3); padding: 7px 10px; border-bottom: 1px solid var(--os-line-1); white-space: nowrap; font-size: 11.5px; }
