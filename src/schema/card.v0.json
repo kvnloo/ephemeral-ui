@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ephemeralui.vercel.app/schema/card.v0.json",
+  "title": "Ephemeral UI card (draft v0)",
+  "description": "A card is data the host renders. The host owns theme, layout and permission prompts; the card never runs code.",
+  "type": "object",
+  "required": ["kind", "app"],
+  "properties": {
+    "kind": { "type": "string", "enum": ["inbox", "thread", "approve", "chat", "notify", "slots", "kanban", "triage", "file", "graph", "search", "feed", "frames", "sign", "context", "receipt", "metric", "track", "crm", "ride", "route", "boarding", "player", "workout", "home", "merge", "ci", "deploy", "incident", "migrate"] },
+    "app": { "type": "string", "description": "Catalog id, e.g. gmail, github, uber." },
+    "ttl": { "description": "How long the card lives: 'until-done' (default), 'pinned', or milliseconds.", "oneOf": [{ "type": "string", "enum": ["until-done", "pinned"] }, { "type": "integer", "minimum": 0 }] },
+    "actions": { "type": "string", "enum": ["read-only", "host-confirmed"], "description": "Writes are only allowed through a confirmation the host draws (hold, tap)." },
+    "render": { "type": "object", "properties": { "host": { "type": "string" }, "theme": { "type": "string" }, "brand": { "enum": ["accent", "full", "mono"] } } }
+  },
+  "additionalProperties": true
+}

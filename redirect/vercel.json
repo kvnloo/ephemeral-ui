@@ -1,0 +1,1 @@
+{ "redirects": [{ "source": "/:path+", "destination": "https://ephemeralui.vercel.app/:path+", "permanent": true }] }

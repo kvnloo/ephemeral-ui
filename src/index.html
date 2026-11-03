@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ephemeral-ui · one card spec, every agent host</title>
+<meta name="description" content="Ephemeral UI cards: they appear when an agent touches an app, adapt to the host (Hermes, T3 Code, …) and dissolve when the task is done. 310 apps, 30 card kinds, a live theme engine.">
+<meta name="theme-color" content="#fcfcfc">
+<meta property="og:title" content="ephemeral-ui">
+<meta property="og:description" content="One card spec, every agent host. 310 apps · 30 card kinds · T3 Code and Hermes desktop themes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='7' width='26' height='18' rx='5' fill='%23111' /%3E%3Crect x='7' y='11' width='10' height='3' rx='1.5' fill='%23fff'/%3E%3Crect x='7' y='17' width='16' height='3' rx='1.5' fill='%23fff' opacity='.5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
+    <nav class="nav">
+      <a href="#kit">Kit</a><a href="#kinds">Kinds</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+    </nav>
+    <span class="grow"></span>
+    <button class="search open-palette" type="button"><span>Search <b id="napps">310</b> apps</span><kbd>⌘K</kbd></button>
+    <div class="hostpick" role="group" aria-label="Host">
+      <button type="button" data-host="t3">T3 Code</button>
+      <button type="button" data-host="hermes">Hermes</button>
+    </div>
+    <button id="scheme" class="icon-btn" type="button" aria-label="Toggle light and dark" title="Light / dark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
+  </div>
+</header>
+
+<section id="top" class="hero">
+  <div class="hero-copy">
+    <span class="kicker">agnostic · ephemeral · host-native</span>
+    <h1>One card.<br><em>Every agent.</em></h1>
+    <p class="lead">When an agent touches an app, a card shows up in the thread: the inbox it searched, the ride it priced, the PR it is about to merge. It looks like the app, lives in the host's theme, and dissolves when the task is done.</p>
+    <p class="lead dim">The same card spec renders in Hermes, T3 Code, or anything that speaks it. Switch the host up top and the whole page re-skins from the real token files.</p>
+    <div class="cta">
+      <a class="eu-btn primary lg" href="#kit">Browse the kit</a>
+      <button class="eu-btn lg open-palette" type="button">⌘K search</button>
+    </div>
+    <div id="hostctl">
+      <div class="scn"></div>
+      <div class="row"><span class="state eu-hint">Live</span><button class="resume eu-btn ghost sm" type="button" hidden>Resume</button></div>
+    </div>
+  </div>
+  <div class="hero-win"><div id="host" class="win" aria-label="Host preview"></div></div>
+</section>
+
+<section class="band">
+  <div><b data-count="310">0</b><span>apps</span></div>
+  <div><b id="nkinds">30</b><span>card kinds</span></div>
+  <div><b data-count="9">0</b><span>host themes</span></div>
+  <div><b data-count="2">0</b><span>hosts with source tokens</span></div>
+  <div><b>1</b><span>spec</span></div>
+</section>
+
+<section id="kit" class="sec">
+  <div class="sechead">
+    <div><span class="kicker">The kit</span><h2>A card for every app your agent uses.</h2><p class="dim">Each app maps to three card kinds that fit what it does. Tap a tile to play its cards live. Brand colours come from simple-icons; apps without a verified colour get a neutral tile instead of a guess.</p></div>
+    <div class="kitbar"><label class="qbox"><span>⌕</span><input id="q" type="search" placeholder="Search apps, categories or kinds" autocomplete="off"></label><span id="count" class="eu-hint"></span></div>
+  </div>
+  <div id="cats" class="cats"></div>
+  <div id="grid" class="grid"></div>
+  <p id="empty" class="dim center" hidden>No app matches. Try a category or a kind like “merge”.</p>
+</section>
+
+<section id="kinds" class="sec">
+  <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Thirty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme.</p></div></div>
+  <div id="kindgrid" class="kindgrid"></div>
+</section>
+
+<section id="theme" class="sec">
+  <div class="sechead"><div><span class="kicker">Theme engine</span><h2>Preview any host. Bend it to yours.</h2><p class="dim">Presets are read from the hosts' own source: T3 Code's <code>index.css</code> and Hermes desktop's <code>presets.ts</code>, resolved to sRGB. Hermes keeps its near-square corners; T3 keeps its 8px radius and true-black dark mode.</p></div></div>
+  <div class="engine">
+    <div class="ctl">
+      <div id="presets"></div>
+      <div class="ctlgrid">
+        <label>Accent<input id="c-accent" type="color"></label>
+        <label>Radius <span id="v-radius" class="eu-hint"></span><input id="c-radius" type="range" min="0" max="20" step="0.4"></label>
+        <label>Density <span id="v-density" class="eu-hint">Default</span><input id="c-density" type="range" min="0.85" max="1.15" step="0.15" value="1"></label>
+        <label>Motion <span id="v-speed" class="eu-hint"></span><input id="c-speed" type="range" min="0.5" max="2" step="0.25"></label>
+        <label class="wide">Type
+          <select id="c-font"><option value="">Host default</option><option value='Inter, system-ui, sans-serif'>Inter</option><option value='"Instrument Serif", serif'>Instrument Serif</option><option value='"IBM Plex Mono", monospace'>IBM Plex Mono</option><option value='"Courier Prime", monospace'>Courier Prime</option><option value='system-ui, sans-serif'>System UI</option></select>
+        </label>
+        <div class="wide"><span class="lbl">Cards</span><div id="brandmode"></div></div>
+        <div class="wide"><span class="lbl">Logos</span><div id="logomode"></div><p class="eu-hint">T3 Code ships monogram tiles. Official marks are trademarks of their owners and shown for exploration.</p></div>
+        <button id="reset" class="eu-btn ghost" type="button">Reset overrides</button>
+      </div>
+      <div class="tok">
+        <div class="row between"><div class="eu-seg mini"><button id="exp-css" type="button" aria-pressed="true">CSS</button><button id="exp-json" type="button" aria-pressed="false">JSON</button></div><button id="copytok" class="eu-btn sm" type="button">Copy tokens</button></div>
+        <pre id="tokcode"></pre>
+      </div>
+    </div>
+    <div class="pvwrap"><div class="row between"><span class="eu-hint">Live preview</span><button id="pvreplay" class="eu-btn ghost sm" type="button">↻ Replay</button></div><div id="themepv" class="themepv"></div></div>
+  </div>
+</section>
+
+<section id="flows" class="sec">
+  <div class="sechead"><div><span class="kicker">Flows</span><h2>Cards that hand off to each other.</h2><p class="dim">An agent task is usually three apps in a row. Drag the cards around; the cables follow. Run it to watch work move down the line. Click a card to open it.</p></div></div>
+  <div class="flowbar"><div id="flowtabs"></div><button id="runflow" class="eu-btn primary" type="button">▶ Run flow</button></div>
+  <div id="flowcv" class="flowcv"><svg id="flowsvg"></svg></div>
+</section>
+
+<section id="spec" class="sec">
+  <div class="sechead"><div><span class="kicker">Spec</span><h2>Agnostic by contract.</h2><p class="dim">A card is data, not code: a kind, an app, the facts it shows, and actions the host must confirm. The host owns rendering, theme and permissions, so a card can't spoof a host or act without you. Click any card on the page to see its spec here.</p></div></div>
+  <div class="specgrid">
+    <pre id="speccode" class="code"></pre>
+    <div class="adapters">
+      <h3>Hosts</h3>
+      <ul>
+        <li><b>T3 Code</b><span>App cards and brand-coloured activity rows for connector apps · <a href="https://github.com/kvnloo/t3code/pull/71">kvnloo/t3code#71</a> (draft)</span></li>
+        <li><b>Hermes desktop</b><span>Safe OpenUI v2 boards · <a href="https://github.com/kvnloo/hermes-agent/pull/700">kvnloo/hermes-agent#700</a> (draft)</span></li>
+        <li><b>Hermes Android</b><span>Pure-Dart OpenUI v2 parser · <a href="https://github.com/kvnloo/hermes-android/pull/11">kvnloo/hermes-android#11</a> (draft)</span></li>
+        <li><b>Dash</b><span>Inline declarative UI in chat · <a href="https://github.com/kvnloo/dash/pull/87">kvnloo/dash#87</a> (draft)</span></li>
+      </ul>
+      <h3>Rules every host keeps</h3>
+      <ol class="rules">
+        <li>Read-only by default. Writes need a hold or a tap the host draws.</li>
+        <li>The card takes the host's surfaces, type and radius; the app only lends its accent and mark.</li>
+        <li>Cards are ephemeral: they leave a one-line receipt when the task ends. Pin to keep one.</li>
+        <li>No guessed brands: unverified apps get a neutral monogram.</li>
+      </ol>
+      <p class="eu-hint">Schema draft: <a href="schema/card.v0.json">schema/card.v0.json</a></p>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div><span class="wm small"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></span><p class="eu-hint">Formerly <i>t3-app-cards</i>. The original pretotype gallery lives on at <a href="classic/">/classic</a>.</p></div>
+  <div class="srcs"><b>Sources</b><span>Icons and colours: <span id="srcicons"></span></span><span>T3 Code tokens: <span id="srct3"></span></span><span>Hermes tokens: <span id="srchermes"></span></span><span>Merge motion after <a href="https://x.com/pitus_/status/2111519352503873866">@pitus_'s Generative UI #2</a>.</span><span>All data in cards is demo data.</span></div>
+</footer>
+
+<aside id="drawer" hidden>
+  <div class="scrim"></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="App cards">
+    <div class="dhead"></div>
+    <div class="dbody"></div>
+  </div>
+</aside>
+
+<dialog id="palette">
+  <div class="pbox">
+    <label class="pin"><span>⌕</span><input id="pq" placeholder="Apps, card kinds, themes…" autocomplete="off"><kbd>esc</kbd></label>
+    <ul id="pres"></ul>
+  </div>
+</dialog>
+</body>
+</html>
