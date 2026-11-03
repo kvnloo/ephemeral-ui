@@ -14,7 +14,9 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="studio.css">
 <link rel="stylesheet" href="trace.css">
+<link rel="stylesheet" href="reel.css">
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/reel.js"></script>
 </head>
 <body>
 <header class="top">
@@ -32,6 +34,14 @@
     <button id="scheme" class="icon-btn" type="button" aria-label="Toggle light and dark" title="Light / dark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </div>
 </header>
+
+<section id="reel" class="rl-sec" aria-label="Reel">
+  <figure class="rl-fig">
+    <video class="rl-vid" src="media/reel/ephemeral-ui-reel.mp4" poster="media/reel/poster.webp" autoplay muted loop playsinline preload="metadata" aria-label="30-second reel: every card kind playing, 72 agent sessions at once, and five apps handing work down a chain"></video>
+    <button class="rl-snd eu-btn sm" type="button" aria-pressed="false">Sound off</button>
+  </figure>
+  <figcaption class="rl-cap"><span class="kicker">Reel · 31 s</span><span>Every card kind, 72 agent sessions at once, and apps that hand work down a chain. Every frame is the kit's own card code.</span><span class="grow"></span><a class="rl-badge" href="https://www.openui.com" target="_blank" rel="noopener">Built on OpenUI</a><a class="eu-hint" href="#credits">Credits</a></figcaption>
+</section>
 
 <section id="top" class="hero">
   <div class="hero-copy">
@@ -170,6 +180,7 @@
 
 <footer class="foot">
   <div><span class="wm small"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></span><p class="eu-hint">Formerly <i>t3-app-cards</i>. The original pretotype gallery lives on at <a href="classic/">/classic</a>.</p></div>
+  <div id="credits" class="srcs rl-credits"><b>Credits</b><span>Built on <a href="https://github.com/thesysdev/openui">OpenUI</a> by Thesys (MIT): the generative-UI language and renderer these cards build on.</span><span>Icons and brand colours: <a href="https://simpleicons.org">simple-icons</a> (CC0 data; marks are trademarks of their owners). 3D cards: <a href="https://threejs.org">three.js</a> (MIT).</span><span>Trace cards after <a href="https://github.com/can1357/oh-my-pi">omp-stats</a> (MIT). Host tokens: <a href="https://github.com/pingdotgg/t3code">T3 Code</a> (MIT) and <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a> (MIT). Anatomy loops: <a href="https://github.com/wheresryan22/anatomy">wheresryan22/anatomy</a> (MIT).</span><span>Type: Inter, Instrument Serif, IBM Plex Mono, Courier Prime, Caveat (SIL OFL). Reel: made with <a href="https://fframes.studio">fframes</a>; music “November Snow” by cynicmusic (CC0).</span></div>
   <div class="srcs"><b>Sources</b><span>Icons and colours: <span id="srcicons"></span></span><span>T3 Code tokens: <span id="srct3"></span></span><span>Hermes tokens: <span id="srchermes"></span></span><span>Merge motion after <a href="https://x.com/pitus_/status/2111519352503873866">@pitus_'s Generative UI #2</a>.</span><span>All data in cards is demo data.</span></div>
 </footer>
 

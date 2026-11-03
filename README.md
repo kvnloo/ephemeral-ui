@@ -1,5 +1,12 @@
 # ephemeral-ui
 
+[![ephemeral-ui reel](src/media/reel/poster.webp)](https://ephemeralui.vercel.app/media/reel/ephemeral-ui-reel.mp4)
+
+**Reel (31 s):** every card kind playing, 72 agent sessions pulled out into one wall, and five apps handing
+work down a chain. It opens the site (`#reel`). Film source: [`films/ephemeral-ui-reel`](../../films/ephemeral-ui-reel/src).
+
+Built on [OpenUI](https://github.com/thesysdev/openui) by Thesys (MIT). See [Credits](#credits).
+
 Agnostic ephemeral UI cards: they appear when an agent touches an app, take the host's theme
 (Hermes desktop, T3 Code, …) and dissolve into a one-line receipt when the task is done.
 Formerly `t3-app-cards`; the original gallery is kept at `/classic`.
@@ -91,3 +98,15 @@ No bundler: plain ES modules, one stylesheet. `tools/node_modules` holds simple-
 Motion references come from a private reference collection and
 @pitus_'s Generative UI series. The evidence (frame sheets, notes) stays out of this repo, in
 `$ZER0/data/operations/ephemeral-ui/x-taste/`.
+
+## Credits
+
+- [OpenUI](https://github.com/thesysdev/openui) by Thesys (MIT): the generative-UI language and renderer the card spec builds on.
+- [simple-icons](https://simpleicons.org) 16.36.0 (CC0 data) for brand marks and colours; marks are trademarks of their owners.
+- [three.js](https://threejs.org) r187 (MIT) for the 3D studio cards.
+- [omp-stats](https://github.com/can1357/oh-my-pi) (`@oh-my-pi/omp-stats`, MIT) for the trace card shapes and API.
+- Host tokens from [T3 Code](https://github.com/pingdotgg/t3code) (MIT) and [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT); Tailwind 4 colour ramps (MIT).
+- Anatomy figure loops from [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) (MIT).
+- Merge motion after [@pitus_'s Generative UI #2](https://x.com/pitus_/status/2111519352503873866).
+- Type: Inter, Instrument Serif, IBM Plex Mono, Courier Prime, Caveat, and Archivo Black in the reel (SIL OFL 1.1).
+- Reel made with [fframes](https://fframes.studio); music "November Snow" by The Cynic Project / cynicmusic.com (CC0).
