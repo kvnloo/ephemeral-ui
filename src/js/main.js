@@ -69,6 +69,8 @@ function toolRow(a, tool, detail) {
 async function playScene(sc, run, ui) {
   ui.scroll.replaceChildren();
   ui.title.textContent = sc.label;
+  const ti = SCENES.indexOf(sc);
+  [...ui.threadsEl.children].forEach((li, i) => { li.classList.toggle("on", i === (ti < 0 ? 5 : ti)); li.querySelector(".st").classList.toggle("live", i === (ti < 0 ? 5 : ti)); });
   $$("#hostctl .scn button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === sc.id ? "true" : "false"));
   const typed = $(".typed", ui.input);
   ui.input.classList.add("typing");
@@ -147,7 +149,7 @@ export function runInHost(appId, kind) {
 const store = { q: "", cat: "all" };
 function tile(a) {
   const kinds = a.kinds.map((k) => h("span", { class: "kk" }, KINDS[k].label));
-  return h("button", { class: "tile", type: "button", "data-id": a.id, "data-cat": a.cat, onclick: (e) => openDrawer(a.id, e.currentTarget) }, h("span", { class: "glow" }), icon(a, 40), h("span", { class: "tn" }, a.name), h("span", { class: "tc" }, catLabel(a.cat)), h("span", { class: "kks" }, kinds));
+  return h("button", { class: "tile", type: "button", "data-id": a.id, "data-cat": a.cat, style: a.hex ? { "--tile-c": a.hex } : null, onclick: (e) => openDrawer(a.id, e.currentTarget) }, h("span", { class: "glow" }), icon(a, 40), h("span", { class: "tn" }, a.name), h("span", { class: "tc" }, catLabel(a.cat)), h("span", { class: "kks" }, kinds));
 }
 const catLabel = (id) => catalog.categories.find((c) => c.id === id)?.label || id;
 function buildStore() {

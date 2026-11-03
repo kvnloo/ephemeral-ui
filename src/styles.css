@@ -197,7 +197,7 @@ kbd { font-size: 11px; padding: 2px 6px; border-radius: 5px; border: 1px solid v
 .tile.in { opacity: 1; translate: 0 0; transition: transform .35s var(--e-out), border-color .2s, box-shadow .3s, opacity .5s var(--d) ease, translate .7s var(--d) var(--e-out); }
 .tile[hidden] { display: none; }
 .tile:hover { border-color: color-mix(in srgb, var(--tile-c, var(--h-fg)) 40%, var(--h-border)); box-shadow: 0 18px 40px -22px rgb(0 0 0 / .35); }
-.tile .glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(240px circle at var(--mx) var(--my), color-mix(in srgb, var(--h-primary) 12%, transparent), transparent 60%); }
+.tile .glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(240px circle at var(--mx) var(--my), color-mix(in srgb, var(--tile-c, var(--h-primary)) 16%, transparent), transparent 60%); }
 .tile:hover .glow { opacity: 1; }
 .tile .eu-ico { margin-bottom: 10px; transition: transform .4s cubic-bezier(.3,1.6,.5,1); }
 .tile:hover .eu-ico { transform: translateY(-2px) rotate(-4deg) scale(1.06); }
