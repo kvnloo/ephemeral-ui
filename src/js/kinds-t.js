@@ -44,7 +44,8 @@ export function spanDrawer(span, track, trace, entries, { onClose, onTrack } = {
   const e = span.entryId ? entries?.[`${track.file}#${span.entryId}`]?.message : null;
   const m = [["Duration", fDur(span.end - span.start) + (span.unterminated ? " · unterminated" : "")], ["Start", fClock(span.start)], ["Track", track.label]];
   if (span.kind === "model") {
-    m.push(["Tokens", fInt(span.tokens ?? e?.usage?.totalTokens ?? 0)], ["Cost", "$" + (span.cost ?? e?.usage?.cost?.total ?? 0).toFixed(4)], ["TTFT", fDur(span.ttft ?? e?.ttft ?? null)], ["Model", span.model ?? e?.model ?? "-"]);
+    const noUsage = span.tokens == null && !e?.usage;
+    m.push(["Tokens", noUsage ? "not recorded" : fInt(span.tokens ?? e.usage.totalTokens)], ["Cost", noUsage ? "N/A" : "$" + (span.cost ?? e?.usage?.cost?.total ?? 0).toFixed(4)], ["TTFT", fDur(span.ttft ?? e?.ttft ?? null)], ["Model", span.model ?? e?.model ?? "-"]);
     if (e?.usage) m.push(["Input / output / cached", `${fInt(e.usage.input)} / ${fInt(e.usage.output)} / ${fInt(e.usage.cacheRead)}`]);
     if (e?.provider) m.push(["Provider", e.provider]);
     if (e?.stopReason) m.push(["Stop reason", e.stopReason]);
@@ -266,7 +267,7 @@ export function timeline(trace, entries, o = {}) {
     const ol = h("ol", { class: "os-txl" });
     const more = h("button", { class: "os-btn", type: "button" }, "");
     let n = 0;
-    const add = (k) => { for (const { s, t } of list.slice(n, n + k)) ol.append(h("li", { onclick: () => select(s, t, { reveal: true }) }, h("span", { class: `os-kchip k-${s.kind}` }, s.kind), h("b", {}, s.label), h("span", { class: "os-txd" }, s.kind === "tool" ? s.detail ?? "" : s.kind === "model" ? `${fCompact(s.tokens ?? 0)} tok · ${fCost(s.cost ?? 0)}` : s.kind === "turn" ? "‹user message withheld›" : s.detail ?? ""), h("span", { class: "os-mono dim" }, t.id === "main" ? "" : t.label + " "), h("span", { class: "os-mono dim r" }, fDur(s.end - s.start)))); n += k; more.textContent = n < list.length ? `Show ${Math.min(40, list.length - n)} more of ${list.length - n}` : "End of transcript"; more.disabled = n >= list.length; };
+    const add = (k) => { for (const { s, t } of list.slice(n, n + k)) ol.append(h("li", { onclick: () => select(s, t, { reveal: true }) }, h("span", { class: `os-kchip k-${s.kind}` }, s.kind), h("b", {}, s.label), h("span", { class: "os-txd" }, s.kind === "tool" ? s.detail ?? "" : s.kind === "model" ? (s.tokens == null ? "usage not recorded" : `${fCompact(s.tokens)} tok · ${fCost(s.cost ?? 0)}`) : s.kind === "turn" ? "‹user message withheld›" : s.detail ?? ""), h("span", { class: "os-mono dim" }, t.id === "main" ? "" : t.label + " "), h("span", { class: "os-mono dim r" }, fDur(s.end - s.start)))); n += k; more.textContent = n < list.length ? `Show ${Math.min(40, list.length - n)} more of ${list.length - n}` : "End of transcript"; more.disabled = n >= list.length; };
     more.onclick = () => add(40);
     add(24);
     transcript.append(h("div", { class: "os-ph" }, h("div", {}, h("div", { class: "os-pt" }, "Transcript"), h("div", { class: "os-pd" }, "Every span in order; click to inspect. Message text is withheld in the public fixture."))), ol, more);
