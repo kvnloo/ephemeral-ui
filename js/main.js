@@ -10,6 +10,8 @@ import { KINDS_E } from "./kinds-e.js";
 import { KINDS_P } from "./kinds-p.js";
 import { KINDS_F } from "./kinds-f.js";
 import { KINDS_T } from "./kinds-t.js";
+import { KINDS_I } from "./kinds-i.js";
+import { buildIntent, INTENT_KITS } from "./intent-kits.js";
 import { KINDS_INFRA, buildInfrastructure } from "./kinds-infra.js";
 import { buildSocial } from "./social.js";
 import { buildAsk } from "./ask.js";
@@ -369,10 +371,10 @@ function buildPalette() {
   let items = [], sel = 0;
   const all = () => [
     ...catalog.apps.map((a) => ({ type: "App", label: a.name, sub: catLabel(a.cat), ico: a, go: () => openDrawer(a.id) })),
-    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.infra ? "infrastructure" : v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
+    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.infra ? "infrastructure" : v.intent ? "intent" : v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); if (v.intent) window.__intent?.pick(INTENT_KITS.find(kit => kit.kinds.includes(k)).id); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
     ...T.themes.map((t) => ({ type: "Theme", label: `${t.label} · ${t.sub}`, sub: t.host, go: () => setTheme(t.id) })),
     ...COMBOS.map((c, i) => ({ type: "Combo", label: c.label, sub: c.tag, go: () => { document.getElementById("combos").scrollIntoView({ behavior: "smooth" }); document.querySelectorAll(".cb-tab")[i]?.click(); } })),
-    ...[["Kit", "kit"], ["Combos", "combos"], ["Cloud & local infrastructure", "infrastructure"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
+    ...[["Kit", "kit"], ["Combos", "combos"], ["Intent kits", "intent"], ["Cloud & local infrastructure", "infrastructure"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
   ];
   const render = () => {
     const q = inp.value.trim().toLowerCase();
@@ -433,6 +435,7 @@ async function boot() {
   buildStore(); buildKinds(); buildThemes(); buildFlows(); buildPalette(); buildOSS();
   buildCombos({ catalog, icon, openDrawer });
   buildAsk({ catalog, setSpec });
+  buildIntent({ catalog, setSpec });
   buildInfrastructure({ catalog, setSpec });
   buildSocial({ catalog, KINDS, makeCard, setTheme, T, setSpec });
   const pairs = catalog.apps.reduce((n, a) => n + a.kinds.length, 0);

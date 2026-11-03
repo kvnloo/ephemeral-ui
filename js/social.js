@@ -5,7 +5,7 @@ import { h, anim, Run, quiet } from "./motion.js";
 
 const KEY = "eui.playlist.v1";
 const MAX = 24, MAX_TITLE = 80, MAX_BY = 40, MAX_NOTE = 140;
-const NOT_SHAREABLE = /^(trace|intent-|intel-)/; // these need fixture input, not just (app, kind)
+const NOT_SHAREABLE = /^trace/; // trace cards need a chosen session; intent-/intel- render from the public snapshot
 
 const clip = (s, n) => (typeof s === "string" ? s.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, n) : "");
 const b64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
