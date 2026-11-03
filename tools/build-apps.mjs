@@ -12,7 +12,7 @@ const apps = cat.apps.map((a) => {
   const icon = a.slug ? bySlug[a.slug] : null;
   if (a.slug && !icon) missing.push(`${a.name} (${a.slug})`);
   const id = a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  return { id, name: a.name, cat: a.cat, kinds: a.kinds, hex: icon ? "#" + icon.hex : null, path: icon ? icon.path : null };
+  return { id, name: a.name, cat: a.cat, kinds: a.kinds, hex: icon ? "#" + icon.hex : null, path: icon ? icon.path : null, ...(a.oss ? { oss: true } : {}), ...(a.alt ? { alt: a.alt } : {}), ...(a.ui ? { ui: a.ui } : {}), ...(a.docs ? { docs: a.docs } : {}) };
 });
 if (missing.length) { console.error("unknown slugs:", missing.join(", ")); process.exit(1); }
 mkdirSync(new URL("../src/data/", import.meta.url), { recursive: true });

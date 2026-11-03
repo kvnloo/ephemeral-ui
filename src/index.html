@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ephemeral-ui · one card spec, every agent host</title>
-<meta name="description" content="Ephemeral UI cards: they appear when an agent touches an app, adapt to the host (Hermes, T3 Code, …) and dissolve when the task is done. 310 apps, 30 card kinds, a live theme engine.">
+<meta name="description" content="Ephemeral UI cards: they appear when an agent touches an app, adapt to the host (Hermes, T3 Code, …) and dissolve when the task is done. 490+ apps, 50 card kinds including 3D, cross-app combos and an open-source shelf.">
 <meta name="theme-color" content="#fcfcfc">
 <meta property="og:title" content="ephemeral-ui">
-<meta property="og:description" content="One card spec, every agent host. 310 apps · 30 card kinds · T3 Code and Hermes desktop themes.">
+<meta property="og:description" content="One card spec, every agent host. 490+ apps · 50 card kinds · 3D sculpt, PCG cities, FPV, voice edits · T3 Code and Hermes themes.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='7' width='26' height='18' rx='5' fill='%23111' /%3E%3Crect x='7' y='11' width='10' height='3' rx='1.5' fill='%23fff'/%3E%3Crect x='7' y='17' width='16' height='3' rx='1.5' fill='%23fff' opacity='.5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Courier+Prime:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="studio.css">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -19,10 +20,10 @@
   <div class="bar">
     <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
     <nav class="nav">
-      <a href="#kit">Kit</a><a href="#kinds">Kinds</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
     </nav>
     <span class="grow"></span>
-    <button class="search open-palette" type="button"><span>Search <b id="napps">310</b> apps</span><kbd>⌘K</kbd></button>
+    <button class="search open-palette" type="button"><span>Search <b id="napps">490</b> apps</span><kbd>⌘K</kbd></button>
     <div class="hostpick" role="group" aria-label="Host">
       <button type="button" data-host="t3">T3 Code</button>
       <button type="button" data-host="hermes">Hermes</button>
@@ -36,7 +37,7 @@
     <span class="kicker">agnostic · ephemeral · host-native</span>
     <h1>One card.<br><em>Every agent.</em></h1>
     <p class="lead">When an agent touches an app, a card shows up in the thread: the inbox it searched, the ride it priced, the PR it is about to merge. It looks like the app, lives in the host's theme, and dissolves when the task is done.</p>
-    <p class="lead dim">The same card spec renders in Hermes, T3 Code, or anything that speaks it. Switch the host up top and the whole page re-skins from the real token files.</p>
+    <p class="lead dim">Studio apps too: three agents sculpting one mesh in Blender, a PCG city in Unreal, an FPV run, a voice-and-pen edit in fframestudio. The same card spec renders in Hermes, T3 Code, or anything that speaks it.</p>
     <div class="cta">
       <a class="eu-btn primary lg" href="#kit">Browse the kit</a>
       <button class="eu-btn lg open-palette" type="button">⌘K search</button>
@@ -51,7 +52,8 @@
 
 <section class="band">
   <div><b data-count="310">0</b><span>apps</span></div>
-  <div><b id="nkinds">30</b><span>card kinds</span></div>
+  <div><b id="nkinds">50</b><span>card kinds</span></div>
+  <div><b id="ninter" data-count="1600">0</b><span>app × card interactions</span></div>
   <div><b data-count="9">0</b><span>host themes</span></div>
   <div><b data-count="2">0</b><span>hosts with source tokens</span></div>
   <div><b>1</b><span>spec</span></div>
@@ -67,9 +69,32 @@
   <p id="empty" class="dim center" hidden>No app matches. Try a category or a kind like “merge”.</p>
 </section>
 
+<section id="combos" class="sec">
+  <div class="sechead"><div><span class="kicker">Combos</span><h2>Apps that click together.</h2><p class="dim">Real work crosses apps: a stalled deal becomes a PR, a photo becomes a robot's training object, a flight track becomes a film. Snap the pieces in the order the work flows. When the chain closes, context runs down it and each app shows the one thing you need to know right then.</p></div></div>
+  <div class="cb">
+    <div class="cb-tabs" role="tablist"></div>
+    <div class="cb-main">
+      <div class="cb-top"><div class="cb-hud"></div><span class="grow"></span><button class="cb-auto eu-btn ghost sm" type="button">Auto-assemble</button><button class="cb-reset eu-btn ghost sm" type="button">↻</button></div>
+      <div class="cb-board"></div>
+      <div class="cb-out"></div>
+      <div class="cb-tray"></div>
+    </div>
+  </div>
+</section>
+
 <section id="kinds" class="sec">
-  <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Thirty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme.</p></div></div>
+  <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Fifty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme.</p></div></div>
+  <div id="kindbar" class="kindbar"></div>
   <div id="kindgrid" class="kindgrid"></div>
+</section>
+
+<section id="oss" class="sec">
+  <div class="sechead"><div><span class="kicker">Open-source shelf</span><h2>Every card has a free twin.</h2><p class="dim">The kit is free, and so are <b id="osscount">50</b> of the apps in it. Pick a pair and swap: the same card kind renders in the proprietary app and its open-source equivalent, each in its own editor chrome.</p></div></div>
+  <div class="oss">
+    <div><div id="ossgrid" class="ossgrid"></div><div class="row"><button id="ossswap" class="eu-btn primary" type="button">Swap</button><a id="osskit" class="eu-btn ghost" download="ephemeral-ui-oss-kit.json" href="#">Download the OSS kit (JSON)</a></div></div>
+    <div id="ossstage" class="ossstage"></div>
+  </div>
+  <div id="osslist" class="osslist"></div>
 </section>
 
 <section id="theme" class="sec">

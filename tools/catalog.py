@@ -5,7 +5,10 @@ Apps simple-icons does not carry get no colour: the site draws a neutral monogra
 guessed hex. Run `node tools/build-apps.mjs` to resolve this list into src/data/apps.json.
 """
 import json
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 # category id -> (label, archetypes used by default, in order)
 CATEGORIES = {
@@ -183,16 +186,28 @@ APPS = [
 
 
 def main():
-    seen = set()
+    from catalog_studio import STUDIO_APPS, STUDIO_CATEGORIES
+    cats = {**CATEGORIES, **STUDIO_CATEGORIES}
+    seen = {}
     rows = []
     for row in APPS:
         name, slug, cat = row[:3]
-        assert cat in CATEGORIES, (name, cat)
+        assert cat in cats, (name, cat)
         assert name not in seen, name
-        seen.add(name)
-        kinds = row[3] if len(row) > 3 else CATEGORIES[cat][1]
-        rows.append({"name": name, "slug": slug, "cat": cat, "kinds": kinds})
-    out = {"categories": [{"id": k, "label": v[0]} for k, v in CATEGORIES.items()], "apps": rows}
+        kinds = row[3] if len(row) > 3 else cats[cat][1]
+        seen[name] = {"name": name, "slug": slug, "cat": cat, "kinds": list(kinds)}
+        rows.append(seen[name])
+    # Studio rows: new apps, or richer kinds/metadata for an app the base list already has.
+    for name, slug, cat, kinds, extra in STUDIO_APPS:
+        assert cat in cats, (name, cat)
+        if name in seen:
+            r = seen[name]
+            r["kinds"] = list(kinds)  # studio rows know the app better than the base archetypes
+            r.update({k: v for k, v in extra.items()})
+            continue
+        seen[name] = {"name": name, "slug": slug, "cat": cat, "kinds": list(kinds), **extra}
+        rows.append(seen[name])
+    out = {"categories": [{"id": k, "label": v[0], "studio": k in STUDIO_CATEGORIES} for k, v in cats.items()], "apps": rows}
     json.dump(out, sys.stdout, indent=1)
 
 

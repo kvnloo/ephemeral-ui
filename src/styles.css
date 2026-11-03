@@ -173,7 +173,7 @@ kbd { font-size: 11px; padding: 2px 6px; border-radius: 5px; border: 1px solid v
 .kbd { font: 11px var(--h-mono); color: var(--h-mutedFg); }
 
 /* ---------- band ---------- */
-.band { max-width: 1480px; margin: 0 auto; padding: 22px 24px; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--h-border); border-bottom: 1px solid var(--h-border); }
+.band { max-width: 1480px; margin: 0 auto; padding: 22px 24px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--h-border); border-bottom: 1px solid var(--h-border); }
 .band div { display: flex; align-items: baseline; gap: 10px; }
 .band b { font: 400 44px/1 var(--serif); letter-spacing: -.02em; }
 .band span { color: var(--h-mutedFg); font-size: 13px; }
