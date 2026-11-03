@@ -1,0 +1,37 @@
+/* Playlists: save button on cards, the dock, and the shared-playlist room. All classes pl-*. */
+.pl-save { flex: none; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: var(--h-mutedFg); font-size: 15px; line-height: 1; cursor: pointer; padding: 0; }
+.pl-save:hover { background: var(--soft); color: var(--h-fg); }
+.pl-save[aria-pressed="true"] { color: var(--h-destructive, #e5484d); }
+.pl-save:focus-visible, .pl-pill:focus-visible, .pl-panel :is(button, input):focus-visible { outline: 2px solid var(--h-primary); outline-offset: 2px; }
+
+.pl-dock { position: fixed; right: 16px; bottom: 16px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+.pl-dock > * { pointer-events: auto; }
+.pl-pill { font: 500 13px/1 var(--h-font); color: var(--h-fg); background: var(--h-card-solid, var(--h-card)); border: 1px solid var(--h-border); border-radius: 999px; padding: 10px 14px; box-shadow: var(--h-shadow); cursor: pointer; }
+.pl-pill b { display: inline-block; min-width: 18px; padding: 2px 6px; margin-left: 4px; border-radius: 999px; background: var(--soft2); font-weight: 600; }
+.pl-pill.has b { background: var(--h-primary); color: var(--h-primary-ink); }
+.pl-panel { width: min(380px, calc(100vw - 32px)); max-height: min(640px, calc(100vh - 96px)); overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--h-card-solid, var(--h-card)); color: var(--h-fg); border: 1px solid var(--h-border); border-radius: var(--h-radius-lg, 12px); box-shadow: var(--h-shadow); }
+.pl-panel[hidden] { display: none; }
+.pl-ph { display: flex; align-items: center; justify-content: space-between; }
+.pl-x { border: 0; background: transparent; color: var(--h-mutedFg); font-size: 20px; cursor: pointer; padding: 0 4px; }
+.pl-in { font: 13px/1.4 var(--h-font); color: var(--h-fg); background: var(--h-bg); border: 1px solid var(--h-border); border-radius: var(--h-radius, 8px); padding: 8px 10px; width: 100%; box-sizing: border-box; min-width: 0; }
+.pl-link { font-family: var(--h-mono); font-size: 11px; color: var(--h-mutedFg); }
+.pl-check { font-size: 12px; color: var(--h-mutedFg); display: flex; align-items: center; gap: 6px; }
+.pl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pl-list > li { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--soft); border-radius: var(--h-radius, 8px); }
+.pl-it { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+.pl-it button { flex: none; width: 26px; height: 26px; border: 1px solid var(--h-border); border-radius: var(--h-radius, 6px); background: var(--h-bg); color: var(--h-fg); cursor: pointer; padding: 0; }
+.pl-it button:disabled { opacity: .35; cursor: default; }
+.pl-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pl-n { flex: none; font: 600 11px/1 var(--h-mono); color: var(--h-mutedFg); min-width: 16px; }
+.pl-note { font-size: 12px; padding: 6px 8px; }
+.pl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pl-hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--h-mutedFg); overflow-wrap: anywhere; }
+.pl-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 70; max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 999px; font-size: 13px; background: var(--h-fg); color: var(--h-bg); box-shadow: var(--h-shadow); }
+
+#playlist[hidden] { display: none; }
+#playlist .pl-row { margin: 0 0 20px; }
+.pl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; align-items: start; }
+.pl-cell { margin: 0; min-width: 0; border-radius: var(--h-radius-lg, 12px); transition: box-shadow .3s; }
+.pl-cell.on { box-shadow: 0 0 0 2px var(--h-primary); }
+.pl-cell figcaption { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: var(--h-mutedFg); margin: 0 0 8px; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .pl-dock { right: 12px; bottom: 12px; } .pl-panel { max-height: calc(100vh - 80px); } }

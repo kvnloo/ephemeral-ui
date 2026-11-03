@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ephemeralui.vercel.app/schema/trace-query.v0.json",
+  "title": "Trace query plan (draft v0)",
+  "description": "How an agent answers a natural-language question about an event trace with ephemeral cards. 1) Classify the question into an intent and scope. 2) Run the calls in order against an omp-stats-compatible API (`omp stats` serves it; Hermes sessions can be fed into the same dashboard). 3) Render the cards with the chosen layers, passing each card the JSON of the call it names. 4) Write a one-paragraph answer computed from the same data. The plan is the contract: a host can show it, replay it, or rerun it later against fresh data.",
+  "type": "object",
+  "required": ["v", "q", "intent", "scope", "calls", "cards", "layers"],
+  "properties": {
+    "v": { "const": 0 },
+    "q": { "type": "string", "description": "The question as asked." },
+    "intent": { "$ref": "#/$defs/intent" },
+    "scope": {
+      "type": "object",
+      "required": ["session", "range"],
+      "properties": {
+        "session": { "type": "string", "description": "'latest', 'last N', 'selected', or a session file from /api/sessions." },
+        "harness": { "enum": ["omp", "hermes", null], "description": "Filter sessions by the agent harness that produced them." },
+        "range": { "enum": ["1h", "24h", "7d", "30d", "90d", "all"], "description": "Time range for dashboard endpoints ('today' → 24h, 'this week' → 7d, 'this month' → 30d)." },
+        "count": { "type": "integer", "minimum": 1, "description": "Sessions needed (2 for compare)." }
+      }
+    },
+    "calls": { "type": "array", "items": { "$ref": "#/$defs/call" }, "description": "API calls in dependency order. Later calls may reference earlier results with {id[index].field}." },
+    "cards": { "type": "array", "items": { "$ref": "#/$defs/card" }, "minItems": 1 },
+    "layers": { "type": "array", "items": { "$ref": "https://ephemeralui.vercel.app/schema/card.v0.json#/$defs/layer" }, "uniqueItems": true, "description": "Default layers for every card. The user can toggle them; cards re-render from the data they already have." },
+    "notes": { "type": "array", "items": { "type": "string" }, "description": "Honest caveats the resolver added (e.g. fewer matching sessions than asked for, and what it used instead)." }
+  },
+  "$defs": {
+    "intent": {
+      "enum": ["explain_slowness", "tool_failures", "compare_sessions", "subagent_cost", "errors", "cost_breakdown", "frustration", "walkthrough", "session_overview"],
+      "description": "explain_slowness: where wall time went (model / tools / idle), heaviest tool, longest span. tool_failures: tools ranked by failures over a range, then their failed spans. compare_sessions: two sessions side by side. subagent_cost: per-track cost in one session plus main-vs-subagent share over a range. errors: request failures by signature plus span failures. cost_breakdown: API-equivalent estimate by model, provider, billing component. frustration: user sentiment by model (counts only). walkthrough/session_overview: summary and timeline with transcript."
+    },
+    "call": {
+      "type": "object",
+      "required": ["id", "get"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+        "get": { "type": "string", "pattern": "^/api/", "description": "omp-stats path + query: /api/sessions, /api/session/trace?file=, /api/session/entry?file=&id=, /api/stats?range=, /api/stats/tools?range=, /api/stats/errors?range=&limit=, /api/stats/providers?range=, /api/stats/frustration?range=. {sessions[0].file} style references resolve from earlier calls; {sessions[*].file} fans out." },
+        "select": {
+          "type": "object",
+          "description": "Client-side selection over a list result (the endpoint has no such filter).",
+          "properties": { "where": { "type": "object", "description": "Field filters: exact values, or '>0' style comparisons (harness, subagents, costTotal, …)." }, "sort": { "type": "string", "examples": ["startedAt desc"] }, "take": { "type": "integer", "minimum": 1 } }
+        },
+        "note": { "type": "string" }
+      }
+    },
+    "card": {
+      "type": "object",
+      "required": ["kind", "input"],
+      "properties": {
+        "kind": { "enum": ["trace", "trace-span", "trace-summary", "trace-usage", "trace-tools", "trace-errors", "trace-compare", "trace-frustration"] },
+        "input": { "description": "Call id whose JSON the card takes ('trace', 'tools', 'traces[0]'), or a list of ids for compare.", "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+        "why": { "type": "string", "description": "One line telling the user why this card answers the question." },
+        "wide": { "type": "boolean" },
+        "options": { "$ref": "https://ephemeralui.vercel.app/schema/card.v0.json#/properties/options" },
+        "layers": { "type": "array", "items": { "$ref": "https://ephemeralui.vercel.app/schema/card.v0.json#/$defs/layer" }, "description": "Overrides the plan's layers for this card." }
+      }
+    },
+    "fixture": {
+      "description": "Shape of data/trace-fixture.json on the public site: real omp-stats responses keyed by path, sanitized by tools/sanitize-trace.mjs.",
+      "type": "object",
+      "properties": {
+        "sessions": { "description": "SessionSummary[] (+ harness)." },
+        "traces": { "description": "file → SessionTrace" },
+        "entries": { "description": "'<track.file>#<entryId>' → /api/session/entry entry (assistant usage only)." },
+        "api": { "description": "'/api/...?range=<r>' → response" }
+      }
+    }
+  },
+  "examples": [
+    {
+      "v": 0, "q": "why was this session slow?", "intent": "explain_slowness",
+      "scope": { "session": "latest", "harness": null, "range": "7d", "count": 1 },
+      "calls": [
+        { "id": "sessions", "get": "/api/sessions?limit=50", "select": { "where": {}, "sort": "startedAt desc", "take": 1 } },
+        { "id": "trace", "get": "/api/session/trace?file={sessions[0].file}" }
+      ],
+      "cards": [
+        { "kind": "trace-summary", "input": "trace", "why": "Where the wall time went: model, tools, idle" },
+        { "kind": "trace", "input": "trace", "why": "The waterfall; long spans and idle bridges show the cause", "wide": true },
+        { "kind": "trace-tools", "input": "trace", "why": "Tools by p95 latency in this session", "options": { "sort": "p95", "scope": "trace" } }
+      ],
+      "layers": ["spans", "tokens", "errors", "subagents"]
+    },
+    {
+      "v": 0, "q": "compare my last two Hermes sessions", "intent": "compare_sessions",
+      "scope": { "session": "last 2", "harness": "hermes", "range": "7d", "count": 2 },
+      "calls": [
+        { "id": "sessions", "get": "/api/sessions?limit=50", "select": { "where": { "harness": "hermes" }, "sort": "startedAt desc", "take": 2 } },
+        { "id": "trace0", "get": "/api/session/trace?file={sessions[0].file}" },
+        { "id": "trace1", "get": "/api/session/trace?file={sessions[1].file}" }
+      ],
+      "cards": [
+        { "kind": "trace-compare", "input": ["trace1", "trace0"], "why": "Older on the left, newer on the right", "wide": true },
+        { "kind": "trace-summary", "input": "trace1", "why": "Older session" },
+        { "kind": "trace-summary", "input": "trace0", "why": "Newer session" }
+      ],
+      "layers": ["spans", "tokens", "cost", "errors", "subagents"]
+    }
+  ]
+}
