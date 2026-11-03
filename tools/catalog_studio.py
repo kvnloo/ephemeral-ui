@@ -253,4 +253,16 @@ STUDIO_APPS = [
     ("Hermes Handoff", None, "hermes", ["plugin", "context"], D(oss=True, ui="code")),
     ("Tavily", None, "hermes", ["plugin", "search"], D(ui="code", docs="https://docs.tavily.com/")),
     ("SearXNG", None, "hermes", ["plugin", "search"], D(oss=True, alt=["Google Search API", "Tavily"], ui="code", docs="https://docs.searxng.org/")),
+    # ---- health: wearables + food, plus the OSS ones we work on
+    ("Apple Health", "apple", "health", ["health", "workout", "metric"], D()),
+    ("Oura", None, "health", ["health", "metric", "notify"], D()),
+    ("WHOOP", None, "health", ["health", "workout", "metric"], D()),
+    ("MyFitnessPal", None, "health", ["health", "metric", "receipt"], D()),
+    ("Google Fit", None, "health", ["health", "workout"], D()),
+    ("Lifesum", None, "health", ["health", "metric"], D()),
+    ("NOOP", None, "health", ["health", "metric", "workout"], D(oss=True, alt=["WHOOP app"], ui="dash", docs="https://github.com/muftiarfan/noop")),
+    ("Gadgetbridge", None, "health", ["health", "metric"], D(oss=True, alt=["Fitbit app", "Mi Fitness", "Zepp"], ui="code", docs="https://gadgetbridge.org/")),
+    ("Open mHealth", None, "health", ["health", "graph"], D(oss=True, alt=["Apple HealthKit export"], ui="code")),
+    # ---- digital twins
+    ("Warehouse twin", None, "sim", ["twin", "sim", "city"], D(oss=True, alt=["NVIDIA Omniverse twins", "Siemens Process Simulate"], ui="omni")),
 ]

@@ -509,3 +509,38 @@
 .pl-steps li.done .pl-dot { background: #22c55e; border-color: #22c55e; }
 .pl-view .ap { border-radius: 0; border: 0; border-top: 1px solid color-mix(in srgb, var(--ap-fg) 10%, transparent); }
 .pl-view .g3-p { display: none; }
+
+/* ---------- twin ---------- */
+.tw-kpi { display: flex; gap: 14px; padding: 6px 10px; font-size: 11px; background: var(--ap-panel); } .tw-kpi b { font: 600 13px var(--h-mono); }
+.tw-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.tw-laws { list-style: none; margin: 0; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.tw-laws li { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 5px 8px; border-radius: 5px; background: color-mix(in srgb, var(--ap-fg) 6%, transparent); font-size: 10.5px; transition: background .6s, box-shadow .6s; }
+.tw-laws code { font: 600 10px var(--h-mono); color: var(--ap-acc); } .tw-laws span { grid-column: 1; opacity: .75; }
+.tw-st { grid-row: 1 / 3; grid-column: 2; align-self: center; font: 600 9px var(--h-mono); color: #22c55e; }
+.tw-laws li.fire { background: color-mix(in srgb, #f5a524 28%, transparent); box-shadow: inset 0 0 0 1px #f5a524; transition: none; }
+.tw-log { padding: 2px 10px 8px; font: 10px var(--h-mono); display: flex; flex-direction: column; gap: 2px; opacity: .85; } .tw-log code { color: #f5a524; }
+.tw-src { max-height: 210px; }
+/* ---------- health ---------- */
+.health { --hl-bg: var(--ap-bg); }
+.hl-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; padding: 12px; align-items: center; }
+.hl-ringwrap { position: relative; width: 132px; height: 132px; }
+.hl-rings { width: 100%; height: 100%; transform: rotate(-90deg); }
+.hl-trk { fill: none; stroke: color-mix(in srgb, var(--ap-fg) 10%, transparent); stroke-width: 9; }
+.hl-arc { fill: none; stroke-width: 9; stroke-linecap: round; }
+.hl-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.hl-big { font: 600 28px/1 var(--h-font); letter-spacing: -.02em; } .hl-center span { font-size: 10px; opacity: .65; margin-top: 3px; max-width: 90px; }
+.hl-side { display: flex; flex-direction: column; min-width: 0; }
+.hl-side .ap-lbl { padding-left: 0; }
+.hl-spark { width: 100%; height: 44px; overflow: visible; } .hl-spark polyline { fill: none; stroke: var(--ap-acc); stroke-width: 2; stroke-linejoin: round; } .hl-spark circle { fill: var(--ap-acc); }
+.hl-sleep { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.hl-day { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; opacity: .8; }
+.hl-bar { width: 100%; height: 46px; display: flex; flex-direction: column-reverse; border-radius: 3px; overflow: hidden; }
+.hl-bar .deep { background: #3b4bd8; } .hl-bar .rem { background: #7aa7ff; } .hl-bar .light { background: #b9cdf7; } .hl-bar .awake { background: #f2a65a; }
+.hl-mac { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 12px 10px; font-size: 11px; }
+.hl-mac span { display: flex; justify-content: space-between; } .hl-mac em { font-style: normal; opacity: .6; font: 10px var(--h-mono); }
+.hl-mac i { display: block; height: 6px; margin-top: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--c) calc(var(--p) * 100%), color-mix(in srgb, var(--ap-fg) 10%, transparent) 0); }
+.hl-verdict { margin: 0 10px; padding: 10px 12px; border-radius: 8px; background: var(--ap-panel); border-left: 3px solid var(--ap-acc); }
+.hl-verdict b { display: block; font: 400 20px/1.2 var(--serif); min-height: 24px; } .hl-verdict p { margin: 4px 0 0; font-size: 11.5px; opacity: .8; min-height: 32px; }
+.hl-src { display: flex; gap: 3px; } .hl-src span { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--ap-fg) 8%, transparent); opacity: .7; } .hl-src span.on { opacity: 1; background: var(--ap-acc); color: #fff; }
+.hl-acts { padding: 8px 10px 10px; }
+@media (max-width: 720px) { .tw-grid { grid-template-columns: minmax(0, 1fr); } .hl-top { grid-template-columns: minmax(0, 1fr); justify-items: center; } .hl-side { width: 100%; } .hl-src { display: none; } }
