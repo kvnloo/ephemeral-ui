@@ -54,6 +54,7 @@
 .ops-link { font-size: 11.5px; padding: 2px 7px; border-radius: 999px; background: var(--sl-line-1); overflow-wrap: anywhere; }
 .ops-link + .ops-link::before { content: "→ "; color: var(--sl-ink-3); }
 .ops-link[data-kind="oom"] { color: var(--sl-bad); }
+.ops-link[data-kind="sigkill"], .ops-link[data-kind="acp"] { color: var(--sl-bad); }
 .ops-link[data-kind="turn"] { font-weight: 600; }
 .ops-link[data-kind="none"] { font-style: italic; color: var(--sl-ink-3); }
 .ops-chain[data-bare] { border-color: color-mix(in srgb, var(--sl-warn) 40%, transparent); border-style: dashed; }

@@ -334,16 +334,30 @@ def journal(hours=48):
     except Exception as e:  # noqa: BLE001
         fail("journal --user", "journalctl --user", e)
         return []
-    out = []
+    out, acp = [], []
+    acp_pat = re.compile(r"Started \[systemd-run\] .*\bhermes\b.* acp\.?$")
     for l in txt.splitlines():
-        if not pat.search(l):
-            continue
         m = re.match(r"(\d+\.\d+) \S+ (\S+?)(?:\[\d+\])?: (.*)", l)
         if not m:
             continue
+        t = int(float(m.group(1)) * 1000)
+        if acp_pat.search(m.group(3)):
+            acp.append(t)
+            continue
+        if not pat.search(l) and "process exited, code=killed, status=9/KILL" not in l:
+            continue
         unit = re.match(r"([\w@.\-]+\.(?:service|scope|slice|timer)):", m.group(3))
-        out.append({"t": int(float(m.group(1)) * 1000), "unit": unit.group(1) if unit else m.group(2), "what": "oom" if "OOM" in l or "oom" in l else "failed" if "Failed" in l else "killed"})
-    ok("journal --user", "journalctl --user (failed/killed units)", len(out))
+        # status=9/KILL from systemd: the unit got SIGKILL. agent-oom-guard did not log it, so it is most
+        # likely the kernel's cgroup OOM killer (agent.slice memory.events oom_kill counts these, untimed).
+        what = "oom" if "OOM" in l or "oom" in l else "sigkill" if "status=9/KILL" in l else "failed" if "Failed" in l else "killed"
+        out.append({"t": t, "unit": unit.group(1) if unit else m.group(2), "what": what})
+    # A Hermes ACP process started within 5 s after a SIGKILL is a respawn: the client lost its agent.
+    # (Clients start short-lived ACP probes every few seconds, so a wider window over-counts.)
+    sk = sorted(j["t"] for j in out if j["what"] == "sigkill")
+    for t in acp:
+        if any(0 <= t - s <= 5_000 for s in sk):
+            out.append({"t": t, "unit": "hermes-acp", "what": "acp-respawn"})
+    ok("journal --user", "journalctl --user (failed/killed units, ACP respawns after SIGKILL)", len(out))
     return out
 
 
@@ -514,7 +528,8 @@ def compact(snap):
     snap["journalUnits"] = [{"unit": u, "what": w, "n": n} for (u, w), n in uc.most_common(40)]
     jb = {}
     for j in snap.get("journal", []):
-        k = (j["t"] // 1_800_000, j["unit"], j["what"])
+        # SIGKILLs and ACP respawns keep 5-min buckets: their exact minute is what a cause chain needs
+        k = (j["t"] // (300_000 if j["what"] in ("sigkill", "acp-respawn") else 1_800_000), j["unit"], j["what"])
         jb.setdefault(k, {"t": j["t"], "unit": j["unit"], "what": j["what"], "n": 0})["n"] += 1
     snap["journal"] = sorted(jb.values(), key=lambda j: j["t"])
     # dispatch ledger: per-lane outcome and job-time quantiles (the board's whole need)
@@ -559,7 +574,7 @@ COMM_OK = {"nvidia-smi", "python3", "python", "node", "node-MainThread", "chrome
 HARNESS_OK = {"hermes", "omp", "claude", "codex", "opencode", "antigravity-cli", "grok", "chatgpt", "cursor", "cursor-ide", "kimi", "pi", "gemini", "omo", "deepseek-harness"}
 MODEL_RE = re.compile(r"^(claude|gpt|gemini|grok|deepseek|glm|nvidia|nemotron|kimi|qwen|llama|mistral|o\d|GPT-OSS|Gemini|Claude)[\w .()\-/:]*$")
 LANES_OK = {"claude", "codex", "claude2", "claude3", "nous", "grok"}
-UNITS_OK = {"xdg-desktop-portal-gtk", "xdg-desktop-portal", "systemd", "pipewire", "wireplumber", "dbus", "gnome-keyring-daemon", "app-flatpak"}
+UNITS_OK = {"xdg-desktop-portal-gtk", "xdg-desktop-portal", "systemd", "pipewire", "wireplumber", "dbus", "gnome-keyring-daemon", "app-flatpak", "hermes-acp"}
 
 
 def sanitize(snap, deny):

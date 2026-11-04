@@ -79,6 +79,18 @@ test("picks become typed events and an @ops reference; pins persist", async () =
   }
 });
 
+test("a failed turn after unit SIGKILLs is explained as likely cgroup OOM, not left bare", async () => {
+  const fails = snap.av?.delegateFailures ?? [];
+  const sig = (snap.journal ?? []).filter((j) => j.what === "sigkill");
+  const hit = fails.filter((f) => f.t >= snap.capturedAt - 48 * 3600_000 && sig.some((j) => j.t <= f.t && j.t >= f.t - 10 * 60_000));
+  const c = KINDS_OPS["ops-incidents"].make(app(OPS_APPS["ops-incidents"]), Math.random);
+  document.body.append(c.el); await c.done; await tick();
+  const lead = text(c.el.querySelector(".ops-lead"));
+  if (!hit.length) return;
+  assert.match(lead, /SIGKILL.*likely cgroup OOM, not in kills\.jsonl/);
+  assert.ok(c.el.querySelector('.ops-link[data-kind="sigkill"]'), "chain shows the SIGKILL link");
+});
+
 test("references drop ids that would break the wire format", () => {
   const r = opsRef({ board: "fleet", kind: "host", ids: ["host:laptop", "bad;id=x", "session:s-1a2b3c"], range: [1, 5], at: 9 });
   assert.equal(r, "@ops:v0;b=fleet;k=host;ids=host:laptop,session:s-1a2b3c;r=1-5;at=9");

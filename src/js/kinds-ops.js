@@ -299,13 +299,21 @@ function fleetBoard(d, c) {
 /** Units that fail in a quarter of all 30-min buckets, or 100+ times in 48 h, are background noise, not a cause. */
 const chronicUnits = (d) => {
   const c = new Map(), n = new Map();
-  for (const j of d.journal ?? []) { c.set(j.unit, (c.get(j.unit) ?? 0) + 1); n.set(j.unit, (n.get(j.unit) ?? 0) + (j.n ?? 1)); }
+  for (const j of d.journal ?? []) { if (HARD.has(j.what)) continue; c.set(j.unit, (c.get(j.unit) ?? 0) + 1); n.set(j.unit, (n.get(j.unit) ?? 0) + (j.n ?? 1)); }
   return new Set([...c.keys()].filter((u) => c.get(u) >= 24 || n.get(u) >= 100));
 };
+/** SIGKILLs and ACP respawns are evidence, never chronic noise. */
+const HARD = new Set(["sigkill", "acp-respawn"]);
+const SIGKILL_NOTE = "SIGKILL (likely cgroup OOM, not in kills.jsonl)";
 function incidentEvents(d) {
   const ev = [], chronic = chronicUnits(d);
   for (const k of d.kills ?? []) ev.push({ t: k.t, kind: "oom", label: `OOM kill${k.n > 1 ? ` ×${k.n}` : ""} · ${k.comm} (${k.cls}, ${fmt.int(k.anonMb)} MB)`, tone: k.cls === "protected" ? "bad" : "warn", id: `kill:${k.t}`, n: k.n ?? 1 });
-  for (const j of d.journal ?? []) ev.push({ t: j.t, kind: j.what === "oom" ? "oom" : "unit", label: `${j.unit} ${j.what === "failed" ? "failed" : j.what === "oom" ? "OOM-killed" : "killed"}${j.n > 1 ? ` ×${j.n}` : ""}`, tone: "warn", id: `unit:${j.unit}`, n: j.n ?? 1, chronic: chronic.has(j.unit) });
+  for (const j of d.journal ?? []) {
+    const x = j.n > 1 ? ` ×${j.n}` : "";
+    if (j.what === "sigkill") ev.push({ t: j.t, kind: "sigkill", label: `${j.unit} ${SIGKILL_NOTE}${x}`, tone: "bad", id: `unit:${j.unit}`, n: j.n ?? 1 });
+    else if (j.what === "acp-respawn") ev.push({ t: j.t, kind: "acp", label: `Hermes ACP respawned after SIGKILL${x}`, tone: "bad", id: `unit:${j.unit}`, n: j.n ?? 1 });
+    else ev.push({ t: j.t, kind: j.what === "oom" ? "oom" : "unit", label: `${j.unit} ${j.what === "failed" ? "failed" : j.what === "oom" ? "OOM-killed" : "killed"}${x}`, tone: "warn", id: `unit:${j.unit}`, n: j.n ?? 1, chronic: chronic.has(j.unit) });
+  }
   for (const f of d.av?.delegateFailures ?? []) ev.push({ t: f.t, kind: "turn", label: short(f.text.replace(/^Delegated task node:delegated-task:\S*?%3Adelegate-task%3A/, "delegated "), 90), tone: "bad", id: `session:${f.session}`, session: f.session });
   for (const r of d.runs ?? []) if (r.exit != null && r.exit !== 0 && r.exit !== 75) ev.push({ t: r.end ?? r.t, kind: "build", label: `fleet-build on ${r.node} exited ${r.exit}`, tone: "warn", id: `run:${r.node}@${r.t}` });
   return ev.sort((a, b) => b.t - a.t);
@@ -320,7 +328,7 @@ function incidentsBoard(d, c) {
   const ev = incidentEvents(d).filter((e) => e.t >= from);
   const ch = chains(ev);
   const step = 30 * 60_000, bs = buckets(from, now, step);
-  const K = [["oom", "OOM kills", "#e5484d"], ["unit", "failed units", SERIES[3]], ["turn", "failed turns/delegates", SERIES[1]], ["build", "failed builds", SERIES[2]]];
+  const K = [["oom", "OOM kills", "#e5484d"], ["sigkill", "SIGKILLs (likely cgroup OOM)", "#f2994a"], ["acp", "ACP respawns", SERIES[5]], ["unit", "failed units", SERIES[3]], ["turn", "failed turns/delegates", SERIES[1]], ["build", "failed builds", SERIES[2]]];
   const chart = TimeChart.make({ buckets: bs, bucketMs: step, series: K.map(([k, l, col]) => ({ key: k, label: l, color: col, values: bs.map((t) => sum(ev.filter((e) => e.kind === k && bucketOf(e.t, step) === t), (e) => e.n ?? 1)) })) }, { height: 170, legend: true });
   const list = h("ol", { class: "ops-events" });
   let win = null;
@@ -334,21 +342,41 @@ function incidentsBoard(d, c) {
   const hourly = d.killsHourly ?? [];
   const k14 = sum(hourly, ([, v]) => sum(Object.values(v))), kProt = sum(hourly, ([, v]) => v.protected ?? 0);
   const units = (d.journalUnits ?? []).slice(0, 8), chronic = chronicUnits(d);
-  const oomN = (x) => sum(x.causes.filter((y) => y.kind === "oom"), (y) => y.n ?? 1);
-  const killed = ch.filter((x) => oomN(x) > 0), unkilled = ch.filter((x) => !oomN(x));
-  const explained = killed;
-  const head = lead(ch.length ? `${ch.length} failed turn${ch.length === 1 ? "" : "s"} in 48 h. ${killed.length ? `${killed.map((x) => `${local(x.f.t)} followed ${oomN(x)} OOM kill${oomN(x) === 1 ? "" : "s"}`).join("; ")}.` : "None followed an OOM kill."} ${unkilled.length ? `${unkilled.map((x) => local(x.f.t)).join(", ")}: no OOM kill logged in the 10 min before${unkilled.some((x) => x.causes.length) ? ", only unrelated unit failures" : ""}, so their cause is not recorded.` : ""}` : `${ev.length} incidents in 48 h and no failed turns.`);
-  const chainEl = ch.length ? h("div", { class: "ops-chains" }, ch.slice(0, 6).map(({ f, causes }) => h("button", { type: "button", class: "ops-chain", "data-bare": causes.some((y) => y.kind === "oom") ? null : "1", onclick: () => c.emit("select", { entities: { session: f.session }, range: [Math.min(f.t - 10 * 60_000, ...causes.map((x) => x.t)), f.t], label: `${local(f.t)} ${oomN({ causes })} OOM kills, ${causes.filter((y) => y.kind === "unit").length} unit failures in the 10 min before → ${short(f.label, 50)}` }) },
-    ...(causes.length ? causes.slice(-4).map((x) => h("span", { class: "ops-link", "data-kind": x.kind }, short(x.label, 40))) : [h("span", { class: "ops-link", "data-kind": "none" }, "nothing logged in the 10 min before")]), h("span", { class: "ops-link", "data-kind": "turn" }, `${local(f.t)} · ${short(f.label, 44)}`)))) : null;
+  const nOf = (x, k) => sum(x.causes.filter((y) => y.kind === k), (y) => y.n ?? 1);
+  const oomN = (x) => nOf(x, "oom");
+  const pl = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  // what a chain is explained by: a logged OOM kill, else SIGKILLs (+ ACP respawns), else nothing
+  const why = (x) => oomN(x) ? `followed ${pl(oomN(x), "OOM kill")}` : nOf(x, "sigkill") ? `followed ${pl(nOf(x, "sigkill"), "unit SIGKILL")}${nOf(x, "acp") ? ` and ${pl(nOf(x, "acp"), "Hermes ACP respawn")}` : ""} (likely cgroup OOM, not in kills.jsonl)` : null;
+  const explained = ch.filter((x) => why(x)), bare = ch.filter((x) => !why(x));
+  const sl = d.host?.agentSlice;
+  // chains with the same evidence share one sentence: "15:38 and 15:37 followed …"
+  const groups = [];
+  for (const x of explained) { const w = why(x), g = groups.find((y) => y.w === w); g ? g.ts.push(x.f.t) : groups.push({ w, ts: [x.f.t] }); }
+  const head = lead(ch.length ? [`${ch.length} failed turn${ch.length === 1 ? "" : "s"} in 48 h.`,
+    explained.length ? `${groups.map((g) => `${g.ts.map(local).join(" and ")} ${g.w}`).join("; ")}.` : "None followed an OOM kill or SIGKILL.",
+    bare.length ? `${bare.map((x) => local(x.f.t)).join(", ")}: no OOM kill or SIGKILL in the 10 min before${bare.some((x) => x.causes.length) ? ", only unrelated unit failures" : ""}, so their cause is not recorded.` : "",
+    sl && nOf({ causes: ev }, "sigkill") ? `agent.slice has counted ${fmt.int(sl.oom_kill)} cgroup OOM kills since boot (an untimed counter).` : ""].filter(Boolean).join(" ") : `${ev.length} incidents in 48 h and no failed turns.`);
+  /** One link per kind of evidence: logged OOM kills, SIGKILLs summed over units, ACP respawns; unit failures only when nothing harder was logged. */
+  const links = (causes) => {
+    const out = [], first = (k) => causes.filter((y) => y.kind === k).sort((a, b) => a.t - b.t);
+    const o = first("oom"), sk = first("sigkill"), ac = first("acp"), un = first("unit");
+    for (const x of o.slice(-2)) out.push({ t: x.t, kind: "oom", text: short(x.label, 40) });
+    if (sk.length) out.push({ t: sk[0].t, kind: "sigkill", text: `${local(sk[0].t).split(" ").pop()} ${pl(sum(sk, (y) => y.n ?? 1), "SIGKILL")} across ${pl(new Set(sk.map((y) => y.id)).size, "unit")} (likely cgroup OOM, not in kills.jsonl)` });
+    if (ac.length) out.push({ t: ac[0].t, kind: "acp", text: `${local(ac[0].t).split(" ").pop()} Hermes ACP respawned ×${sum(ac, (y) => y.n ?? 1)}` });
+    if (!out.length) for (const x of un.slice(-2)) out.push({ t: x.t, kind: "unit", text: short(x.label, 40) });
+    return out.sort((a, b) => a.t - b.t).map((x) => h("span", { class: "ops-link", "data-kind": x.kind }, x.text));
+  };
+  const chainEl = ch.length ? h("div", { class: "ops-chains" }, ch.slice(0, 6).map(({ f, causes }) => h("button", { type: "button", class: "ops-chain", "data-bare": why({ causes }) ? null : "1", onclick: () => c.emit("select", { entities: { session: f.session }, range: [Math.min(f.t - 10 * 60_000, ...causes.map((x) => x.t)), f.t], label: `${local(f.t)} ${oomN({ causes })} OOM kills, ${nOf({ causes }, "sigkill")} SIGKILLs (likely cgroup OOM), ${nOf({ causes }, "acp")} ACP respawns, ${causes.filter((y) => y.kind === "unit").length} unit failures in the 10 min before → ${short(f.label, 50)}` }) },
+    ...(causes.length ? links(causes) : [h("span", { class: "ops-link", "data-kind": "none" }, "nothing logged in the 10 min before")]), h("span", { class: "ops-link", "data-kind": "turn" }, `${local(f.t)} · ${short(f.label, 44)}`)))) : null;
   const grid = StatGrid.make([
     { label: "OOM kills (14 d)", value: fmt.int(k14), hint: `${fmt.int(kProt)} protected-class`, tone: kProt ? "bad" : null, spark: (() => { const by = new Map(); for (const [t, v] of hourly) by.set(bucketOf(t, DAYMS), (by.get(bucketOf(t, DAYMS)) ?? 0) + sum(Object.values(v))); return buckets(now - 13 * DAYMS, now, DAYMS).map((t) => by.get(t) ?? 0); })() },
-    { label: "Failed turns (48 h)", value: fmt.int(ch.length), hint: `${explained.length} right after an OOM kill`, tone: unkilled.length ? "warn" : null },
+    { label: "Failed turns (48 h)", value: fmt.int(ch.length), hint: `${explained.length} right after an OOM kill or SIGKILL`, tone: bare.length ? "warn" : null },
     { label: "Unit failures (48 h)", value: fmt.int(sum(d.journalUnits ?? [], (u) => u.n)), hint: units[0] ? `top: ${units[0].unit} ×${units[0].n}` : "" },
   ], { min: 150 });
   const ub = BarList.make(units.map((u, i) => ({ key: u.unit, label: `${u.unit} (${u.what}${chronic.has(u.unit) ? ", chronic: not counted as a cause" : ""})`, value: u.n, color: chronic.has(u.unit) ? OTHER : SERIES[(i + 3) % 10] })));
   ub.on("select", (e) => c.emit("select", { entities: e.entities.key ? { unit: e.entities.key } : {}, label: e.entities.key ? `unit ${e.entities.key} failing repeatedly` : "cleared" }));
   return h("div", {}, head, grid.el, chainEl ? sec("Failed turns and what was logged in the 10 min before · click to send that window", chainEl) : null, sec("Last 48 h on one axis · drag to narrow the list", chart.el), sec("Events", list), units.length ? sec("Units failing most (48 h)", ub.el) : null,
-    gap("when a cgroup OOM happened (agent.slice memory.events are counters with no timestamps; sample them to time a kill) and the ACP error text behind \"Internal error\"."));
+    gap("which process the cgroup OOM killer picked and when: agent-oom-guard logs only its own kills, so a unit SIGKILL is read as \"likely cgroup OOM\" (agent.slice memory.events oom_kill is an untimed counter; sample it to time a kill), and the ACP error text behind \"Internal error\"."));
 }
 
 /* ================================================================ 8. is it still running? */
@@ -359,19 +387,19 @@ function aliveState(s, now, kills) {
     // Hermes state.db: closed sessions carry an end reason; an open one is judged by its last message
     if (s.closedMs) return s.endReason === "ws_orphan_reap" ? { st: "suspect", label: "client went away · reaped", tone: "warn" } : { st: "idle", label: `closed · ${String(s.endReason ?? "ended").replace(/_/g, " ")}`, tone: "neutral" };
     if (age < 5 * 60_000) return { st: "working", label: "working now", tone: "ok" };
-    if (s.lastRole === "user") return { st: "suspect", label: killed ? "stopped mid-turn · OOM kill near" : "your message unanswered", tone: "bad" };
-    if (s.lastRole === "tool") return { st: age < 30 * 60_000 ? "working" : "suspect", label: age < 30 * 60_000 ? `in a tool call · ${fmt.elapsed(age)} quiet` : `stuck in a tool call? ${fmt.elapsed(age)} quiet${killed ? " · OOM kill near" : ""}`, tone: age < 30 * 60_000 ? "ok" : "bad" };
-    if (age > 6 * HOUR) return { st: "suspect", label: killed ? "died without closing · OOM kill near" : "never closed · went quiet", tone: "warn" };
+    if (s.lastRole === "user") return { st: "suspect", label: killed ? "stopped mid-turn · OOM kill or SIGKILL near" : "your message unanswered", tone: "bad" };
+    if (s.lastRole === "tool") return { st: age < 30 * 60_000 ? "working" : "suspect", label: age < 30 * 60_000 ? `in a tool call · ${fmt.elapsed(age)} quiet` : `stuck in a tool call? ${fmt.elapsed(age)} quiet${killed ? " · OOM kill or SIGKILL near" : ""}`, tone: age < 30 * 60_000 ? "ok" : "bad" };
+    if (age > 6 * HOUR) return { st: "suspect", label: killed ? "died without closing · OOM kill or SIGKILL near" : "never closed · went quiet", tone: "warn" };
     return { st: "waiting", label: "turn ended · waiting on you", tone: "warn" };
   }
   if (age < 5 * 60_000) return { st: "working", label: "working now", tone: "ok" };
-  if (s.lastRole === "user") return killed ? { st: "suspect", label: "stopped mid-turn · OOM kill near", tone: "bad" } : { st: "suspect", label: "your message unanswered", tone: "bad" };
+  if (s.lastRole === "user") return killed ? { st: "suspect", label: "stopped mid-turn · OOM kill or SIGKILL near", tone: "bad" } : { st: "suspect", label: "your message unanswered", tone: "bad" };
   if ((s.failStreak ?? 0) >= 3) return { st: "suspect", label: `ended after ${s.failStreak} failing tools`, tone: "warn" };
   if (age < 2 * HOUR) return { st: "waiting", label: "turn ended · waiting on you", tone: "warn" };
   return { st: "idle", label: "idle", tone: "neutral" };
 }
 function aliveBoard(d, c) {
-  const now = d.capturedAt, kills = d.kills ?? [];
+  const now = d.capturedAt, kills = [...(d.kills ?? []), ...(d.journal ?? []).filter((j) => j.what === "sigkill")]; // logged OOM kills + unit SIGKILLs (likely cgroup OOM)
   const live = (d.hermesLive ?? []).filter((s) => (s.msgs ?? 0) > 0);
   const ss = [...live, ...(d.av?.alive ?? []).filter((s) => !live.length || s.agent !== "hermes")].map((s) => ({ ...s, ...aliveState(s, now, kills) })).sort((a, b) => b.endMs - a.endMs);
   const n = (st) => ss.filter((s) => s.st === st).length;
@@ -385,7 +413,7 @@ function aliveBoard(d, c) {
       { key: "s", header: "Session", wrap: true, render: (s) => labelCell(short(s.title ?? s.id, 46), `${s.agent}${s.source ? " · " + s.source : ""}${s.machine ? " · " + s.machine : ""} · ${fmt.int(s.msgs)} msgs`), sort: (s) => s.title ?? "" },
       { key: "last", header: "Last activity", align: "right", render: (s) => fmt.ago(s.endMs, now), sort: (s) => s.endMs },
     ],
-    expanded: (s) => keyValues([["Started", local(s.startMs)], ["Last message", `${local(s.endMs)} (${s.lastRole || "?"})`], ["Source", "endReason" in s ? "Hermes state.db (live)" : "AgentsView (synced)"], s.closedMs ? ["Closed", `${local(s.closedMs)} · ${s.endReason}`] : ["Outcome", s.outcome ?? "open"], ["Failing tools at the end", fmt.int(s.failStreak ?? 0)], ["OOM kills ±3 min of the end", fmt.int(kills.filter((k) => Math.abs(k.t - s.endMs) <= 3 * 60_000).length)]]),
+    expanded: (s) => keyValues([["Started", local(s.startMs)], ["Last message", `${local(s.endMs)} (${s.lastRole || "?"})`], ["Source", "endReason" in s ? "Hermes state.db (live)" : "AgentsView (synced)"], s.closedMs ? ["Closed", `${local(s.closedMs)} · ${s.endReason}`] : ["Outcome", s.outcome ?? "open"], ["Failing tools at the end", fmt.int(s.failStreak ?? 0)], ["OOM kills / SIGKILLs ±3 min of the end", fmt.int(kills.filter((k) => Math.abs(k.t - s.endMs) <= 3 * 60_000).length)]]),
   });
   for (const t of ["select", "pin"]) tbl.on(t, (e) => { const s = byId.get(e.entities.key); c.emit(t, s ? { entities: { session: s.id, harness: s.agent }, range: [s.startMs, s.endMs], label: `${short(s.title, 40)} (${s.agent}): ${s.label}, last ${fmt.ago(s.endMs, now)}` } : { label: "cleared" }); });
   const seg = Segmented.make([{ value: "all", label: `All ${ss.length}` }, { value: "working", label: `Working ${n("working")}` }, { value: "waiting", label: `Waiting ${n("waiting")}` }, { value: "suspect", label: `Stopped? ${n("suspect")}` }, { value: "idle", label: `Idle ${n("idle")}` }], { name: "state", size: "sm", onChange: (v) => { filt = v; tbl.refresh(); } });
