@@ -1,222 +1,438 @@
-// Combos: cross-app workflows as a puzzle. Snap the apps into order; when the chain closes, context
-// flows piece to piece and each piece shows the one thing you need to know at that moment.
+// Combos: cross-app work as a live node graph (ComfyUI-style), composed from the user's own prompt and stack.
+// Your words light the nodes they asked for; nodes your stack implies are marked "from your stack". Branches run in
+// parallel, every wire carries a typed payload you can read in flight, and the receiving node shows what it used it
+// for. Checkpoints (human-in-the-loop gates) stop the run until you approve, edit or ask; how many there are depends on
+// how you prompted. Emits eui:select / eui:decision on the section so a host can send the selection back to the agent.
 import { h, anim, Run, motion } from "./motion.js";
 import { burst } from "./shell.js";
 
+// node: [id, app, alts, title, out, now, gate?]   gate: { lvl: 1 (always) | 2 (walk-through only), ask, ev: [], diff: [] }
+// edge: [from, to, type, payload, use]            prompt: segments [text, nodeId?] per style
 export const COMBOS = [
-  { id: "deal", label: "Stalled deal → shipped feature", tag: "Sales × Eng", pieces: [
-    ["hubspot", "Deal stalled", "Acme · $48k · blocker: SSO", "Acme's champion asked for SSO twice in 9 days."],
-    ["google-ads", "Checked search terms", "‘SAML login’ CTR 4.1%", "SSO is your best-converting keyword this month."],
-    ["github", "Opened PR #212", "preview + checks green", "PR #212 is green; one review left (Priya)."],
-    ["maze", "Ran an unmoderated test", "5 of 6 done in < 40 s", "One tester missed the IdP field; the copy is fixed."],
-    ["gmail", "Drafted the follow-up", "video + PR link", "Send now: Acme opened your last email 3 minutes ago."]] },
-  { id: "crash", label: "Crash → fix → ship → tell", tag: "On-call", pieces: [
-    ["sentry", "New issue · 412 users", "TypeError in checkout.ts:88", "Started 14 min after deploy 3f2c1a9."],
-    ["linear", "Filed ENG-482 · Urgent", "owner: Sam · cycle 31", "Sam already touched checkout.ts today."],
-    ["github", "Fix PR #219", "1-line null guard + test", "The test reproduces the Sentry stack exactly."],
-    ["vercel", "Promoted to production", "p95 back to 182 ms", "Error rate is 0 for 6 minutes."],
-    ["slack", "Posted in #incidents", "timeline + root cause", "Resolved in 23 minutes; no customer emails yet."]] },
-  { id: "robot", label: "Photo → 3D → USD → robot sim", tag: "3D × Robotics", pieces: [
-    ["trellis", "Image → 3D", "mug.glb · 18k tris", "Watertight mesh; handle thickness 6 mm."],
-    ["blender", "Cleaned + scaled", "real-world 9.5 cm", "Origin moved to the base so it rests on tables."],
-    ["openusd", "Wrapped as USD asset", "mug.usd + physics schema", "Collision approximated as convex decomposition (8 hulls)."],
-    ["isaac-sim", "Grasp training", "16 envs · 94% success", "Fails only when the handle faces away; add that pose to the curriculum."]] },
-  { id: "trailer", label: "Sculpt → level → trailer → publish", tag: "Game dev", pieces: [
-    ["blender", "Sculpted the hero prop", "relic.glb · baked normals", "Normal map baked at 4k; 2.1k tris after decimate."],
-    ["unreal-engine", "Dressed the level", "PCG ruins · Lumen", "Frame time 11.8 ms on the target GPU."],
-    ["davinci-resolve", "Cut the trailer", "0:42 · graded", "Beat drop lands on the relic reveal at 0:27."],
-    ["youtube-studio", "Scheduled the premiere", "Fri 10:00 PT", "Your audience peaks Fri 9–11 PT; thumbnail B tested +18% CTR."]] },
-  { id: "flight", label: "Flight track → reconstruction → film", tag: "Ours", pieces: [
-    ["god-s-eye-view", "Pulled the ADS-B track", "N722BD · 1 Hz · 14 min", "Last 40 s show a 2,300 ft/min descent."],
-    ["cesium", "Placed it on terrain", "3D Tiles · photogrammetry", "Approach crosses the ridge 180 ft lower than the glide path."],
-    ["fframestudio", "Cut the explainer", "shots: chase, cockpit, map", "The cockpit shot needs the altitude readout pinned."],
-    ["x", "Drafted the thread", "6 posts + 0:58 video", "Lead with the ridge clip; it carries the finding."]] },
-  { id: "study", label: "Lecture → notes → cards → map", tag: "Learning", pieces: [
-    ["youtube", "Watched a USD lecture", "47 min · transcript", "Three ideas matter: layers, LIVRPS, payloads."],
-    ["obsidian", "Wrote atomic notes", "6 notes · linked", "‘Payload’ links to your Isaac Sim note from last week."],
-    ["anki", "Made 12 cards", "cloze + image occlusion", "First review due tonight; 2 min."],
-    ["excalidraw", "Drew the concept map", "layers → opinions", "The arrow from Variants to Payloads is the one people get wrong."]] },
-  { id: "capture", label: "Show the bug → fix → walkthrough", tag: "Dev flow", pieces: [
-    ["scrawl", "Recorded the bug", "contact sheet · 3 marks", "Mark ② shows the button overlapping the composer."],
-    ["t3-code", "Agent fixed it", "2 files · tests pass", "Fix is a min-width: 0 on the grid column."],
-    ["github", "PR #88 opened", "before/after shots", "Mobile 390 px now has no horizontal overflow."],
-    ["loom", "Recorded a 40 s walkthrough", "linked in the PR", "Reviewers watch these 3× more than they read diffs."]] },
-  { id: "design", label: "Design → build → preview → sign-off", tag: "Product", pieces: [
-    ["figma", "Picked frame ‘Checkout v3’", "tokens + 4 states", "The error state has no design yet."],
-    ["github", "Generated the component", "Checkout.tsx · stories", "Agent added the missing error state from your tokens."],
-    ["vercel", "Preview ready", "checkout-v3.vercel.app", "Lighthouse 98; CLS 0."],
-    ["frame-io", "Sent for sign-off", "3 reviewers", "Mina approved; waiting on legal for the copy."]] },
+  { id: "crash", label: "Crash → fix → ship → tell", tag: "On-call",
+    prompt: {
+      terse: [["checkout's broken", "s"], [". "], ["fix it", "g"], [" and "], ["ship", "v"], ["."]],
+      walk: [["checkout's throwing errors", "s"], [" for some users. "], ["Walk me through the fix", "g"], [" before anything "], ["goes live", "v"], [", then "], ["tell the team", "k"], ["."]],
+      voice: [["“hey, checkout's crashing again", "s"], [", "], ["handle it", "g"], [" and "], ["ping the team", "k"], ["”"]] },
+    nodes: [
+      ["s", "sentry", [], "New issue · 412 users", "TypeError · checkout.ts:88", "Started 14 min after deploy 3f2c1a9."],
+      ["p", "pagerduty", ["opsgenie"], "Who's on call", "Sam Ortiz · checkout", "Sam is on call and touched checkout.ts today."],
+      ["l", "linear", ["jira"], "Filed ENG-482 · Urgent", "ENG-482 · owner Sam", "Linked to the Sentry issue; lands in cycle 31."],
+      ["g", "github", ["gitlab"], "Fix PR #219", "1-line null guard + test", "The new test reproduces the Sentry stack exactly.",
+        { lvl: 2, ask: "Open PR #219 for review?", ev: ["Failing test written from the Sentry stack", "Fix touches 1 line of checkout.ts", "Sam is requested as reviewer"], diff: ["- const total = cart.items.reduce(sum, 0)", "+ const total = (cart.items ?? []).reduce(sum, 0)"] }],
+      ["v", "vercel", ["netlify"], "Promote to production", "p95 182 ms · 0 errors", "Error rate is 0 for 6 minutes.",
+        { lvl: 1, ask: "Promote PR #219 to production?", ev: ["New test passes; it failed before the fix", "Preview: 0 errors in 300 checkout runs", "Rollback is one click (deploy 3f2c1a9)"], diff: ["- const total = cart.items.reduce(sum, 0)", "+ const total = (cart.items ?? []).reduce(sum, 0)"] }],
+      ["k", "slack", ["discord", "microsoft-teams"], "Post to #incidents", "timeline + root cause", "Resolved in 23 minutes; no customer emails yet."]],
+    edges: [
+      ["s", "l", "issue", "412 users · checkout.ts:88", "ticket title + impact"],
+      ["p", "l", "person", "Sam Ortiz (on call)", "assignee"],
+      ["s", "g", "trace", "stack @ checkout.ts:88", "becomes the failing test"],
+      ["l", "g", "ticket", "ENG-482", "PR title + link"],
+      ["g", "v", "pr", "PR #219 · checks green", "what to promote"],
+      ["l", "k", "ticket", "ENG-482 timeline", "the incident thread"],
+      ["v", "k", "metric", "p95 182 ms · 0 errors", "proof it's fixed"]] },
+  { id: "deal", label: "Stalled deal → shipped feature", tag: "Sales × Eng",
+    prompt: {
+      terse: [["unstick the Acme deal", "hs"], ["."]],
+      walk: [["Acme's deal is stuck", "hs"], [". Show me "], ["why", "ga"], [" and "], ["what we'd send", "gm"], [" before anything goes out."]],
+      voice: [["“what's blocking Acme?", "hs"], [" "], ["get them unstuck", "gh"], ["”"]] },
+    nodes: [
+      ["hs", "hubspot", ["salesforce"], "Deal stalled · Acme $48k", "blocker: SSO", "Acme's champion asked for SSO twice in 9 days."],
+      ["ga", "google-ads", [], "Checked search terms", "‘SAML login’ CTR 4.1%", "SSO is your best-converting keyword this month."],
+      ["gh", "github", ["gitlab"], "PR #212 · SAML SSO", "preview + checks green", "One review left (Priya).",
+        { lvl: 2, ask: "Request Priya's review on PR #212?", ev: ["Checks green on the preview", "Covers Okta + Azure AD", "Priya owns auth/"], diff: ["+ auth/saml.ts  (new, 140 lines)", "+ settings/sso.tsx  (IdP field)"] }],
+      ["mz", "maze", [], "Unmoderated test", "5 of 6 done in < 40 s", "One tester missed the IdP field; the copy is fixed."],
+      ["gm", "gmail", ["outlook"], "Follow-up to Dana", "40 s video + PR link", "Dana opened your last email 3 minutes ago.",
+        { lvl: 1, ask: "Send the follow-up to Dana at Acme?", ev: ["Preview link works signed-out", "Maze: 5 of 6 finished SSO setup", "Tone matches your last 3 emails to Acme"], diff: ["Subject: SSO is live in preview", "Hi Dana, here's a 40 s walkthrough and the link…"] }]],
+    edges: [
+      ["hs", "gh", "spec", "SSO (SAML) · Acme", "the feature to build"],
+      ["gh", "mz", "url", "preview URL", "what testers open"],
+      ["hs", "gm", "person", "Dana · champion", "recipient"],
+      ["ga", "gm", "metric", "‘SAML login’ CTR 4.1%", "why it matters, one line"],
+      ["mz", "gm", "clip", "40 s clip", "attachment"],
+      ["gh", "gm", "pr", "PR #212", "proof link"]] },
+  { id: "design", label: "Design → build → preview → sign-off", tag: "Product",
+    prompt: {
+      terse: [["build Checkout v3", "fg"], [" and "], ["get sign-off", "fi"], ["."]],
+      walk: [["Turn Checkout v3", "fg"], [" into code. "], ["Show me the states", "gh"], [" before "], ["it goes to reviewers", "fi"], ["."]],
+      voice: [["“ship the new checkout design", "fg"], [", "], ["send it round for sign-off", "fi"], ["”"]] },
+    nodes: [
+      ["fg", "figma", ["penpot"], "Frame ‘Checkout v3’", "tokens + 4 states", "The error state has no design yet."],
+      ["gh", "github", ["gitlab"], "Checkout.tsx · stories", "5 states incl. error", "Drew the missing error state from your tokens.",
+        { lvl: 2, ask: "Use the generated error state?", ev: ["Built only from your tokens", "Contrast AA on both themes", "Story added for review"], diff: ["+ <ErrorState tone=\"danger\" retry />", "+ stories/Checkout.error.tsx"] }],
+      ["vc", "vercel", ["netlify"], "Preview ready", "Lighthouse 98 · CLS 0", "checkout-v3 passes at 390 px."],
+      ["lm", "loom", [], "40 s walkthrough", "before / after", "Reviewers watch these 3× more than they read diffs."],
+      ["fi", "frame-io", [], "Sign-off", "3 reviewers", "Mina approved; legal is reviewing the copy.",
+        { lvl: 1, ask: "Send Checkout v3 to 3 reviewers?", ev: ["Preview link + Figma frame attached", "Walkthrough is 40 s", "Legal tagged for the copy"], diff: ["To: Mina, Theo, Legal", "Due: Thu 5 pm"] }]],
+    edges: [
+      ["fg", "gh", "tokens", "tokens + 4 frames", "component props"],
+      ["fg", "fi", "frame", "Figma frame", "the reference"],
+      ["gh", "vc", "build", "Checkout.tsx", "what to deploy"],
+      ["vc", "lm", "url", "preview URL", "what to record"],
+      ["vc", "fi", "url", "preview URL", "link to try it"],
+      ["lm", "fi", "clip", "40 s walkthrough", "watch first"]] },
+  { id: "robot", label: "Photo → 3D → USD → robot sim", tag: "3D × Robotics",
+    prompt: {
+      terse: [["mug photo", "tr"], [" → "], ["robot grasp", "is"], ["."]],
+      walk: [["Make this mug", "tr"], [" something "], ["a robot can learn to grab", "is"], [". Log what you find", "nt"], ["."]],
+      voice: [["“teach the arm to pick up my mug", "is"], ["”"]] },
+    nodes: [
+      ["tr", "trellis", [], "Image → 3D", "mug.glb · 18k tris", "Watertight mesh; handle is 6 mm thick."],
+      ["bl", "blender", [], "Cleaned + scaled", "9.5 cm · origin at base", "Origin moved to the base so it rests on tables."],
+      ["us", "openusd", [], "Wrapped as USD", "mug.usd + physics", "Collision is 8 convex hulls."],
+      ["is", "isaac-sim", [], "Grasp training", "16 envs · 94% success", "Fails only when the handle faces away.",
+        { lvl: 1, ask: "Start a 2 h run on 16 envs?", ev: ["Asset passes the physics check", "Same reward as last week's cup run", "GPU is free until 6 pm"], diff: ["envs: 16 · steps: 2M", "curriculum: + handle-away pose"] }],
+      ["nt", "notion", ["obsidian"], "Experiment log", "run card + failure pose", "Logged the handle-away pose for the next curriculum."]],
+    edges: [
+      ["tr", "bl", "mesh", "mug.glb", "what to clean"],
+      ["bl", "us", "mesh", "9.5 cm mesh", "the USD payload"],
+      ["tr", "nt", "image", "photo + preview", "log header"],
+      ["us", "is", "asset", "mug.usd", "the object to grasp"],
+      ["is", "nt", "metric", "94% · failure pose", "what to try next"]] },
 ];
 
-const store = { xp: +(localStorage.getItem("eu-xp") || 0), best: JSON.parse(localStorage.getItem("eu-best") || "{}") };
-const level = (xp) => Math.floor(Math.sqrt(xp / 40)) + 1;
+const STYLES = [
+  ["terse", "Terse"], ["walk", "Walk me through"], ["voice", "Voice"]];
+const TUNE = {
+  terse: (g) => `Short prompt → ${g} checkpoint${g === 1 ? "" : "s"}, one line per node.`,
+  walk: (g) => `You asked to be walked through → ${g} checkpoints, reasons shown on every wire.`,
+  voice: (g) => `Spoken → summaries read aloud, ${g} checkpoint you can answer by voice.`,
+};
+const TYPE_HUE = { issue: 350, trace: 20, person: 280, ticket: 235, pr: 150, metric: 190, spec: 40, url: 205, clip: 320, tokens: 300, frame: 15, build: 130, mesh: 30, image: 55, asset: 95 };
+const hue = (t) => TYPE_HUE[t] ?? 220;
 
-/** Jigsaw outline. left/right: -1 blank, 0 flat, 1 tab. Horizontal pieces connect left↔right; vertical ones top↔bottom. */
-function piecePath(w, hh, a, b, vert) {
-  const t = 13, k = t * 1.6;
-  if (!vert) {
-    const m = hh / 2;
-    const right = b ? `L${w} ${m - t} C ${w + b * k} ${m - t * 1.4}, ${w + b * k} ${m + t * 1.4}, ${w} ${m + t} ` : "";
-    const left = a ? `L0 ${m + t} C ${-a * k} ${m + t * 1.4}, ${-a * k} ${m - t * 1.4}, 0 ${m - t} ` : "";
-    return `M0 0 L${w} 0 ${right}L${w} ${hh} L0 ${hh} ${left}Z`;
-  }
-  const m = w / 2;
-  const top = a ? `L${m - t} 0 C ${m - t * 1.4} ${-a * k}, ${m + t * 1.4} ${-a * k}, ${m + t} 0 ` : "";
-  const bottom = b ? `L${m + t} ${hh} C ${m + t * 1.4} ${hh + b * k}, ${m - t * 1.4} ${hh + b * k}, ${m - t} ${hh} ` : "";
-  return `M0 0 ${top}L${w} 0 L${w} ${hh} ${bottom}L0 ${hh} Z`;
+function css() {
+  if (document.querySelector("link[data-flow-css]")) return;
+  document.head.append(h("link", { rel: "stylesheet", href: new URL("../flow.css", import.meta.url).href, "data-flow-css": "" }));
+}
+
+/** Longest-path layering → positions in a logical stage (wide: columns; narrow: rows). */
+function layout(c, V) {
+  const L = {}, ids = c.nodes.map((n) => n[0]);
+  const preds = (id) => c.edges.filter((e) => e[1] === id).map((e) => e[0]);
+  const depth = (id) => (L[id] ??= Math.max(-1, ...preds(id).map(depth)) + 1);
+  ids.forEach(depth);
+  const layers = [];
+  ids.forEach((id) => (layers[L[id]] ||= []).push(id));
+  const NW = V ? 156 : 160, NH = V ? 92 : 104, GAP = 66;
+  const W = V ? 360 : 48 + NW + (layers.length - 1) * (NW + GAP), H = V ? layers.length * 150 + 20 : 340;
+  const pos = {};
+  layers.forEach((ly, i) => ly.forEach((id, j) => {
+    const span = V ? W : H, n = ly.length, gap = span / n;
+    const along = gap * (j + 0.5);
+    if (V) pos[id] = { x: along - NW / 2, y: 20 + i * 150 };
+    else pos[id] = { x: 24 + i * (NW + GAP), y: along - NH / 2 + (n === 1 && i % 2 ? 26 : 0) };
+  }));
+  return { pos, W, H, NW, NH, V, depth: L };
 }
 
 export function buildCombos({ catalog, icon, openDrawer }) {
   const root = document.getElementById("combos");
   if (!root) return;
-  const tabs = root.querySelector(".cb-tabs"), board = root.querySelector(".cb-board"), tray = root.querySelector(".cb-tray"), hud = root.querySelector(".cb-hud"), out = root.querySelector(".cb-out");
-  let cur = 0, placed = [], combo = 0, startedAt = 0, running = null, touched = false;
-  const vert = () => board.clientWidth < 640;
-  tabs.replaceChildren(...COMBOS.map((c, i) => h("button", { type: "button", class: "cb-tab", "aria-pressed": i === 0 ? "true" : "false", onclick: () => load(i) }, h("span", { class: "cb-icos" }, c.pieces.slice(0, 4).map(([id]) => catalog.byId[id] && icon(catalog.byId[id], 16))), h("b", {}, c.label), h("em", {}, c.tag), h("i", { class: "cb-stars" }, "★".repeat(store.best[c.id] || 0)))));
-  function drawHud() {
-    const lv = level(store.xp), lo = 40 * (lv - 1) ** 2, hi = 40 * lv ** 2;
-    hud.replaceChildren(h("span", { class: "cb-lv" }, `Lv ${lv}`), h("span", { class: "cb-xp" }, h("i", { style: { width: `${((store.xp - lo) / (hi - lo)) * 100}%` } })), h("span", { class: "cb-pts" }, `${store.xp} xp`), h("span", { class: "cb-combo" + (combo > 1 ? " on" : "") }, `×${combo}`));
+  css();
+  const app = (id) => catalog.byId[id] || { id, name: id, hex: null };
+  const tabs = root.querySelector(".cb-tabs"), main = root.querySelector(".cb-main");
+  main.classList.add("fl");
+  const promptEl = h("div", { class: "fl-prompt" }), styleSeg = h("div", { class: "fl-style", role: "group", "aria-label": "How you prompted" });
+  const stackEl = h("div", { class: "fl-stack" }), tuneEl = h("span", { class: "fl-tune" });
+  const stage = h("div", { class: "fl-stage" }), wrap = h("div", { class: "fl-canvas" }, stage);
+  const insp = h("aside", { class: "fl-insp", "aria-live": "polite" });
+  const ledger = h("div", { class: "fl-ledger" });
+  const runBtn = h("button", { type: "button", class: "eu-btn primary sm fl-run" }, "▶ Run");
+  const resetBtn = h("button", { type: "button", class: "eu-btn ghost sm", title: "Reset" }, "↻");
+  main.replaceChildren(
+    h("div", { class: "fl-top" }, h("span", { class: "fl-you" }, "You"), promptEl, styleSeg),
+    h("div", { class: "fl-mid" }, wrap, insp),
+    h("div", { class: "fl-bar" }, stackEl, h("span", { class: "grow" }), tuneEl, runBtn, resetBtn),
+    ledger);
+
+  let cur = 0, style = "terse", lay = null, run = null, touched = false, sel = null;
+  let swaps = {}, state = {}, facts = [], decisions = 0, waiters = {};
+  const C = () => COMBOS[cur];
+  const gated = (n) => n[6] && (n[6].lvl === 1 || style === "walk");
+  const nodeOf = (id) => C().nodes.find((n) => n[0] === id);
+  const appOf = (n) => app(swaps[n[0]] || n[1]);
+  const emit = (type, detail) => root.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
+
+  tabs.replaceChildren(...COMBOS.map((c, i) => h("button", { type: "button", class: "cb-tab", "aria-pressed": i === 0 ? "true" : "false", onclick: () => { touched = true; load(i); } },
+    h("span", { class: "cb-icos" }, c.nodes.slice(0, 5).map((n) => icon(app(n[1]), 16))), h("b", {}, c.label), h("em", {}, `${c.tag} · ${c.nodes.length} apps · ${c.edges.length} handoffs`))));
+  styleSeg.replaceChildren(...STYLES.map(([k, label]) => h("button", { type: "button", "data-style": k, "aria-pressed": k === style ? "true" : "false", onclick: () => { touched = true; setStyle(k); } }, label)));
+
+  function setStyle(k) {
+    style = k;
+    styleSeg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.style === k ? "true" : "false"));
+    root.dataset.style = k;
+    compose(true);
   }
-  function pieceEl(appId, i, n, data) {
-    const a = catalog.byId[appId];
-    const V = vert(), W = V ? 280 : 168, H = V ? 74 : 104;
-    const L = i === 0 ? 0 : -1, R = i === n - 1 ? 0 : 1;
-    const svgNS = "http://www.w3.org/2000/svg";
-    const s = document.createElementNS(svgNS, "svg"); s.setAttribute("viewBox", `-16 -16 ${W + 32} ${H + 32}`); s.setAttribute("class", "cb-shape");
-    const p = document.createElementNS(svgNS, "path"); p.setAttribute("d", piecePath(W, H, L, R, V)); s.append(p);
-    const el = h("div", { class: "cb-p", "data-app": appId, style: { "--a": a?.hex || "var(--h-mutedFg)", "--w": `${W}px`, "--hh": `${H}px` } }, s, h("div", { class: "cb-pc" }, icon(a, 26), h("div", {}, h("b", {}, a.name), h("span", {}, data ? data[1] : a.cat))), h("div", { class: "cb-focus" }));
-    return el;
+
+  function drawPrompt() {
+    const segs = C().prompt[style];
+    promptEl.replaceChildren(...(style === "voice" ? [h("span", { class: "fl-wave", "aria-hidden": "true" }, ...Array.from({ length: 9 }, (_, i) => h("i", { style: { "--i": i } })))] : []),
+      ...segs.map(([t, id]) => id ? h("mark", { "data-node": id, onpointerenter: () => hl(id, true), onpointerleave: () => hl(id, false), onclick: () => select(id) }, t) : t));
   }
-  function load(i) {
-    running?.stop(); running = null;
-    cur = i; placed = []; combo = 0; startedAt = 0;
-    tabs.querySelectorAll(".cb-tab").forEach((b, j) => b.setAttribute("aria-pressed", j === i ? "true" : "false"));
-    const c = COMBOS[i], n = c.pieces.length;
-    board.classList.toggle("vert", vert());
-    board.replaceChildren(...c.pieces.map((d, k) => h("div", { class: "cb-slot", "data-k": k }, h("span", {}, k + 1))));
-    // tray: the real pieces shuffled with two decoys
-    const decoyPool = catalog.apps.filter((a) => !c.pieces.some((d) => d[0] === a.id) && a.hex);
-    const decoys = [0, 1].map((k) => decoyPool[(i * 37 + k * 101) % decoyPool.length].id);
-    const all = c.pieces.map((d, k) => ({ id: d[0], k, d })).concat(decoys.map((id) => ({ id, k: -1 })));
-    all.sort((x, y) => ((x.id.length * 7 + i) % 5) - ((y.id.length * 7 + i) % 5) || x.id.localeCompare(y.id));
-    tray.replaceChildren(...all.map((x) => { const el = pieceEl(x.id, Math.max(0, x.k), n, x.d); el.dataset.k = x.k; el.dataset.used = ""; wire(el); return el; }));
-    out.replaceChildren(h("p", { class: "eu-hint" }, "Drag the apps onto the board in the order the work flows (or tap them in order). Two pieces don't belong."));
-    tray.querySelectorAll(".cb-p").forEach((p, k) => anim(p, [{ opacity: 0, transform: "translateY(16px) rotate(-4deg)" }, { opacity: 1, transform: "none" }], { spring: "bouncy", delay: k * 50 }));
-    drawHud();
+  function hl(id, on) {
+    stage.querySelector(`.fl-node[data-id="${id}"]`)?.classList.toggle("hl", on);
+    promptEl.querySelectorAll(`mark[data-node="${id}"]`).forEach((m) => m.classList.toggle("hl", on));
   }
-  function wire(el) {
-    let st = null;
-    el.addEventListener("pointerdown", (e) => {
-      if (el.dataset.used || running) return;
-      touched = true;
-      startedAt ||= performance.now();
-      const r = el.getBoundingClientRect();
-      st = { x: e.clientX, y: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false };
-      el.setPointerCapture(e.pointerId);
+  function drawStack() {
+    stackEl.replaceChildren(h("span", { class: "kicker" }, "Your stack"), ...C().nodes.map((n) => {
+      const a = appOf(n), alts = [n[1], ...n[2]].filter((x) => catalog.byId[x]);
+      return h("button", { type: "button", class: "fl-chip", "data-node": n[0], disabled: alts.length < 2 ? "" : null, title: alts.length > 1 ? `Swap: ${alts.map((x) => app(x).name).join(" / ")}` : a.name,
+        onclick: () => { touched = true; const i = alts.indexOf(swaps[n[0]] || n[1]); swaps[n[0]] = alts[(i + 1) % alts.length]; compose(false); select(n[0]); } },
+        icon(a, 16), a.name, alts.length > 1 ? h("i", {}, "⇄") : null);
+    }));
+  }
+
+  // ---------- stage: nodes, wires, sockets ----------
+  const svgNS = "http://www.w3.org/2000/svg";
+  const S = (tag, attrs = {}) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  function port(id, out) {
+    const p = lay.pos[id], { NW, NH, V } = lay;
+    if (V) return out ? { x: p.x + NW / 2, y: p.y + NH } : { x: p.x + NW / 2, y: p.y };
+    return out ? { x: p.x + NW, y: p.y + 40 } : { x: p.x, y: p.y + 40 };
+  }
+  function wirePath(e) {
+    const a = port(e[0], true), b = port(e[1], false);
+    if (lay.V) { const d = Math.max(40, (b.y - a.y) / 2); return `M${a.x} ${a.y} C ${a.x} ${a.y + d}, ${b.x} ${b.y - d}, ${b.x} ${b.y}`; }
+    const d = Math.max(50, (b.x - a.x) / 2);
+    return `M${a.x} ${a.y} C ${a.x + d} ${a.y}, ${b.x - d} ${b.y}, ${b.x} ${b.y}`;
+  }
+  function fit() {
+    if (!lay) return;
+    const s = Math.min(1, wrap.clientWidth / lay.W);
+    stage.style.transform = `scale(${s})`;
+    wrap.style.height = `${lay.H * s}px`;
+  }
+  function compose(animate) {
+    run?.stop(); run = null;
+    Object.values(waiters).forEach((w) => w.cancel?.());
+    waiters = {}; state = {}; facts = []; decisions = 0; sel = null;
+    const c = C(), V = wrap.clientWidth < 600;
+    lay = layout(c, V);
+    root.classList.toggle("fl-v", V);
+    stage.style.width = `${lay.W}px`; stage.style.height = `${lay.H}px`;
+    const wires = S("svg", { class: "fl-wires", viewBox: `0 0 ${lay.W} ${lay.H}`, width: lay.W, height: lay.H });
+    const fromPrompt = new Set(c.prompt[style].filter((s) => s[1]).map((s) => s[1]));
+    const nodes = c.nodes.map((n) => {
+      const a = appOf(n), p = lay.pos[n[0]];
+      const el = h("div", { class: "fl-node", "data-id": n[0], tabindex: "0", role: "button", style: { left: `${p.x}px`, top: `${p.y}px`, width: `${lay.NW}px`, height: `${lay.NH}px`, "--a": a.hex || "var(--h-mutedFg)" },
+        onclick: () => { touched = true; select(n[0]); }, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(n[0]); } },
+        onpointerenter: () => hl(n[0], true), onpointerleave: () => hl(n[0], false) },
+        h("div", { class: "fl-nh" }, icon(a, 20), h("b", {}, a.name), h("span", { class: "fl-dot" })),
+        h("div", { class: "fl-nt" }, n[3]),
+        h("div", { class: "fl-no" }, n[4]),
+        h("div", { class: "fl-src" + (fromPrompt.has(n[0]) ? " p" : "") }, fromPrompt.has(n[0]) ? "from your prompt" : "from your stack"),
+        gated(n) ? h("span", { class: "fl-gate-b", title: "Checkpoint: waits for you" }, "◆") : null,
+        h("span", { class: "fl-sock in" }), h("span", { class: "fl-sock out" }));
+      drag(el, n[0]);
+      return el;
     });
+    for (const e of c.edges) {
+      const g = S("g", { class: "fl-w", "data-e": `${e[0]}>${e[1]}`, style: `--t:${hue(e[2])}` });
+      const d = wirePath(e);
+      g.append(S("path", { d, class: "fl-wb" }), S("path", { d, class: "fl-wf" }));
+      wires.append(g);
+    }
+    const labels = c.edges.map((e) => h("button", { type: "button", class: "fl-lab", "data-e": `${e[0]}>${e[1]}`, style: { "--t": hue(e[2]) }, onclick: () => { touched = true; select(e[1], e); } }, e[2]));
+    stage.replaceChildren(wires, ...labels, ...nodes);
+    placeLabels();
+    fit();
+    drawPrompt(); drawStack();
+    const g = c.nodes.filter(gated).length;
+    tuneEl.textContent = TUNE[style](g);
+    runBtn.disabled = false; runBtn.textContent = "▶ Run";
+    drawLedger();
+    showIdle();
+    if (animate) {
+      // nodes the prompt named arrive first, then what the stack implies
+      const order = [...nodes].sort((x, y) => (fromPrompt.has(y.dataset.id) - fromPrompt.has(x.dataset.id)) || (lay.depth[x.dataset.id] - lay.depth[y.dataset.id]));
+      order.forEach((el, k) => anim(el, [{ opacity: 0, transform: "translateY(10px) scale(.92)" }, { opacity: 1, transform: "none" }], { spring: "soft", delay: 60 + k * 70 }));
+      wires.querySelectorAll(".fl-wb").forEach((p, k) => { const L = p.getTotalLength?.() || 300; anim(p, [{ strokeDasharray: `${L}`, strokeDashoffset: `${L}` }, { strokeDasharray: `${L}`, strokeDashoffset: "0" }], { duration: 520, delay: 300 + k * 60, easing: "cubic-bezier(.16,1,.3,1)" }); });
+    }
+  }
+  function placeLabels() {
+    for (const lab of stage.querySelectorAll(".fl-lab")) {
+      const [a, b] = lab.dataset.e.split(">");
+      const p = stage.querySelector(`.fl-w[data-e="${a}>${b}"] .fl-wb`);
+      const L = p.getTotalLength?.() || 0, m = L ? p.getPointAtLength(L * 0.5) : { x: 0, y: 0 };
+      lab.style.left = `${m.x}px`; lab.style.top = `${m.y}px`;
+    }
+  }
+  function drag(el, id) {
+    let st = null;
+    el.addEventListener("pointerdown", (e) => { if (e.button) return; st = { x: e.clientX, y: e.clientY, p: { ...lay.pos[id] }, moved: false }; });
     el.addEventListener("pointermove", (e) => {
       if (!st) return;
-      const dx = e.clientX - st.x, dy = e.clientY - st.y;
+      const s = Math.min(1, wrap.clientWidth / lay.W), dx = (e.clientX - st.x) / s, dy = (e.clientY - st.y) / s;
       if (!st.moved && Math.hypot(dx, dy) < 6) return;
-      st.moved = true; el.classList.add("lift");
-      el.style.translate = `${dx}px ${dy}px`;
-      const slot = nextSlot(); slot?.classList.toggle("near", hit(e, slot));
+      if (!st.moved) { st.moved = true; el.setPointerCapture(e.pointerId); el.classList.add("lift"); touched = true; }
+      lay.pos[id] = { x: Math.max(0, Math.min(lay.W - lay.NW, st.p.x + dx)), y: Math.max(0, Math.min(lay.H - lay.NH, st.p.y + dy)) };
+      el.style.left = `${lay.pos[id].x}px`; el.style.top = `${lay.pos[id].y}px`;
+      for (const e2 of C().edges) if (e2[0] === id || e2[1] === id) stage.querySelectorAll(`.fl-w[data-e="${e2[0]}>${e2[1]}"] path`).forEach((p) => p.setAttribute("d", wirePath(e2)));
+      placeLabels();
     });
-    el.addEventListener("pointerup", (e) => {
-      if (!st) return;
-      const slot = nextSlot();
-      const drop = !st.moved || (slot && hit(e, slot));
-      el.classList.remove("lift");
-      slot?.classList.remove("near");
-      st = null;
-      if (drop && slot) tryPlace(el, slot); else { anim(el, [{ translate: el.style.translate }, { translate: "0px 0px" }], { spring: "soft" }); el.style.translate = ""; }
+    const up = (e) => { if (!st) return; if (st.moved) { el.classList.remove("lift"); el.addEventListener("click", (c) => c.stopImmediatePropagation(), { once: true, capture: true }); } st = null; };
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  }
+
+  // ---------- inspector ----------
+  function showIdle() {
+    const c = C();
+    insp.className = "fl-insp idle";
+    insp.replaceChildren(h("span", { class: "kicker" }, "Composed for you"),
+      h("b", { class: "fl-ih" }, `${c.nodes.length} apps · ${c.edges.length} handoffs · ${c.nodes.filter(gated).length} checkpoint${c.nodes.filter(gated).length === 1 ? "" : "s"}`),
+      h("p", { class: "fl-ip" }, "Highlighted words in your prompt became nodes; the rest come from the apps you already use. Click a node or a wire to see what it carries. Drag nodes to rearrange."),
+      h("div", { class: "fl-legend" }, ...[...new Set(c.edges.map((e) => e[2]))].map((t) => h("span", { style: { "--t": hue(t) } }, t))));
+  }
+  function select(id, edge) {
+    const n = nodeOf(id); if (!n) return;
+    sel = id;
+    stage.querySelectorAll(".fl-node").forEach((el) => el.classList.toggle("sel", el.dataset.id === id));
+    stage.querySelectorAll(".fl-w, .fl-lab").forEach((el) => el.classList.toggle("sel", !!edge && el.dataset.e === `${edge[0]}>${edge[1]}`));
+    emit("eui:select", { combo: C().id, label: n[3], ids: [`node:${id}`, ...(edge ? [`edge:${edge[0]}>${edge[1]}`] : [])], entities: { node: id, app: appOf(n).id, edge: edge ? `${edge[0]}>${edge[1]}` : null }, style });
+    if (state[id] === "wait") return showGate(n);
+    showNode(n, edge);
+  }
+  function showNode(n, edge) {
+    const a = appOf(n), c = C();
+    const ins = c.edges.filter((e) => e[1] === n[0]), outs = c.edges.filter((e) => e[0] === n[0]);
+    const st = state[n[0]] || "idle";
+    const row = (e, dir) => {
+      const other = appOf(nodeOf(dir === "in" ? e[0] : e[1]));
+      return h("li", { class: "fl-io" + (edge && e === edge ? " sel" : "") + (dir === "in" && state[e[0]] === "done" ? " got" : ""), style: { "--t": hue(e[2]) } },
+        icon(other, 16), h("span", { class: "fl-io-t" }, e[2]), h("code", {}, e[3]), h("em", {}, dir === "in" ? `→ ${e[4]}` : `to ${other.name}`));
+    };
+    insp.className = `fl-insp st-${st}`;
+    insp.replaceChildren(
+      h("div", { class: "fl-ihd" }, icon(a, 24), h("div", {}, h("b", {}, a.name), h("span", {}, n[3])), h("span", { class: "fl-pill " + st }, { idle: "queued", run: "running", done: "done", wait: "needs you" }[st])),
+      ins.length ? h("div", { class: "fl-sec" }, h("span", { class: "kicker" }, "Receives"), h("ul", {}, ins.map((e) => row(e, "in")))) : h("div", { class: "fl-sec" }, h("span", { class: "kicker" }, "Starts here"), h("p", { class: "fl-ip" }, "First signal in the chain.")),
+      h("div", { class: "fl-sec fl-nowbox" }, h("span", { class: "kicker" }, st === "done" ? "Learned" : "Will tell you"), h("b", {}, n[5])),
+      ...(outs.length ? [h("div", { class: "fl-sec" }, h("span", { class: "kicker" }, "Hands off"), h("ul", {}, outs.map((e) => row(e, "out"))))] : []),
+      h("div", { class: "fl-acts" }, h("button", { type: "button", class: "eu-btn ghost sm", onclick: () => openDrawer(a.id) }, `${a.name} cards`), h("button", { type: "button", class: "eu-btn ghost sm", onclick: () => { emit("eui:pin", { combo: C().id, ids: [`node:${n[0]}`], label: n[5] }); burst(insp.querySelector(".eu-ico"), "var(--h-primary)", 8); } }, "Pin to chat")));
+  }
+  function showGate(n) {
+    const a = appOf(n), g = n[6];
+    insp.className = "fl-insp gate";
+    const note = h("textarea", { class: "fl-note", rows: 2, placeholder: "Change something before it runs…", hidden: "" });
+    const said = C().prompt[style].find((s) => s[1] === n[0])?.[0].replace(/[“”]/g, "");
+    const why = h("p", { class: "fl-why", hidden: "" }, g.lvl === 1
+      ? `This step reaches people outside the agent, so it always waits for you${said ? ` (you said “${said}”)` : ""}. Branches that don't depend on it keep running.`
+      : `You asked to be walked through, so this step waits for you too. Prompt tersely and it runs on its own.`);
+    const decide = (kind) => { const w = waiters[n[0]]; if (!w) return; decisions++; emit("eui:decision", { combo: C().id, ids: [`node:${n[0]}`], decision: kind, note: note.value || null }); w.ok(kind); };
+    insp.replaceChildren(
+      h("div", { class: "fl-ihd" }, icon(a, 24), h("div", {}, h("b", {}, "Checkpoint"), h("span", {}, a.name)), h("span", { class: "fl-pill wait" }, "needs you")),
+      h("b", { class: "fl-ask" }, g.ask),
+      h("ul", { class: "fl-ev" }, g.ev.map((x) => h("li", {}, x))),
+      h("pre", { class: "fl-diff" }, g.diff.map((x) => h("span", { class: x[0] === "-" ? "del" : x[0] === "+" ? "add" : "" }, x))),
+      note, why,
+      h("div", { class: "fl-acts" },
+        h("button", { type: "button", class: "eu-btn primary sm fl-approve", onclick: () => decide(note.hidden || !note.value ? "approve" : "approve-with-edit") }, style === "voice" ? "Approve · or say “yes”" : "Approve"),
+        h("button", { type: "button", class: "eu-btn ghost sm", onclick: () => { note.hidden = !note.hidden; if (!note.hidden) note.focus(); } }, "Edit"),
+        h("button", { type: "button", class: "eu-btn ghost sm", onclick: () => { why.hidden = !why.hidden; } }, "Why ask?")));
+    anim(insp, [{ transform: "translateY(6px)", opacity: 0.4 }, { transform: "none", opacity: 1 }], { spring: "soft" });
+  }
+
+  // ---------- run: branches in parallel, packets on wires, gates wait ----------
+  function setState(id, st) {
+    state[id] = st;
+    const el = stage.querySelector(`.fl-node[data-id="${id}"]`);
+    el?.setAttribute("data-st", st);
+  }
+  function drawLedger() {
+    const c = C();
+    ledger.replaceChildren(
+      h("span", { class: "kicker" }, "Carried"),
+      h("div", { class: "fl-facts" }, ...(facts.length ? facts.map((f) => h("span", { class: "fl-fact", style: { "--t": hue(f.t) } }, icon(appOf(nodeOf(f.from)), 14), f.text)) : [h("span", { class: "fl-empty" }, "Nothing yet. Run it and every handoff lands here.")])),
+      h("span", { class: "fl-count" }, h("b", {}, facts.length), ` of ${c.edges.length} handoffs · `, h("b", {}, decisions), decisions === 1 ? " decision · " : " decisions · ", h("b", {}, 0), " copy-pastes"));
+  }
+  async function packet(e, r, k = 0) {
+    if (k) await r.wait(220 * k);
+    const p = stage.querySelector(`.fl-w[data-e="${e[0]}>${e[1]}"]`);
+    p.classList.add("live");
+    const pk = h("span", { class: "fl-pkt", style: { "--t": hue(e[2]), offsetPath: `path("${wirePath(e)}")` } }, h("i", {}, e[2]), e[3]);
+    stage.append(pk);
+    try { await anim(pk, [{ offsetDistance: "0%", opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.88 }, { offsetDistance: "100%", opacity: 0 }], { duration: 1150, easing: "cubic-bezier(.45,0,.25,1)" }).finished; }
+    finally { pk.remove(); }
+    r.check();
+    p.classList.remove("live"); p.classList.add("done");
+    stage.querySelector(`.fl-lab[data-e="${e[0]}>${e[1]}"]`)?.classList.add("done");
+    // arrival: the receiving socket shows what this payload became
+    const tgt = stage.querySelector(`.fl-node[data-id="${e[1]}"]`);
+    const lens = h("span", { class: "fl-lens", style: { "--t": hue(e[2]), "--k": tgt.querySelectorAll(".fl-lens").length } }, h("code", {}, e[3]), h("em", {}, `→ ${e[4]}`));
+    tgt.append(lens);
+    anim(lens, [{ opacity: 0, transform: "translate(-50%, 6px) scale(.9)" }, { opacity: 1, transform: "translate(-50%, 0)", offset: 0.15 }, { opacity: 1, offset: 0.8 }, { opacity: 0, transform: "translate(-50%, -6px)" }], { duration: 2300 }).onfinish = () => lens.remove();
+    burst(tgt.querySelector(".fl-sock.in"), `hsl(${hue(e[2])} 80% 60%)`, 8);
+    facts.push({ t: e[2], text: e[3], from: e[0] });
+    drawLedger();
+    if (sel === e[1] && state[e[1]] !== "wait") showNode(nodeOf(e[1]));
+  }
+  function gate(n) {
+    return new Promise((ok, no) => {
+      waiters[n[0]] = { ok: (k) => { delete waiters[n[0]]; ok(k); }, cancel: () => no(Run.CANCEL) };
+      setState(n[0], "wait");
+      select(n[0]);
+      runBtn.textContent = "Waiting on you…";
     });
   }
-  const nextSlot = () => board.querySelector(`.cb-slot[data-k="${placed.length}"]`);
-  const hit = (e, slot) => { const r = slot.getBoundingClientRect(); return e.clientX > r.left - 30 && e.clientX < r.right + 30 && e.clientY > r.top - 30 && e.clientY < r.bottom + 30; };
-  function tryPlace(el, slot) {
-    const want = placed.length;
-    if (+el.dataset.k !== want) {
-      combo = 0; drawHud();
-      el.style.translate = "";
-      anim(el, [{ transform: "translateX(0)" }, { transform: "translateX(-9px) rotate(-3deg)" }, { transform: "translateX(8px) rotate(2deg)" }, { transform: "translateX(-5px)" }, { transform: "none" }], { duration: 420 });
-      el.classList.add("nope"); setTimeout(() => el.classList.remove("nope"), 600);
-      return;
-    }
-    const r0 = el.getBoundingClientRect();
-    el.style.translate = ""; el.dataset.used = "1";
-    slot.replaceChildren(el); slot.classList.add("filled");
-    const r1 = el.getBoundingClientRect();
-    anim(el, [{ transform: `translate(${r0.left - r1.left}px, ${r0.top - r1.top}px) scale(1.06)` }, { transform: "none" }], { spring: "bouncy" });
-    placed.push(el.dataset.app);
-    combo++; gain(10 * combo, el);
-    burst(el.querySelector(".eu-ico"), el.style.getPropertyValue("--a"), 10);
-    if (placed.length === COMBOS[cur].pieces.length) setTimeout(finish, 350);
+  async function runNode(n, r) {
+    if (gated(n)) { await gate(n); r.check(); }
+    setState(n[0], "run");
+    runBtn.textContent = "Running…";
+    const el = stage.querySelector(`.fl-node[data-id="${n[0]}"]`);
+    const now = h("div", { class: "fl-now", title: n[5] }, n[5]);
+    el.querySelector(".fl-src").replaceWith(now);
+    anim(now, [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
+    if (!sel || state[sel] === "done" || sel === n[0]) select(n[0]);
+    await r.wait(1250);
+    setState(n[0], "done");
+    if (sel === n[0]) showNode(n);
+    await Promise.all(C().edges.filter((e) => e[0] === n[0]).map((e, k) => packet(e, r, k)));
   }
-  function gain(n, at) {
-    store.xp += n; localStorage.setItem("eu-xp", store.xp);
-    const before = level(store.xp - n);
-    drawHud();
-    if (at) { const f = h("span", { class: "cb-float" }, `+${n}`); at.append(f); anim(f, [{ opacity: 1, transform: "translate(-50%, 0)" }, { opacity: 0, transform: "translate(-50%, -34px)" }], { duration: 900, easing: "cubic-bezier(.16,1,.3,1)" }).onfinish = () => f.remove(); }
-    if (level(store.xp) > before) { const t = h("div", { class: "cb-lvup" }, `Level ${level(store.xp)}`); root.append(t); anim(t, [{ opacity: 0, transform: "translate(-50%, 10px) scale(.9)" }, { opacity: 1, transform: "translate(-50%, 0) scale(1)" }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], { duration: 1800 }).onfinish = () => t.remove(); }
-  }
-  async function finish() {
-    const c = COMBOS[cur];
-    const secs = startedAt ? (performance.now() - startedAt) / 1000 : 0;
-    const stars = secs && secs < 12 ? 3 : secs < 25 ? 2 : 1;
-    store.best[c.id] = Math.max(store.best[c.id] || 0, stars); localStorage.setItem("eu-best", JSON.stringify(store.best));
-    tabs.children[cur].querySelector(".cb-stars").textContent = "★".repeat(store.best[c.id]);
-    gain(25 * stars);
-    await flow();
-  }
-  /** Context runs down the chain; each piece shows its one 'now' fact while the rest dim. */
-  async function flow() {
-    const run = (running = new Run());
-    const c = COMBOS[cur];
-    const pieces = [...board.querySelectorAll(".cb-p")];
-    board.classList.add("flowing");
-    const facts = [];
+  async function play() {
+    if (run) return;
+    if (Object.keys(state).length) compose(false);
+    const r = (run = new Run()), c = C();
+    root.classList.add("fl-running"); runBtn.disabled = false;
+    const started = new Set(), done = new Set();
     try {
-      for (let k = 0; k < pieces.length; k++) {
-        const p = pieces[k], d = c.pieces[k];
-        pieces.forEach((q, j) => q.classList.toggle("now", j === k));
-        p.classList.add("lit");
-        const f = p.querySelector(".cb-focus"); f.textContent = d[3];
-        anim(f, [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
-        out.replaceChildren(h("div", { class: "cb-now" }, h("span", { class: "kicker" }, `Now · ${catalog.byId[d[0]].name} · ${d[1]}`), h("b", {}, d[3])), h("div", { class: "cb-carried" }, facts.map((x) => h("span", { class: "eu-chip" }, x))));
-        await run.wait(1500);
-        if (k < pieces.length - 1) {
-          const tok = h("span", { class: "cb-token" }, d[2]);
-          board.append(tok);
-          const a = p.getBoundingClientRect(), b = pieces[k + 1].getBoundingClientRect(), br = board.getBoundingClientRect();
-          await anim(tok, [{ left: `${a.left + a.width / 2 - br.left}px`, top: `${a.top + a.height / 2 - br.top}px`, opacity: 0, transform: "translate(-50%,-50%) scale(.6)" }, { opacity: 1, offset: 0.2, transform: "translate(-50%,-50%) scale(1)" }, { left: `${b.left + b.width / 2 - br.left}px`, top: `${b.top + b.height / 2 - br.top}px`, opacity: 1, transform: "translate(-50%,-50%) scale(1)" }], { duration: 700, easing: "cubic-bezier(.65,0,.35,1)" }).finished;
-          tok.remove();
-          facts.push(d[2]);
-          burst(pieces[k + 1].querySelector(".eu-ico"), "var(--h-primary)", 8);
-        }
-      }
-      facts.push(c.pieces.at(-1)[2]);
-      pieces.forEach((q) => q.classList.remove("now"));
-      out.replaceChildren(h("div", { class: "cb-now done" }, h("span", { class: "kicker" }, `Combo complete · ${c.pieces.length} apps`), h("b", {}, `${facts.length} facts carried across, 0 copy-pastes. You saw one thing at a time.`)), h("div", { class: "cb-carried" }, facts.map((x) => h("span", { class: "eu-chip" }, x))), h("div", { class: "row" }, h("button", { class: "eu-btn primary sm", type: "button", onclick: () => load((cur + 1) % COMBOS.length) }, "Next combo →"), h("button", { class: "eu-btn ghost sm", type: "button", onclick: () => flow() }, "↻ Replay flow"), h("button", { class: "eu-btn ghost sm", type: "button", onclick: () => openDrawer(c.pieces[0][0]) }, `Open ${catalog.byId[c.pieces[0][0]].name} cards`)));
+      await new Promise((res, rej) => {
+        const tick = () => {
+          if (r.dead) return rej(Run.CANCEL);
+          if (done.size === c.nodes.length) return res();
+          for (const n of c.nodes) {
+            if (started.has(n[0])) continue;
+            const preds = c.edges.filter((e) => e[1] === n[0]);
+            if (preds.every((e) => done.has(e[0]) && facts.some((f) => f.from === e[0] && f.text === e[3]))) {
+              started.add(n[0]);
+              runNode(n, r).then(() => { done.add(n[0]); tick(); }, rej);
+            }
+          }
+        };
+        tick();
+      });
+      runBtn.textContent = "↻ Run again";
+      insp.className = "fl-insp done";
+      insp.replaceChildren(h("span", { class: "kicker" }, "Done"), h("b", { class: "fl-ih" }, `${facts.length} handoffs, ${decisions} decision${decisions === 1 ? "" : "s"} from you, 0 copy-pastes.`),
+        h("p", { class: "fl-ip" }, "Each app saw only what it needed; you saw one thing at a time and stepped in where it mattered."),
+        h("div", { class: "fl-acts" }, h("button", { type: "button", class: "eu-btn primary sm", onclick: () => { touched = true; load((cur + 1) % COMBOS.length); } }, "Next flow →"), h("button", { type: "button", class: "eu-btn ghost sm", onclick: () => setStyle(style === "walk" ? "terse" : "walk") }, style === "walk" ? "Try it terse" : "Walk me through instead")));
     } catch (e) { if (e !== Run.CANCEL) throw e; }
-    finally { board.classList.remove("flowing"); running = null; }
+    finally { if (run === r) run = null; root.classList.remove("fl-running"); }
   }
-  async function autoSolve() {
-    const c = COMBOS[cur];
-    for (let k = placed.length; k < c.pieces.length; k++) {
-      const el = tray.querySelector(`.cb-p[data-k="${k}"]:not([data-used="1"])`);
-      if (!el) return;
-      await new Promise((r) => setTimeout(r, 380 / motion.speed));
-      if (cur !== COMBOS.indexOf(c)) return;
-      tryPlace(el, nextSlot());
-    }
+  function load(i) {
+    cur = i; swaps = {};
+    tabs.querySelectorAll(".cb-tab").forEach((b, j) => b.setAttribute("aria-pressed", j === i ? "true" : "false"));
+    root.dataset.combo = COMBOS[i].id;
+    compose(true);
   }
-  root.querySelector(".cb-auto").onclick = autoSolve;
-  root.querySelector(".cb-reset").onclick = () => load(cur);
-  // re-cut the pieces when the board switches between a row and a column (phone rotation, resize)
-  let lastV = null;
-  new ResizeObserver(() => { const v = vert(); if (lastV === null) { lastV = v; return; } if (v !== lastV && !running) { lastV = v; load(cur); } }).observe(board);
-  // if nobody touches it, it assembles itself once so the section never sits idle
-  new IntersectionObserver(([en], io) => { if (!en.isIntersecting) return; io.disconnect(); setTimeout(() => { if (!touched && !placed.length) autoSolve(); }, 3500); }, { threshold: 0.4 }).observe(board);
+  runBtn.onclick = () => { touched = true; if (!run) play(); };
+  resetBtn.onclick = () => { touched = true; compose(true); };
+  root.dataset.style = style;
+  // row ↔ column re-layout only when the width has really settled on the other side (phone rotation, window resize):
+  // a capture tool briefly resizing the viewport must not wipe a run the person is looking at
+  let relay = 0;
+  new ResizeObserver(() => { fit(); clearTimeout(relay); relay = setTimeout(() => { if (lay && (wrap.clientWidth < 600) !== lay.V && !run) compose(false); }, 400); }).observe(wrap);
+  // nobody touched it: run once so the section never sits idle (it still stops at the checkpoint for a person)
+  new IntersectionObserver(([en], io) => { if (!en.isIntersecting) return; io.disconnect(); setTimeout(() => { if (!touched && !run) play(); }, 2500 / motion.speed); }, { threshold: 0.35 }).observe(wrap);
+  root.flow = { load, setStyle, play, select, approve: () => Object.values(waiters)[0]?.ok("approve") };
   requestAnimationFrame(() => load(0));
 }
