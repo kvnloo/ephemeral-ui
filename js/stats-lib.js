@@ -73,6 +73,44 @@ export function comp(kind, el, spec = {}) {
   return c;
 }
 
+/* ---------------- touch: title text without hover ---------------- */
+// Titles carry definitions, absolute times and full names that a phone can never hover. Inside any stats
+// component a long-press on an element with a title shows that text in a small bubble; the next touch,
+// scroll or 5 s hides it. touchTip(text, x, y) shows one directly (ShareBar uses it on tap).
+let tipEl = null, tipTimer = 0, press = null, held = null, lastPointer = "mouse";
+export function touchTip(text, x, y) {
+  if (!text || typeof document === "undefined") return;
+  if (!tipEl) { tipEl = h("div", { class: "sl-touch-tip", role: "tooltip", hidden: true }); document.body.append(tipEl); }
+  tipEl.textContent = text; tipEl.hidden = false;
+  const r = tipEl.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+  tipEl.style.left = `${Math.max(8, Math.min(vw - r.width - 8, x - r.width / 2))}px`;
+  tipEl.style.top = `${y - r.height - 14 < 8 ? y + 22 : y - r.height - 14}px`;
+  clearTimeout(tipTimer); tipTimer = setTimeout(hideTouchTip, 5000);
+}
+export function hideTouchTip() { if (tipEl) tipEl.hidden = true; clearTimeout(tipTimer); }
+export const lastPointerType = () => lastPointer;
+if (typeof document !== "undefined" && document.addEventListener) {
+  const end = () => { clearTimeout(press?.timer); press = null; };
+  document.addEventListener("pointerdown", (e) => {
+    lastPointer = e.pointerType; held = null;
+    if (tipEl && !tipEl.hidden) hideTouchTip();
+    if (e.pointerType !== "touch") return;
+    const t = e.target.closest?.("[title]");
+    if (!t?.title || !t.closest("[data-stats-kind]")) return;
+    const x = e.clientX, y = e.clientY;
+    held = t;
+    press = { x, y, shown: false, timer: setTimeout(() => { if (press) { press.shown = true; touchTip(t.title, x, y); } }, 500) };
+  }, { capture: true, passive: true });
+  document.addEventListener("pointermove", (e) => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) end(); }, { capture: true, passive: true });
+  document.addEventListener("pointerup", () => { if (press && !press.shown) end(); else press = null; held = null; }, { capture: true, passive: true });
+  // Chrome's own long-press selects the word under the finger (and opens Touch to Search); on a titled
+  // element the long-press means "explain this", so that selection is cancelled.
+  document.addEventListener("selectstart", (e) => { if (held && lastPointer === "touch") e.preventDefault(); }, { capture: true });
+  // the long-press that showed a title must not also open the browser's text-selection / link menu
+  document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-stats-kind] [title], [data-stats-kind][title]") && lastPointer === "touch") { e.preventDefault(); if (!tipEl || tipEl.hidden) { const t = e.target.closest("[title]"); touchTip(t.title, e.clientX, e.clientY); } } }, { capture: true });
+  addEventListener("scroll", () => { if (tipEl && !tipEl.hidden) hideTouchTip(); }, { capture: true, passive: true });
+}
+
 /* ---------------- formatters (client/data/formatters.ts) ---------------- */
 const LOC = "en-US";
 export const fmt = {
@@ -211,7 +249,7 @@ export const ShareBar = {
   label: "Share bar",
   make(segments, o = {}) {
     const tot = segments.reduce((n, s) => n + Math.max(0, s.value), 0);
-    const el = h("div", { class: "sl-share", style: { height: `${o.height ?? 8}px` }, role: "img" }, tot > 0 ? segments.filter((s) => s.value > 0).map((s) => h("i", { style: { flexGrow: s.value / tot, background: s.color }, title: `${s.label}: ${((s.value / tot) * 100).toFixed(1)}%`, "data-key": s.key, onclick: o.selectable ? () => c.emit("select", { ids: { key: s.key }, label: s.label, value: s.value }) : null })) : null);
+    const el = h("div", { class: "sl-share", style: { height: `${o.height ?? 8}px` }, role: "img" }, tot > 0 ? segments.filter((s) => s.value > 0).map((s) => { const t = `${s.label}: ${((s.value / tot) * 100).toFixed(1)}%`; return h("i", { style: { flexGrow: s.value / tot, background: s.color }, title: t, "data-key": s.key, onclick: (e) => { if (lastPointer === "touch") touchTip(t, e.clientX, e.clientY); if (o.selectable) c.emit("select", { ids: { key: s.key }, label: s.label, value: s.value }); } }); }) : null);
     const c = comp("ShareBar", el, { segments: segments.length });
     return c;
   },
@@ -266,7 +304,8 @@ export const Chart = {
     const hidden = new Set(o.hidden ?? []);
     const plot = h("div", { class: "sl-chart", style: { height: `${H}px` } });
     const tip = h("div", { class: "sl-chart-tip", hidden: true });
-    plot.append(tip);
+    const hit = h("div", { class: "sl-chart-hit", style: { cursor: o.slotIds ? "pointer" : "crosshair" } });
+    plot.append(hit, tip);
     const legend = o.legend ? Legend.make(series.map((s) => ({ key: s.key, label: s.label, color: s.color, value: o.legend.values ? o.legend.values(s) : null })), { toggle: true, hidden, onToggle: () => draw() }) : null;
     const el = h("div", { class: "sl-chartwrap" }, plot, legend?.el ?? null);
     const c = comp(o.component ?? "Chart", el, { slots, series: series.map((s) => s.key) });
@@ -325,8 +364,8 @@ export const Chart = {
       }
       for (const r of o.references ?? []) { const y = r.axis === "right" ? yr(r.value) : yl(r.value); const rg = svg("g", { class: "sl-axis" }, svg("line", { x1: padL, x2: padL + pw, y1: y, y2: y, class: "sl-ref" })); if (r.label) rg.append(svg("text", { x: padL + pw - 4, y: y - 5, "text-anchor": "end" }, r.label)); g.append(rg); }
       g.append(svg("line", { class: "sl-base", x1: padL, x2: padL + pw, y1: yl(0), y2: yl(0) }));
-      const hit = svg("rect", { x: padL, y: PT, width: pw, height: ph, fill: "transparent", style: `cursor:${o.slotIds ? "pointer" : "crosshair"};touch-action:pan-y` });
-      g.append(hit);
+      // persistent hit layer (not re-created per draw): a touch keeps its target while the svg redraws
+      Object.assign(hit.style, { left: `${padL}px`, top: `${PT}px`, width: `${pw}px`, height: `${ph}px` });
       plot.querySelector("svg")?.remove();
       plot.prepend(g);
       plot.querySelector(".sl-chart-empty")?.remove();
@@ -342,17 +381,58 @@ export const Chart = {
       } else tip.hidden = true;
     }
     const slotAt = (e) => { const b = plot.getBoundingClientRect(); if (!geo) return null; const i = Math.floor((e.clientX - b.left - geo.padL) / geo.sw); return i >= 0 && i < slots ? i : null; };
-    plot.addEventListener("pointermove", (e) => { const i = slotAt(e); if (drag && i != null) { brush = [drag.i0, i]; drag.moved = drag.moved || i !== drag.i0; } if (i !== hover || drag) { hover = i; draw(); } });
-    plot.addEventListener("pointerleave", () => { hover = null; if (!drag) draw(); });
-    plot.addEventListener("pointerdown", (e) => { const i = slotAt(e); if (i == null || e.pointerType === "touch") return; drag = { i0: i, moved: false }; plot.setPointerCapture(e.pointerId); });
+    const title = (i) => (o.tooltipTitle ?? o.tickLabel ?? String)(i);
+    const emitBrush = () => { const a = Math.min(...brush), b = Math.max(...brush), s0 = o.slotIds?.(a), s1 = o.slotIds?.(b); c.spec.brush = [a, b]; c.emit("brush", { ids: s0?.ids, range: s0?.range && s1?.range ? [s0.range[0], s1.range[1]] : undefined, filter: { slots: [a, b] }, label: `${title(a)} → ${title(b)}` }); draw(); };
+    const pick = (i) => { brush = null; const s = o.slotIds?.(i) ?? { ids: { key: String(i) }, label: title(i) }; c.spec.selected = i; c.emit("select", s); draw(); };
+    // Touch (no hover): tap shows the tooltip and crosshair, a second tap on the same slot selects it,
+    // a horizontal drag scrubs the tooltip, long-press then drag brushes a range. Vertical drags scroll the page.
+    const T = { id: null, i0: null, x: 0, y: 0, armed: false, moved: false, timer: 0 };
+    let outside = null;
+    const holdTip = () => { if (outside) return; outside = (ev) => { if (plot.contains(ev.target)) return; removeEventListener("pointerdown", outside, true); outside = null; hover = null; draw(); }; addEventListener("pointerdown", outside, true); };
+    plot.addEventListener("contextmenu", (e) => e.preventDefault());
+    hit.addEventListener("touchmove", (e) => { if (T.armed) e.preventDefault(); }, { passive: false });
+    plot.addEventListener("pointermove", (e) => {
+      const i = slotAt(e);
+      if (e.pointerType === "touch") {
+        if (T.id !== e.pointerId) return;
+        if (T.armed) { if (i != null && (i !== brush?.[1] || i !== hover)) { brush = [T.i0, i]; hover = i; draw(); } return; }
+        const dx = e.clientX - T.x, dy = e.clientY - T.y;
+        if (!T.moved && Math.hypot(dx, dy) > 8) { T.moved = true; clearTimeout(T.timer); }
+        if (T.moved && Math.abs(dx) > Math.abs(dy) && i != null && i !== hover) { hover = i; holdTip(); draw(); }
+        return;
+      }
+      if (drag && i != null) { brush = [drag.i0, i]; drag.moved = drag.moved || i !== drag.i0; } if (i !== hover || drag) { hover = i; draw(); }
+    });
+    plot.addEventListener("pointerleave", (e) => { if (e.pointerType === "touch") return; hover = null; if (!drag) draw(); });
+    plot.addEventListener("pointerdown", (e) => {
+      const i = slotAt(e); if (i == null) return;
+      if (e.pointerType === "touch") {
+        clearTimeout(T.timer);
+        Object.assign(T, { id: e.pointerId, i0: i, x: e.clientX, y: e.clientY, armed: false, moved: false });
+        T.timer = setTimeout(() => { if (T.moved || T.id == null) return; T.armed = true; brush = [T.i0, T.i0]; hover = T.i0; holdTip(); draw(); }, 450);
+        return;
+      }
+      drag = { i0: i, moved: false }; plot.setPointerCapture(e.pointerId);
+    });
+    plot.addEventListener("pointercancel", (e) => { if (e.pointerType !== "touch" || T.id !== e.pointerId) return; clearTimeout(T.timer); T.id = null; if (T.armed) { T.armed = false; brush = null; draw(); } });
     plot.addEventListener("pointerup", (e) => {
+      if (e.pointerType === "touch") {
+        clearTimeout(T.timer);
+        if (T.id !== e.pointerId) return;
+        T.id = null;
+        // a long-press released without dragging is a select, not a one-slot brush (a slow tap can arm it too)
+        if (T.armed) { T.armed = false; if (brush && brush[0] !== brush[1]) emitBrush(); else pick(T.i0); return; }
+        if (T.moved) return;
+        const i = slotAt(e);
+        if (i == null) return;
+        if (hover !== i) { hover = i; holdTip(); draw(); return; }
+        pick(i);
+        return;
+      }
       const d = drag; drag = null; const i = slotAt(e) ?? hover;
-      if (d?.moved && brush) { const a = Math.min(...brush), b = Math.max(...brush), s0 = o.slotIds?.(a), s1 = o.slotIds?.(b); c.spec.brush = [a, b]; c.emit("brush", { ids: s0?.ids, range: s0?.range && s1?.range ? [s0.range[0], s1.range[1]] : undefined, filter: { slots: [a, b] }, label: `${(o.tooltipTitle ?? o.tickLabel ?? String)(a)} → ${(o.tooltipTitle ?? o.tickLabel ?? String)(b)}` }); draw(); return; }
+      if (d?.moved && brush) { emitBrush(); return; }
       if (i == null) return;
-      if (e.pointerType === "touch" && hover !== i) { hover = i; draw(); return; }
-      brush = null;
-      const s = o.slotIds?.(i) ?? { ids: { key: String(i) }, label: (o.tooltipTitle ?? o.tickLabel ?? String)(i) };
-      c.spec.selected = i; c.emit("select", s); draw();
+      pick(i);
     });
     plot.addEventListener("dblclick", () => { brush = null; delete c.spec.brush; c.emit("brush", { filter: { slots: null }, label: "brush cleared" }); draw(); });
     c.uid = Math.random().toString(36).slice(2, 7);
@@ -437,6 +517,9 @@ export const Table = {
     const thead = h("thead"), tbody = h("tbody"), more = h("div", { class: "sl-table-more" });
     const table = h("table", { class: "sl-table" + (o.dense ? " dense" : "") }, thead, tbody);
     const wrap = h("div", { class: "sl-table-wrap" }, table);
+    // An expanded row spans every column; when the table scrolls sideways (phones) its detail is pinned to
+    // the visible width instead of stretching across off-screen columns.
+    if (o.expanded && typeof ResizeObserver === "function") new ResizeObserver(() => wrap.style.setProperty("--sl-wrap-w", `${wrap.clientWidth}px`)).observe(wrap);
     const bar = search || o.toolbar ? h("div", { class: "sl-table-bar" }, search?.el ?? null, ...(o.toolbar ?? []), h("span", { class: "sl-grow" }), count) : null;
     const el = h("div", { class: "sl-tablebox" }, bar, wrap, more);
     const c = comp(o.component ?? "Table", el, { sort: st.sort, rows: rows.length });
@@ -458,7 +541,7 @@ export const Table = {
           o.pinnable ? h("td", { "data-align": "right" }, h("button", { type: "button", class: "sl-pin", title: "Pin this row: it goes back to the agent as context", "aria-label": "Pin row", onclick: (e) => { e.stopPropagation(); st.sel = k; c.emit("pin", { ids: o.ids?.(r) ?? { key: String(k) }, label: o.label?.(r) ?? String(k) }); render(); } }, "Pin")) : null);
         kids.push(tr);
         const detail = o.expanded && st.open === k ? o.expanded(r) : null;
-        if (detail) kids.push(h("tr", { class: "sl-tr-detail" }, h("td", { colspan: cols.length + (o.pinnable ? 1 : 0), "data-wrap": "true" }, detail)));
+        if (detail) kids.push(h("tr", { class: "sl-tr-detail" }, h("td", { colspan: cols.length + (o.pinnable ? 1 : 0), "data-wrap": "true" }, h("div", { class: "sl-tr-detail-in" }, detail))));
       }
       tbody.replaceChildren(...kids);
       more.replaceChildren(...(o.limit && all.length > o.limit ? [h("span", { class: "sl-micro" }, `${fmt.int(vis.length)} of ${fmt.int(all.length)}`), all.length > st.shown ? h("button", { type: "button", class: "sl-btn ghost sm", onclick: () => { st.shown += o.limit * 4; render(); } }, "Show more") : null, st.shown > o.limit ? h("button", { type: "button", class: "sl-btn ghost sm", onclick: () => { st.shown = o.limit; render(); } }, "Show fewer") : null].filter(Boolean) : []));
