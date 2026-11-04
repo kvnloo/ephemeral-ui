@@ -73,6 +73,17 @@
       "path": "HermesMobile (iOS, SwiftUI)",
       "tier0": "WKWebView preview of the export (unverified)",
       "status": "not started (fork from 2026-11-01; annotation/turbo ask came first)"
+    },
+    {
+      "id": "ripple",
+      "priority": 2,
+      "repo": "kvnloo/ripple",
+      "path": "web + server (visual review surface)",
+      "tier0": "bin/ripple-cards SESSION NAME --cards app:kind,... (wraps tools/export-cards.mjs, default theme hermes-slate, 2 MB cap) or POST /api/cards; shown in a drawer beside the review, iframe sandbox=allow-scripts + no-network CSP.",
+      "tier0_theme": "hermes-slate",
+      "tier1": "eui:intent postMessage accepted only from Ripple's own frames -> card_intent event (declare, authority none) + agent-queue.jsonl line with review card/candidate/object context. eui:ready shown per doc; Ripple injects an eui:size height reporter.",
+      "tier2": "none (Ripple is a web surface; Dash mounts it as a WebView)",
+      "status": "verified 2026-11-03 on groot in real Chromium against a copy of the ACE review session: tests/browser/cards.py 24/24 (mount, sandbox probe, click -> card_intent + queue line, forged message ignored, live push, 1440 + 412). Draft PR kvnloo/ripple#7 (stacked on #3). Not yet seen in Dash's WebView."
     }
   ],
   "phone_webview_proof": "s22 (SM-S906U1), focus-safe agent display 1080x2340/420, plain Android WebView (dev.z0.agentscreen OverviewActivity, JS on, no DOM storage): 8 cards single column to footer, Evidence tab tap works, PAGE_DOWN scrolls; owner focus stayed on display 0 for all 64 steps. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/s22-proof/webview/. Chrome on an agent display left an empty IntentDispatcher task (black); use a WebView host instead.",
