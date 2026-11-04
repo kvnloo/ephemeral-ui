@@ -81,7 +81,7 @@ function laneHistory(b, now, c) {
     for (let i = 1, last = -99; i < vals.length; i++) { if (vals[i] != null) last = i; else if (vals[i - 1] != null && i - last <= 4) vals[i] = vals[i - 1]; }
     return { key: id, label: id, color: SERIES[i % SERIES.length], values: vals, kind: "line" };
   });
-  const ch = TimeChart.make({ buckets: bs, bucketMs: step, series }, { kind: "line", stacked: false, height: 170, yMax: 100, format: (v) => `${Math.round(v)}%`, legend: true, references: [{ value: 100, label: "100%" }] });
+  const ch = TimeChart.make({ buckets: bs, bucketMs: step, series }, { kind: "line", stacked: false, height: 170, yMax: 100, format: (v) => `${Math.round(v)}%`, legend: true, references: [{ value: 100, label: "100%" }], tickLabel: (i) => fmt.day(bs[i]) });
   ch.on("brush", (e) => c.emit("brush", { range: e.range, label: `burn history ${e.label}` }));
   ch.on("select", (e) => c.emit("select", { range: e.range, label: `burn at ${e.label}` }));
   return { el: ch.el, select: (id) => { ch.hidden.clear(); for (const s of series) if (s.key !== id) ch.hidden.add(s.key); ch.draw(); } };
