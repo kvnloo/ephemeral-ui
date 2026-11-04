@@ -18,7 +18,7 @@
       "tier0_theme": "hermes-nous",
       "tier0_limits": "opaque origin: no localStorage/fetch to the kit; the export embeds its data",
       "tier1": "none yet (no postMessage channel from the artifact frame back to chat)",
-      "tier2": "no OpenUI catalog in apps/desktop on main",
+      "tier2": "Another session's feat/p1103-desktop-app-cards (openui-v2 fence embed, Board catalog with data-in-props app cards) is the desktop OpenUI host. Intent sections there need a decision: data-in-props from an AODL/z0int tool result, or host binding.",
       "status": "frame contract verified in Chromium via tools/desktop-frame-harness.mjs: eui:ready {cards:8, failed:0} across the sandbox, 520px rail, light. Not yet seen in a running desktop build (local checkout is 2026-08-17; main needs a build + backend)."
     },
     {
@@ -29,8 +29,8 @@
       "tier0": "tern browser '{\"op\":\"open\",\"owner\":<block>,\"url\":\"file:///…/cards.html\",\"how\":\"beside\"}' docks the export beside the session pane.",
       "tier0_theme": "hermes-nous-dark",
       "tier1": "pick -> {selector}; eval document.querySelector(selector).closest('[data-kind]').dataset -> {app,kind}. Verified.",
-      "tier2": "OpenUI v2 on feat/tern-openui-v2 (worktree hermes-wt/openui-v2): bounded catalog, fixed Luau renderers (treemap, tables, charts). No kit cards in it.",
-      "status": "tier0+tier1 verified on groot 2026-11-03: z0 playlist (8 cards, hermes-nous-dark) in a tern browser block; ref clicks switch tabs; pick returned the clicked element, resolved via closest('[data-kind]') to ripple/intent-declare. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/tern-proof/. Pitfall: snapshot names role=tab only via aria-label (kit fixed). tier2 not started"
+      "tier2": "OpenUI ephemeral-intent/v1 native intent board on kvnloo/hermes-agent feat/tern-openui-intent-kit @bf3b64c (stacked on local feat/tern-openui-v2 b7fa64f; docs ui-tsp/OPENUI-INTENT.md). Host-bound: model selects sections, host document (tools/openui-intent-doc.mjs) supplies values.",
+      "status": "tier0+tier1 verified on groot 2026-11-03: z0 playlist (8 cards, hermes-nous-dark) in a tern browser block; ref clicks switch tabs; pick returned the clicked element, resolved via closest('[data-kind]') to ripple/intent-declare. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/tern-proof/. Pitfall: snapshot names role=tab only via aria-label (kit fixed).  | tier2 verified 2026-11-03 in a private-daemon ordinary Tern window on groot: 8-section, 3-section and a real Groq gpt-oss-120b one-shot board rendered natively; section focus via keys/click. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/openui/tern-native/. Not yet via the live /visual discovery path."
     },
     {
       "id": "t3-web-desktop",
@@ -75,5 +75,6 @@
       "status": "not started (fork from 2026-11-01; annotation/turbo ask came first)"
     }
   ],
-  "phone_webview_proof": "s22 (SM-S906U1), focus-safe agent display 1080x2340/420, plain Android WebView (dev.z0.agentscreen OverviewActivity, JS on, no DOM storage): 8 cards single column to footer, Evidence tab tap works, PAGE_DOWN scrolls; owner focus stayed on display 0 for all 64 steps. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/s22-proof/webview/. Chrome on an agent display left an empty IntentDispatcher task (black); use a WebView host instead."
+  "phone_webview_proof": "s22 (SM-S906U1), focus-safe agent display 1080x2340/420, plain Android WebView (dev.z0.agentscreen OverviewActivity, JS on, no DOM storage): 8 cards single column to footer, Evidence tab tap works, PAGE_DOWN scrolls; owner focus stayed on display 0 for all 64 steps. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/s22-proof/webview/. Chrome on an agent display left an empty IntentDispatcher task (black); use a WebView host instead.",
+  "openui_shared_catalog": "integration/openui/ephemeral-intent.v1.json (pinned + signature-checked in the Tern lane)"
 }
