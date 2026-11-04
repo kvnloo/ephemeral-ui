@@ -9,6 +9,7 @@
 //   node tools/export-cards.mjs --cards ripple:intent-declare,z0intelligence:intel-value --theme t3-dark --out x.html
 //   options: --title <text>  --host-vars (map --h-* onto the host page's own CSS vars, for T3 html_render)
 //            --max-bytes <n> (default 512000, T3's html_render limit; fails instead of truncating)
+//            --ops-data <file> (ops-* boards: a live ops-snapshot.v0 from tools/ops-collect.py instead of the public fixture)
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -34,7 +35,7 @@ if (!items.length) throw Error("no cards: pass --playlist or --cards app:kind,â€
 themeId ??= "hermes-nous"; title ??= "ephemeral-ui cards";
 
 // ---- kind â†’ module (keys of each top-level KINDS_* object); fail loudly on an unknown kind
-const MOD_CSS = { "kinds-3d": "studio.css", "kinds-c": "studio.css", "kinds-e": "studio.css", "kinds-f": "studio.css", "kinds-p": "studio.css", "kinds-t": "trace.css", "kinds-i": "intent.css", "kinds-infra": "infra.css" };
+const MOD_CSS = { "kinds-3d": "studio.css", "kinds-c": "studio.css", "kinds-e": "studio.css", "kinds-f": "studio.css", "kinds-p": "studio.css", "kinds-t": "trace.css", "kinds-i": "intent.css", "kinds-infra": "infra.css", "kinds-ops": ["stats.css", "ops.css"] };
 const owner = {};
 for (const f of fs.readdirSync(path.join(src, "js")).filter((f) => /^kinds-.*\.js$/.test(f))) {
   const s = fs.readFileSync(path.join(src, "js", f), "utf8"); const m = s.match(/export const (KINDS_\w+) = \{([\s\S]*?)\n\};?/) || s.match(/export const (KINDS_\w+) = \{(.*)\};/);
@@ -51,6 +52,7 @@ const mods = [...new Set(items.map(([, k]) => owner[k][0]))];
 // ---- data the cards read: apps (pruned to the used ones), themes, and per-module fixtures
 const data = { "data/apps.json": { ...apps, apps: apps.apps.filter((a) => items.some(([id]) => id === a.id)) }, "data/themes.json": themes };
 if (mods.includes("kinds-i")) data["data/intent-snapshot.json"] = JSON.parse(fs.readFileSync(path.join(src, "data/intent-snapshot.json"), "utf8"));
+if (mods.includes("kinds-ops")) data["data/ops-fixture.json"] = JSON.parse(fs.readFileSync(arg("ops-data") ?? path.join(src, "data/ops-fixture.json"), "utf8"));
 if (mods.includes("kinds-t")) data["data/trace-fixture.json"] = JSON.parse(fs.readFileSync(path.join(src, "data/trace-fixture.json"), "utf8"));
 
 const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), "eui-export-"));
@@ -90,7 +92,7 @@ const esbuild = process.env.ESBUILD || "esbuild";
 const bundle = execFileSync(esbuild, [path.join(dir, "entry.js"), "--bundle", "--format=iife", "--minify", "--log-level=error", "--legal-comments=none"], { encoding: "utf8", maxBuffer: 64 << 20 });
 fs.rmSync(dir, { recursive: true });
 
-const css = ["styles.css", ...new Set(mods.map((m) => MOD_CSS[m]).filter(Boolean))].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
+const css = ["styles.css", ...new Set(mods.flatMap((m) => MOD_CSS[m] ?? []))].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
 // T3 html_render: frame owns background + exposes its own tokens; plain hosts get the kit theme as is.
 const hostVars = flag("host-vars") ? `:root{--h-bg:var(--background);--h-fg:var(--foreground);--h-card:var(--card);--h-card-solid:var(--card);--h-mutedFg:var(--muted-foreground);--h-muted:var(--muted);--h-border:var(--border);--h-primary:var(--primary);--h-primaryFg:var(--primary-foreground);--h-success:var(--success);--h-warning:var(--warning);--h-danger:var(--destructive);--h-font:var(--font-sans);--h-mono:var(--font-mono)}html,body{background:none!important}` : `html,body{background:var(--h-bg);color:var(--h-fg)}`;
 const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title.replace(/</g, "&lt;")}</title><style>${css}
