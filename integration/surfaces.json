@@ -82,8 +82,8 @@
       "tier0": "bin/ripple-cards SESSION NAME --cards app:kind,... (wraps tools/export-cards.mjs, default theme hermes-slate, 2 MB cap) or POST /api/cards; shown in a drawer beside the review, iframe sandbox=allow-scripts + no-network CSP.",
       "tier0_theme": "hermes-slate",
       "tier1": "eui:intent postMessage accepted only from Ripple's own frames -> card_intent event (declare, authority none) + agent-queue.jsonl line with review card/candidate/object context. eui:ready shown per doc; Ripple injects an eui:size height reporter.",
-      "tier2": "none (Ripple is a web surface; Dash mounts it as a WebView)",
-      "status": "verified 2026-11-03 on groot in real Chromium against a copy of the ACE review session: tests/browser/cards.py 24/24 (mount, sandbox probe, click -> card_intent + queue line, forged message ignored, live push, 1440 + 412). Draft PR kvnloo/ripple#7 (stacked on #3). Not yet seen in Dash's WebView."
+      "tier2": "none (web surface). Dash opens it through its existing artifact-stage screen: bin/ripple-review SESSION --host <tailnet ip> writes DASH-LINK.txt (http://100.x:port/#t=<hex> for a chat reply, dash://stage?url=… deep link); token-gated.",
+      "status": "verified 2026-11-03 on groot (tests/browser/cards.py 24/24, tests/browser/dash.py 19/19) and in the real Dash native app 0.1.0-rc4 on the S22 (served turbo 9bf54beb, agent virtual display): stage deep link rendered Ripple + agent cards; a card tap stored card_intent from a dash- device and wrote the agent-queue line. Merged to kvnloo/ripple main (#7, #8). Not yet on the S25; no mic over plain-http tailnet."
     }
   ],
   "phone_webview_proof": "s22 (SM-S906U1), focus-safe agent display 1080x2340/420, plain Android WebView (dev.z0.agentscreen OverviewActivity, JS on, no DOM storage): 8 cards single column to footer, Evidence tab tap works, PAGE_DOWN scrolls; owner focus stayed on display 0 for all 64 steps. Receipts: $ZER0/data/operations/ephemeral-aodl-cards-20261103/s22-proof/webview/. Chrome on an agent display left an empty IntentDispatcher task (black); use a WebView host instead.",
