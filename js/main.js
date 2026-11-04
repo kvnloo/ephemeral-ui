@@ -16,8 +16,9 @@ import { KINDS_INFRA, buildInfrastructure } from "./kinds-infra.js";
 import { buildSocial } from "./social.js";
 import { buildAsk } from "./ask.js";
 import { buildCombos, COMBOS } from "./combos.js";
+import { KINDS_OPS } from "./kinds-ops.js";
 
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_T, ...KINDS_I, ...KINDS_INFRA };
+export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_T, ...KINDS_I, ...KINDS_INFRA, ...KINDS_OPS };
 const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P), ...Object.keys(KINDS_F)]);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
