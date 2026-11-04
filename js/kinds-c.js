@@ -3,6 +3,7 @@
 // stages and Anatomy figures. Terms and defaults come from each app's docs (see apps.json `docs`).
 import { h, anim, stagger, typeText, flip, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg, avatar, PEOPLE } from "./shell.js";
+import { act, tell, why, undoable, settle } from "./loop.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
 const sleep = (run, ms) => run.wait(ms);
@@ -52,8 +53,16 @@ function nodesMake(a, r) {
     let o = null;
     n.querySelector(".ng-h").addEventListener("pointerdown", (e) => { const sc = 1; o = [e.clientX, e.clientY, parseFloat(n.style.left), parseFloat(n.style.top), sc]; n.setPointerCapture(e.pointerId); n.classList.add("drag"); e.stopPropagation(); });
     n.addEventListener("pointermove", (e) => { if (!o) return; n.style.left = `${o[2] + (e.clientX - o[0]) * o[4]}px`; n.style.top = `${o[3] + (e.clientY - o[1]) * o[4]}px`; lay(); });
-    n.addEventListener("pointerup", () => { o = null; n.classList.remove("drag"); });
+    n.addEventListener("pointerup", (e) => { const moved = o && Math.hypot(e.clientX - o[0], e.clientY - o[1]) > 4; o = null; n.classList.remove("drag"); if (!moved) pickNode(n); });
+    n.tabIndex = 0; n.setAttribute("role", "button"); n.setAttribute("aria-label", `${n.querySelector(".ng-h").textContent} node`);
+    n.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickNode(n); } });
   });
+  // Pointing at a node is how you talk about it: the agent gets the node, not "the third box".
+  function pickNode(n) {
+    nodes.forEach((x) => x.classList.toggle("lp-sel", x === n));
+    const t = n.querySelector(".ng-h").textContent, b = n.querySelector(".ng-b")?.textContent || "";
+    tell(el, { action: "select", label: `This node: ${t}`, entities: { node: t }, ack: /KSampler|sampler/i.test(t) ? "The sampler: 20 steps, euler, cfg 7. Fewer steps would halve the time; more would mostly sharpen fabric." : /Checkpoint/i.test(t) ? "SDXL base. Swap it for a turbo checkpoint and the run drops to ~1 s at 4 steps." : b ? `${t} — ${b}. Tell me what to change and I'll re-run from here.` : `${t}. Tell me what to change and I'll re-run from here.` });
+  }
   const queue = h("button", { class: "eu-btn primary", type: "button" }, graphFor(a) === "comfy" ? "Queue Prompt" : graphFor(a) === "unreal" ? "▶ Compile & Play" : "Cook");
   async function exec(run) {
     queue.disabled = true;
@@ -72,7 +81,7 @@ function nodesMake(a, r) {
   }
   queue.onclick = () => exec(new Run());
   const surface = appSurface(a, [appBar(graphFor(a) === "comfy" ? ["Workflow", "Queue", "History"] : graphFor(a) === "unreal" ? ["Event Graph", "Construction Script", "Compile"] : [a.name, "Network", "Cook"], [h("span", { class: "ap-stat" }, `${nodes.length} nodes`)]), h("div", { class: "ng-scroll" }, cv), out], { cls: "nodes" });
-  const el = shell(a, "nodes", { verb: `Built a ${graphFor(a) === "comfy" ? "workflow" : "graph"} · ${a.name}`, status: "Ready", body: surface, foot: [queue, h("button", { class: "eu-btn ghost" }, "Save graph")], summary: `Built and ran a ${nodes.length}-node graph in ${a.name}` });
+  const el = shell(a, "nodes", { verb: `Built a ${graphFor(a) === "comfy" ? "workflow" : "graph"} · ${a.name}`, status: "Ready", body: surface, foot: [queue, act("Save graph", { cls: "ghost", ack: `Saved to ${a.name} as a reusable workflow — re-running it from this card gives the same result.`, done: "Saved ✓" })], summary: `Built and ran a ${nodes.length}-node graph in ${a.name}` });
   return { el, async play(run) { nodes.forEach((n, i) => anim(n, [{ opacity: 0, transform: "scale(.9)" }, { opacity: 1, transform: "none" }], { spring: "bouncy", delay: i * 80 })); wires.forEach((w, i) => { w.p.setAttribute("pathLength", 1); anim(w.p, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 600, delay: 300 + i * 90 }); }); requestAnimationFrame(lay); await sleep(run, 1500); await exec(run); }, auto: async (run) => {}, spec: { kind: "nodes", app: a.id, graph: graphFor(a), nodes: g.nodes.map((n) => n[0]) } };
 }
 
@@ -135,7 +144,7 @@ function timelineMake(a, r) {
     voice.classList.remove("on");
   }
   const surface = appSurface(a, [appBar(a.ui === "premiere" ? ["Edit", "Color", "Audio", "Captions"] : a.ui === "resolve" ? ["Cut", "Edit", "Fusion", "Color", "Fairlight"] : a.ui === "ffs" ? ["Film", "Shots", "Review", "Render"] : a.ui === "descript" ? ["Script", "Scenes", "Layers"] : [a.name, "Timeline", "Export"], [play]), h("div", { class: "tl-top" }, mon, h("div", { class: "tl-side" }, voice, transcript, chips)), tracks], { cls: "timeline" });
-  const el = shell(a, "timeline", { verb: "Edited by voice and marks", status: "Editing", body: surface, foot: [h("button", { class: "eu-btn primary" }, a.ui === "ffs" ? "Render film" : "Export"), h("button", { class: "eu-btn ghost" }, "Undo all")], summary: `Cut a pause and added a punch-in in ${a.name}` });
+  const el = shell(a, "timeline", { verb: "Edited by voice and marks", status: "Editing", body: surface, foot: [act(a.ui === "ffs" ? "Render film" : "Export", { cls: "primary", ack: "Rendering at 4K in the background. This card turns into the file when it lands; keep chatting." }), act("Undo all", { cls: "ghost", ack: "Reverted all three edits. The cut is back to the original — your marks are kept if you want them again." })], summary: `Cut a pause and added a punch-in in ${a.name}` });
   return { el, async play(run) { draw(); stagger(v1.children, { gap: 60 }); await sleep(run, 700); await edit(run); }, spec: { kind: "timeline", app: a.id, input: ["voice", "pen marks"], ops: ["ripple delete 00:00:11", "scale keyframe 120%"] } };
 }
 function wave() { const s = svg("svg", { viewBox: "0 0 200 20", preserveAspectRatio: "none", class: "wv" }); let d = "M0 10"; for (let i = 0; i < 200; i += 2) { const a = Math.abs(Math.sin(i * 0.31) * Math.sin(i * 0.07)) * 9 + 1; d += ` M${i} ${10 - a} L${i} ${10 + a}`; } s.append(svg("path", { d })); return s; }
@@ -181,7 +190,7 @@ function reviewMake(a, r) {
   handle.addEventListener("pointermove", (e) => { if (!dragC) return; const b = frame.getBoundingClientRect(); const x = Math.max(0, Math.min(100, ((e.clientX - b.left) / b.width) * 100)); frame.style.setProperty("--cmp", `${x}%`); handle.style.left = `${x}%`; });
   handle.addEventListener("pointerup", () => (dragC = false));
   const surface = appSurface(a, [appBar(a.ui === "frameio" ? ["Review", "Compare", "Share"] : a.ui === "dash" ? ["Annotate", "Voice", "Send"] : a.ui === "ffs" ? ["Review", "Shots", "Proposals"] : [a.name, "Review", "Versions"], [h("span", { class: "ap-stat" }, "v1 → v2")]), h("div", { class: "rv" }, h("div", {}, frame, bar, bundle), comments)], { cls: "review" });
-  const el = shell(a, "review", { verb: "Review with marks", status: "In review", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw on the frame to leave a mark; send it and drag the compare handle.")), foot: [send, h("button", { class: "eu-btn ghost" }, "Copy link")], summary: `Reviewed a cut in ${a.name} and approved v2` });
+  const el = shell(a, "review", { verb: "Review with marks", status: "In review", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw on the frame to leave a mark; send it and drag the compare handle.")), foot: [send, act("Copy link", { cls: "ghost", ack: "Copied. The link opens this frame at 00:00:11 with both marks and the compare handle where you left it.", done: "Copied ✓" })], summary: `Reviewed a cut in ${a.name} and approved v2` });
   return { el, async play(run) { await sleep(run, 400); const d = svg("path", { d: "M58 20 C 70 14, 80 22, 74 32 C 68 40, 54 36, 56 26", class: "rv-stroke", pathLength: 1 }); ink.append(d); anim(d, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 800 }); await sleep(run, 800); addComment(PEOPLE[2], "Highlights clip here — pull back 1/3 stop"); await sleep(run, 500); addComment(PEOPLE[5], "Love the push-in. Hold 6 more frames."); }, spec: { kind: "review", app: a.id, marks: 2, bundle: ["contact sheet", "transcript", "keyframes"], compare: "v1↔v2" } };
 }
 
@@ -215,7 +224,7 @@ function layersMake(a, r) {
   async function generate(run) {
     const go = bar.querySelector(".ly-go"); go.disabled = true; go.textContent = "Generating…"; bar.classList.add("busy");
     await sleep(run, 1100);
-    vars.replaceChildren(...variants.map((_, i) => { const b = h("button", { type: "button", class: "ly-v" + (i === 0 ? " on" : "") }, h("canvas", { width: 104, height: 64 })); b.onclick = () => choose(i); return b; }));
+    vars.replaceChildren(...variants.map((_, i) => { const b = h("button", { type: "button", class: "ly-v" + (i === 0 ? " on" : ""), "aria-label": `Variation ${i + 1}` }, h("canvas", { width: 104, height: 64 })); b.onclick = () => choose(i); return b; }));
     vars.querySelectorAll("canvas").forEach((c, i) => { paint(i); c.getContext("2d").drawImage(cv, 0, 0, 520, 320, 0, 0, 104, 64); });
     stagger(vars.children, { gap: 90, sp: "bouncy" });
     choose(0);
@@ -226,7 +235,7 @@ function layersMake(a, r) {
   function choose(i) { pick = i; paint(i); vars.querySelectorAll(".ly-v").forEach((b, j) => b.classList.toggle("on", j === i)); }
   bar.querySelector(".ly-go").onclick = () => generate(new Run());
   const surface = appSurface(a, [appBar(a.ui === "photoshop" ? ["File", "Edit", "Image", "Layer", "Select"] : [a.name, "Layers", "Filters"], [h("span", { class: "ap-stat" }, "100% · RGB/8")]), h("div", { class: "ly" }, h("div", { class: "ly-stage" }, cv, ants, bar), h("div", { class: "ly-side" }, h("span", { class: "ap-lbl" }, "Properties · variations"), vars, h("span", { class: "ap-lbl" }, "Layers"), layers))], { cls: "layers" });
-  const el = shell(a, "layers", { verb: `${genWord} on a selection`, status: "Editing", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Keep variation"), h("button", { class: "eu-btn ghost" }, "Export PSD")], summary: `Filled a selection with a barn in ${a.name}` });
+  const el = shell(a, "layers", { verb: `${genWord} on a selection`, status: "Editing", body: surface, foot: [act("Keep variation", { cls: "primary", ack: () => `Kept variation ${pick + 1} as its own layer above Background. The other two stay in Variations if you change your mind.`, entities: { layer: "generative-1" }, done: "Kept ✓" }), act("Export PSD", { cls: "ghost", ack: "Exported a layered PSD — masks and the generative layer stay editable." })], summary: `Filled a selection with a barn in ${a.name}` });
   return { el, async play(run) { paint(); anim(lasso, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 900 }); await sleep(run, 1000); ants.classList.add("march"); await typeText(bar.querySelector(".ly-prompt"), "a red barn with white doors", run, 30); await sleep(run, 300); await generate(run); }, spec: { kind: "layers", app: a.id, tool: genWord, selection: "lasso", prompt: "a red barn with white doors", variations: 3 } };
 }
 
@@ -238,13 +247,13 @@ function galleryMake(a, r) {
     : Array.from({ length: 6 }, (_, i) => ({ gen: i, vid: i % 3 === 0, t: ["Hero shot", "Turntable", "Detail", "Wide", "Close-up", "Night"][i] }));
   const grid = h("div", { class: "gl" }, items.map((it, i) => {
     const media = it.src ? (it.vid ? h("video", { src: it.vid, poster: it.src, muted: true, loop: true, playsinline: true, preload: "none" }) : h("img", { src: it.src, alt: it.t, loading: "lazy" })) : genTile(it.gen);
-    const b = h("button", { type: "button", class: "gl-i" + (i === 0 ? " gl-big" : ""), "data-i": i }, media, it.vid ? h("span", { class: "gl-play" }, "▶") : null, h("span", { class: "gl-t" }, it.t), h("span", { class: "gl-sel" }));
+    const b = h("button", { type: "button", class: "gl-i" + (i === 0 ? " gl-big" : ""), "data-i": i, "aria-label": `${it.t}${it.vid ? " (video)" : ""}. Open; S to select.`, onkeydown: (e) => { if (e.key === "s" || e.key === "S") { e.preventDefault(); b.querySelector(".gl-sel").click(); } } }, media, it.vid ? h("span", { class: "gl-play" }, "▶") : null, h("span", { class: "gl-t" }, it.t), h("span", { class: "gl-sel", title: "Select for the agent" }));
     b.addEventListener("pointerenter", () => b.querySelector("video")?.play().catch(() => {}));
     b.addEventListener("pointerleave", () => b.querySelector("video")?.pause());
     return b;
   }));
   const picked = new Set();
-  const pill = h("div", { class: "gl-pill", hidden: true });
+  const pill = h("button", { type: "button", class: "gl-pill", hidden: true, onclick: () => { const ids = [...picked].sort(); const names = ids.map((i) => items[i].t); tell(el, { action: "select", label: `Use ${names.join(", ")}`, entities: { media: names }, ack: names.length === 1 ? `Got “${names[0]}”. Want variations of it, or should I drop it into the deck?` : `Got ${names.length}. I'll keep them in this order — say what they're for.` }); pill.textContent = `Sent ${names.length} ✓`; } });
   grid.addEventListener("click", (e) => {
     const b = e.target.closest(".gl-i"); if (!b) return;
     if (e.target.closest(".gl-sel")) { const i = +b.dataset.i; picked.has(i) ? picked.delete(i) : picked.add(i); b.classList.toggle("picked"); pill.hidden = !picked.size; pill.textContent = `Send ${picked.size} to agent →`; anim(pill, [{ transform: "scale(.9)" }, { transform: "none" }], { spring: "bouncy" }); return; }
@@ -265,7 +274,7 @@ function galleryMake(a, r) {
     const r0 = from.getBoundingClientRect(), r1 = m.getBoundingClientRect();
     anim(m, [{ transform: `translate(${r0.left - r1.left}px, ${r0.top - r1.top}px) scale(${r0.width / Math.max(1, r1.width)})` }, { transform: "none" }], { spring: "soft" });
   }
-  const el = shell(a, "gallery", { verb: `${items.length} results · ${items.filter((x) => x.vid).length} videos`, status: "Grid", body: h("div", {}, grid, pill), foot: [h("button", { class: "eu-btn ghost" }, "Open all in " + a.name)], summary: `Browsed ${items.length} renders in ${a.name}` });
+  const el = shell(a, "gallery", { verb: `${items.length} results · ${items.filter((x) => x.vid).length} videos`, status: "Grid", body: h("div", {}, grid, pill), foot: [act("Open all in " + a.name, { cls: "ghost", ack: `Opened all six in ${a.name} as one board, in the order shown here.` })], summary: `Browsed ${items.length} renders in ${a.name}` });
   return { el, async play() { stagger(grid.children, { gap: 50 }); const v = grid.querySelector("video"); if (v) { v.preload = "auto"; v.play().catch(() => {}); } }, spec: { kind: "gallery", app: a.id, items: items.map((x) => ({ title: x.t, video: !!x.vid })) } };
 }
 function genTile(i) { const c = h("canvas", { width: 320, height: 200 }); const g = c.getContext("2d"); const hue = (i * 57 + 190) % 360; const gr = g.createLinearGradient(0, 0, 320, 200); gr.addColorStop(0, `hsl(${hue} 50% 22%)`); gr.addColorStop(1, `hsl(${(hue + 50) % 360} 60% 55%)`); g.fillStyle = gr; g.fillRect(0, 0, 320, 200); g.fillStyle = "rgba(255,255,255,.85)"; g.beginPath(); g.arc(160 + Math.sin(i) * 60, 100, 30 + i * 4, 0, 7); g.fill(); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(0, 150, 320, 50); return c; }
@@ -298,7 +307,7 @@ function cadMake(a, r) {
   const tabs = revit ? ["Architecture", "Structure", "Annotate", "View"] : free ? ["Sketcher", "Part Design", "TechDraw"] : fusion ? ["Solid", "Surface", "Sketch"] : ["Home", "Insert", "Annotate", "Parametric"];
   const status = h("span", { class: "ap-stat" }, free ? "Under-constrained: 6 DoF" : "ORTHO · SNAP · 1:50");
   const surface = appSurface(a, [appBar(tabs, [status]), h("div", { class: "cad-wrap" }, s, tip), cmd], { cls: "cad" + (free ? " free" : "") });
-  const el = shell(a, "cad", { verb: revit ? "Drafted walls on Level 1" : free ? "Constrained a sketch" : "Drafted a floor plan", status: "Drafting", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Click to draft walls (ortho, 0.25 m snap). Double-click to end.")), foot: [h("button", { class: "eu-btn primary" }, revit ? "Create sheet" : free ? "Pad (extrude)" : "Plot to PDF"), h("button", { class: "eu-btn ghost" }, "Export DXF")], summary: `Drafted a 2-room plan in ${a.name}` });
+  const el = shell(a, "cad", { verb: revit ? "Drafted walls on Level 1" : free ? "Constrained a sketch" : "Drafted a floor plan", status: "Drafting", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Click to draft walls (ortho, 0.25 m snap). Double-click to end.")), foot: [act(revit ? "Create sheet" : free ? "Pad (extrude)" : "Plot to PDF", { cls: "primary", ack: revit ? "Placed the plan on a new A1 sheet at 1:50 with the dimensions you see." : free ? "Padded the sketch 3000 mm into a solid. The constraints still drive it." : "Plotted plan.pdf at 1:50 on A3, dimensions in mm." }), act("Export DXF", { cls: "ghost", ack: "Exported plan.dxf (mm, layers kept: WALLS, DIMS, TEXT)." })], summary: `Drafted a 2-room plan in ${a.name}` });
   return { el, async play(run) {
     await setCmd(run, revit ? "WA  Wall: Architectural · Generic 200mm" : free ? "Sketcher_CreatePolyline" : "PLINE  Specify start point:");
     const outer = line(plan); anim(outer, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 1400, easing: "cubic-bezier(.65,0,.35,1)" });
@@ -323,7 +332,9 @@ function boardMake(a, r) {
   const cur = (name, c) => h("div", { class: "bd-cur", style: { "--c": c } }, svg("svg", { viewBox: "0 0 16 16" }, svg("path", { d: "M1 1 L1 13 L4.5 9.5 L7 15 L9 14 L6.5 8.5 L11.5 8.5 Z" })), h("span", {}, name));
   const agent = cur("Agent", "#f97316"), you = cur("You", ui.acc || "#2f80ed");
   const wrap = h("div", { class: "bd" + (ex ? " ex" : "") }, s, agent, you);
-  const tool = h("div", { class: "bd-tools" }, ["↖", "✋", "✎", "▭", "◯", "→", "T", "🗒"].map((t, i) => h("button", { type: "button", class: i === 2 ? "on" : "" }, t)));
+  const TOOLS = [["↖", "Select"], ["✋", "Hand"], ["✎", "Draw"], ["▭", "Rectangle"], ["◯", "Ellipse"], ["→", "Arrow"], ["T", "Text"], ["🗒", "Sticky note"]];
+  let mode = "Draw";
+  const tool = h("div", { class: "bd-tools", role: "toolbar", "aria-label": "Tools" }, TOOLS.map(([t, name], i) => h("button", { type: "button", class: i === 2 ? "on" : "", "aria-label": name, title: name, "aria-pressed": i === 2 ? "true" : "false", onclick: (e) => { mode = name; tool.querySelectorAll("button").forEach((b) => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); s.dataset.mode = name; } }, t)));
   const real = h("button", { class: "bd-real", type: "button" }, a.ui === "tldraw" ? "Make Real" : ex ? "Wireframe → code" : "Generate");
   const jit = (pts) => pts.map(([x, y]) => [x + (Math.random() - 0.5) * (ex ? 2.6 : 0.6), y + (Math.random() - 0.5) * (ex ? 2.6 : 0.6)]);
   const path = (pts, close) => { const p = jit(pts); return "M" + p.map((q) => q.join(" ")).join(" L") + (close ? " Z" : ""); };
@@ -347,18 +358,28 @@ function boardMake(a, r) {
   // you can draw freehand
   let pen = null;
   const pt = (e) => { const b = s.getBoundingClientRect(); return [((e.clientX - b.left) / b.width) * W, ((e.clientY - b.top) / b.height) * H]; };
-  s.addEventListener("pointerdown", (e) => { s.setPointerCapture(e.pointerId); const [x, y] = pt(e); pen = svg("path", { d: `M${x} ${y}`, class: "bd-pen", stroke: ui.acc || "#2f80ed" }); s.append(pen); });
-  s.addEventListener("pointermove", (e) => { const [x, y] = pt(e); const b = wrap.getBoundingClientRect(); you.style.translate = `${(x / W) * b.width}px ${(y / H) * b.height}px`; if (pen) pen.setAttribute("d", pen.getAttribute("d") + ` L${x.toFixed(1)} ${y.toFixed(1)}`); });
-  s.addEventListener("pointerup", () => (pen = null));
+  // Each tool really draws; whatever you add is context the agent reads (it says what it understood).
+  let p0 = null, mine = 0;
+  const shapeOf = (x0, y0, x, y) => mode === "Rectangle" ? `M${x0} ${y0} H${x} V${y} H${x0} Z` : mode === "Ellipse" ? `M${(x0 + x) / 2} ${y0} A${Math.abs(x - x0) / 2} ${Math.abs(y - y0) / 2} 0 1 0 ${(x0 + x) / 2} ${y} A${Math.abs(x - x0) / 2} ${Math.abs(y - y0) / 2} 0 1 0 ${(x0 + x) / 2} ${y0}` : `M${x0} ${y0} L${x} ${y} M${x - 10} ${y - 6} L${x} ${y} L${x - 8} ${y + 7}`;
+  s.addEventListener("pointerdown", (e) => {
+    const [x, y] = pt(e);
+    if (mode === "Select" || mode === "Hand") { const g = e.target.closest?.(".bd-sh"); if (g && mode === "Select") { s.querySelectorAll(".bd-sh.sel").forEach((n) => n.classList.remove("sel")); g.classList.add("sel"); const t = g.querySelector("text")?.textContent || "an arrow"; tell(el, { action: "select", label: `This: ${t}`, entities: { shape: t }, ack: t === "an arrow" ? "That arrow says one thing depends on the other. Want me to label it?" : `“${t}” — I'll make that the focus of the generated UI.` }); } return; }
+    if (mode === "Text" || mode === "Sticky note") { const label = mode === "Text" ? "Quiz me" : "Due Friday"; const n = svg("text", { x, y, class: "bd-tx mine", fill: ui.acc || "#2f80ed" }, label); if (mode === "Sticky note") s.append(svg("rect", { x: x - 6, y: y - 16, width: 86, height: 24, rx: 3, fill: "#fff3bf", class: "mine" })); s.append(n); mine++; tell(el, { action: "annotate", label: `Added “${label}”`, entities: { note: label }, ack: label === "Quiz me" ? "Noted — Make Real will end in a 12-card quiz." : "Noted — I'll schedule the deck to finish by Friday." }); return; }
+    s.setPointerCapture(e.pointerId); p0 = [x, y];
+    pen = svg("path", { d: `M${x} ${y}`, class: "bd-pen", stroke: ui.acc || "#2f80ed", fill: "none" }); s.append(pen);
+  });
+  s.addEventListener("pointermove", (e) => { const [x, y] = pt(e); const b = wrap.getBoundingClientRect(); you.style.translate = `${(x / W) * b.width}px ${(y / H) * b.height}px`; if (!pen) return; if (mode === "Draw") pen.setAttribute("d", pen.getAttribute("d") + ` L${x.toFixed(1)} ${y.toFixed(1)}`); else pen.setAttribute("d", shapeOf(p0[0], p0[1], x, y)); });
+  s.addEventListener("pointerup", (e) => { if (!pen) return; const [x, y] = pt(e); const big = Math.hypot(x - p0[0], y - p0[1]) > 18; if (big) { mine++; tell(el, { action: "draw", label: `Drew a ${mode.toLowerCase()}`, entities: { shape: `${mode.toLowerCase()}-${mine}` }, quiet: true }); } else pen.remove(); pen = null; });
   real.onclick = async () => {
     real.disabled = true; real.textContent = "Generating…";
     const out = h("div", { class: "bd-out" }, h("div", { class: "bd-win" }, h("div", { class: "bd-wb" }, h("i"), h("i"), h("i")), h("div", { class: "bd-ui" }, h("b", {}, "USD composition"), h("div", { class: "bd-chips" }, ..."L I V R P S".split(" ").map((c) => h("span", {}, c))), h("div", { class: "bd-bar" }, h("i")), h("button", { type: "button" }, "Start review (12 cards)"))));
     await new Promise((res) => setTimeout(res, 900));
     wrap.append(out); anim(out, [{ opacity: 0, transform: "scale(.85) translateY(10px)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" });
     real.textContent = "✓ Made real"; burst(real);
+    tell(el, { action: "make_real", label: "Make it real", entities: { board: "study-map" }, ack: mine ? `Built it, including your ${mine} addition${mine > 1 ? "s" : ""}. The quiz button runs the Anki deck.` : "Built a working page from the map. The quiz button runs the Anki deck." });
   };
   const surface = appSurface(a, [h("div", { class: "bd-frame" }, wrap, tool, real)], { cls: "board" });
-  const el = shell(a, "board", { verb: "Sketching with you", status: "2 here", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw anywhere. The agent lays out the study map; Make Real turns it into a working UI.")), foot: [h("button", { class: "eu-btn ghost" }, "Export .tldr"), h("button", { class: "eu-btn ghost" }, "Copy as PNG")], summary: `Built a study map in ${a.name}` });
+  const el = shell(a, "board", { verb: "Sketching with you", status: "2 here", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw anywhere. The agent lays out the study map; Make Real turns it into a working UI.")), foot: [act("Export .tldr", { cls: "ghost", ack: "Saved study-map.tldr — opening it restores every shape and your strokes." }), act("Copy as PNG", { cls: "ghost", ack: "Copied a 2× PNG of the board to your clipboard.", done: "Copied ✓" })], summary: `Built a study map in ${a.name}` });
   return { el, async play(run) {
     await sleep(run, 200);
     for (const e of els) {
@@ -380,21 +401,26 @@ function dawMake(a, r) {
   const grid = h("div", { class: "pr-grid" });
   const ph = h("i", { class: "pr-ph" });
   roll.append(keys, h("div", { class: "pr-area" }, grid, ph));
-  const scenes = h("div", { class: "sv" }, ["Drums", "Bass", "Keys", "Vox"].map((t, ti) => h("div", { class: "sv-col" }, h("b", {}, t), [0, 1, 2].map((s) => h("button", { type: "button", class: "sv-clip" + ((ti + s) % 3 === 2 ? " empty" : ""), style: { "--c": ["#ff764d", "#ffb532", "#7ad1ff", "#b388ff"][ti] } }, h("i"), (ti + s) % 3 === 2 ? "" : `${t} ${s + 1}`)))));
+  const scenes = h("div", { class: "sv" }, ["Drums", "Bass", "Keys", "Vox"].map((t, ti) => h("div", { class: "sv-col" }, h("b", {}, t), [0, 1, 2].map((s) => h("button", { type: "button", "aria-label": (ti + s) % 3 === 2 ? `Empty ${t} slot ${s + 1}` : `${t} ${s + 1}`, class: "sv-clip" + ((ti + s) % 3 === 2 ? " empty" : ""), style: { "--c": ["#ff764d", "#ffb532", "#7ad1ff", "#b388ff"][ti] } }, h("i"), (ti + s) % 3 === 2 ? "" : `${t} ${s + 1}`)))));
   const notes = [];
   const place = (pitch, step, len) => { const n = h("i", { class: "pr-n", style: { left: `${(step / 16) * 100}%`, width: `${(len / 16) * 100 - 0.6}%`, top: `${((71 - pitch) / 24) * 100}%` } }); grid.append(n); notes.push({ n, pitch, step, len }); return n; };
   let ctx = null, playing = false;
   const play = h("button", { class: "eu-btn", type: "button" }, "▶ Play");
   play.onclick = () => {
-    if (playing) return; playing = true;
+    if (playing) return; playing = true; play.textContent = "❚❚ Playing"; play.setAttribute("aria-pressed", "true");
+    if (!notes.length) for (let c = 0; c < 4; c++) for (const p of chords[c][1]) place(p, c * 4, 3.6);
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     const t0 = ctx.currentTime + 0.05, spb = 60 / 96 / 4;
     for (const { pitch, step, len } of notes) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle"; o.frequency.value = 440 * Math.pow(2, (pitch - 69) / 12); g.gain.setValueAtTime(0, t0 + step * spb); g.gain.linearRampToValueAtTime(0.08, t0 + step * spb + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + (step + len) * spb); o.connect(g).connect(ctx.destination); o.start(t0 + step * spb); o.stop(t0 + (step + len) * spb + 0.05); }
-    anim(ph, [{ left: "0%" }, { left: "100%" }], { duration: 16 * spb * 1000, easing: "linear" }).onfinish = () => (playing = false);
+    anim(ph, [{ left: "0%" }, { left: "100%" }], { duration: 16 * spb * 1000, easing: "linear" }).onfinish = () => { playing = false; play.textContent = "▶ Play"; play.setAttribute("aria-pressed", "false"); };
   };
-  scenes.addEventListener("click", (e) => { const c = e.target.closest(".sv-clip:not(.empty)"); if (!c) return; c.classList.toggle("on"); });
+  scenes.addEventListener("click", (e) => {
+    const c = e.target.closest(".sv-clip"); if (!c) return;
+    if (c.classList.contains("empty")) { const lbl = c.getAttribute("aria-label").replace("Empty ", ""); tell(el, { action: "fill", label: `Write something for ${lbl}`, entities: { clip: lbl }, ack: `Writing a ${lbl.split(" ")[0].toLowerCase()} part over Am–F–C–G for that slot. It'll appear here in a few seconds.` }); c.classList.remove("empty"); c.classList.add("on", "pending"); c.append(lbl); return; }
+    c.classList.toggle("on");
+  });
   const surface = appSurface(a, [appBar(a.ui === "ableton" ? ["Session", "Arrangement", "Clip"] : a.ui === "fl" ? ["Playlist", "Piano roll", "Mixer"] : [a.name, "Tracks", "Editor"], [h("span", { class: "ap-stat" }, "96 BPM · A minor"), play]), h("div", { class: "daw" }, scenes, roll)], { cls: "daw-w" });
-  const el = shell(a, "daw", { verb: "Wrote a chord progression", status: "Recording", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Bounce stems"), h("button", { class: "eu-btn ghost" }, "Export MIDI")], summary: `Wrote Am–F–C–G in ${a.name}` });
+  const el = shell(a, "daw", { verb: "Wrote a chord progression", status: "Recording", body: surface, foot: [act("Bounce stems", { cls: "primary", ack: "Bouncing 4 stems (Drums, Bass, Keys, Vox) at 48 kHz/24-bit. I'll drop them in Downloads/am-f-c-g/." }), act("Export MIDI", { cls: "ghost", ack: "Saved progression.mid — Am, F, C, G, one bar each at 96 BPM." })], summary: `Wrote Am–F–C–G in ${a.name}` });
   return { el, async play(run) { stagger(scenes.querySelectorAll(".sv-clip"), { gap: 30 }); for (let c = 0; c < 4; c++) { for (const p of chords[c][1]) { const n = place(p, c * 4, 3.6); anim(n, [{ transform: "scaleX(0)", transformOrigin: "left" }, { transform: "none" }], { spring: "snappy" }); await sleep(run, 70); } await sleep(run, 160); } }, spec: { kind: "daw", app: a.id, bpm: 96, key: "A minor", progression: chords.map((c) => c[0]) } };
 }
 
@@ -436,7 +462,7 @@ function flashMake(a, r) {
   const heat = h("div", { class: "fc-heat" }, Array.from({ length: 28 }, (_, k) => h("i", { style: { "--o": [0.1, 0.3, 0.6, 0.9][Math.floor((Math.sin(k * 1.7) + 1) * 2) % 4] } })));
   render();
   const surface = appSurface(a, [appBar(quiz ? ["Flashcards", "Learn", "Test", "Match"] : ["Decks", "Add", "Browse", "Stats"], [counts]), h("div", { class: "fc" }, card, btns), h("div", { class: "row between" }, h("span", { class: "eu-hint" }, quiz ? "Made from the lecture you watched" : "FSRS · desired retention 0.90"), heat)], { cls: "flash" + (quiz ? " quiz" : "") });
-  const el = shell(a, "flash", { verb: quiz ? "Made a study set" : "Due now: 56 cards", status: "Review", body: surface, foot: [h("button", { class: "eu-btn ghost" }, "Add from selection"), h("button", { class: "eu-btn ghost" }, "Sync")], summary: `Reviewed ${deck.length} cards in ${a.name}` });
+  const el = shell(a, "flash", { verb: quiz ? "Made a study set" : "Due now: 56 cards", status: "Review", body: surface, foot: [act("Add from selection", { cls: "ghost", ack: "Made 4 cards from your highlighted passage. They're due tomorrow with the rest." }), act("Sync", { cls: "ghost", ack: "Synced: 56 due, 3 new from today's highlights. Nothing conflicted.", done: "Synced ✓" })], summary: `Reviewed ${deck.length} cards in ${a.name}` });
   return { el, async play(run) { anim(card, [{ transform: "translateY(12px) scale(.96)", opacity: 0 }, { transform: "none", opacity: 1 }], { spring: "bouncy" }); }, auto: async (run) => { await run.wait(600); show(); await run.wait(900); answer(quiz ? "Know" : "Good"); }, spec: { kind: "flash", app: a.id, deck: deck.map((d) => d[0]), scheduler: quiz ? "Quizlet Learn" : "FSRS", buttons: quiz ? ["Still learning", "Know"] : ["Again <1m", "Hard 6m", "Good 10m", "Easy 4d"] } };
 }
 
@@ -459,7 +485,7 @@ function stageMake(a, r) {
   }
   resolve();
   const surface = appSurface(a, [appBar(["Stage", "Layers", "Property"], [h("span", { class: "ap-stat" }, "usdview · Hydra Storm")]), h("div", { class: "us" }, tree, h("div", {}, h("span", { class: "ap-lbl" }, "Layer stack · strongest first · tap to mute"), stack, h("div", { class: "row" }, h("span", { class: "eu-hint" }, "variantSet “color”"), variant), result))], { cls: "stage" });
-  const el = shell(a, "stage", { verb: "Resolved a prim's opinions", status: "Composed", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Flatten to .usdc"), h("button", { class: "eu-btn ghost" }, "Open in usdview")], summary: `Traced displayColor through ${layers.length} layers in ${a.name}` });
+  const el = shell(a, "stage", { verb: "Resolved a prim's opinions", status: "Composed", body: surface, foot: [act("Flatten to .usdc", { cls: "primary", ack: "Flattened the stage to shot_042_flat.usdc. The gripper keeps the red variant you picked." }), act("Open in usdview", { cls: "ghost", ack: "Opened usdview on the gripper prim, with the layer stack shown." })], summary: `Traced displayColor through ${layers.length} layers in ${a.name}` });
   return { el, async play() { stagger(tree.children, { gap: 50 }); stagger(stack.children, { gap: 70, delay: 200 }); }, spec: { kind: "stage", app: a.id, prim: "/World/Robot/arm/gripper", attribute: "primvars:displayColor", layers: layers.map((l) => l[0]), rule: "LIVRPS" } };
 }
 

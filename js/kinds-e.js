@@ -2,6 +2,7 @@
 // sandbox VMs that fork (boat). The agent works on its own display; you watch, take over, or hand back.
 import { h, anim, stagger, typeText, Run } from "./motion.js";
 import { shell, burst, holdButton } from "./shell.js";
+import { act, tell, why, undoable, settle } from "./loop.js";
 import { appSurface, appBar } from "./chrome.js";
 
 const STEPS = {
@@ -21,8 +22,8 @@ function screenMake(a, r) {
   const log = h("ol", { class: "cu-log" });
   const badge = h("span", { class: "cu-badge" }, phone ? "virtual display #1 · 1080×2340" : "sandbox · ubuntu-24.04 · 1280×800");
   let mine = false;
-  const take = h("button", { class: "eu-btn", type: "button", onclick: () => { mine = !mine; disp.classList.toggle("yours", mine); take.textContent = mine ? "Hand back to agent" : "Take over"; cur.querySelector("span").textContent = mine ? "you" : "agent"; } }, "Take over");
-  async function act(run, [verb, what, x, y], i) {
+  const take = h("button", { class: "eu-btn", type: "button", onclick: () => { mine = !mine; disp.classList.toggle("yours", mine); take.textContent = mine ? "Hand back to agent" : "Take over"; cur.querySelector("span").textContent = mine ? "you" : "agent"; settle(el, mine ? "You're driving" : "Driving", mine ? "paused" : null); tell(el, { action: mine ? "takeover" : "handback", label: mine ? "I'll drive" : "Your turn again", entities: { display: phone ? "virtual-1" : "sandbox" }, ack: mine ? "Paused after the current step. Anything you do here is logged so I can pick up from it." : "Picking up from what you did — I'll re-read the screen first." }); } }, "Take over");
+  async function step(run, [verb, what, x, y], i) {
     if (mine) { await run.wait(400); return; }
     anim(cur, [{ left: cur.style.left || "50%", top: cur.style.top || "50%" }, { left: `${x}%`, top: `${y}%` }], { duration: 520, easing: "cubic-bezier(.4,0,.2,1)" });
     cur.style.left = `${x}%`; cur.style.top = `${y}%`;
@@ -37,8 +38,8 @@ function screenMake(a, r) {
     while (log.children.length > 5) log.firstChild.remove();
   }
   const surface = appSurface(a, [appBar(phone ? ["Mirror", "Virtual display", "Input"] : a.id === "cua" ? ["Computer", "Trajectory", "Benchmarks"] : [a.name, "Display", "Logs"], [badge]), h("div", { class: "cu" }, h("div", { class: "cu-stage" }, disp), log)], { cls: "screen" });
-  const el = shell(a, "screen", { verb: phone ? "Agent on its own display" : "Computer-use run", status: "Driving", body: h("div", {}, surface, h("p", { class: "eu-hint" }, phone ? "Runs on a second display: your phone screen stays yours." : "The agent drives a sandboxed desktop. Take over any time.")), foot: [take, h("button", { class: "eu-btn ghost" }, "Save trajectory")], summary: `${steps.length} computer-use steps in ${a.name}` });
-  return { el, async play(run) { for (let i = 0; i < steps.length; i++) await act(run, steps[i], i); }, spec: { kind: "screen", app: a.id, display: phone ? "scrcpy --new-display=1080x2340/420" : "cua sandbox", steps: steps.map((s) => `${s[0]} ${s[1]}`), takeover: true } };
+  const el = shell(a, "screen", { verb: phone ? "Agent on its own display" : "Computer-use run", status: "Driving", body: h("div", {}, surface, h("p", { class: "eu-hint" }, phone ? "Runs on a second display: your phone screen stays yours." : "The agent drives a sandboxed desktop. Take over any time.")), foot: [take, act("Save trajectory", { cls: "ghost", ack: "Saved the run as a trajectory (12 steps, screenshots included) so it can be replayed or used as a test.", done: "Saved ✓" })], summary: `${steps.length} computer-use steps in ${a.name}` });
+  return { el, async play(run) { for (let i = 0; i < steps.length; i++) await step(run, steps[i], i); }, spec: { kind: "screen", app: a.id, display: phone ? "scrcpy --new-display=1080x2340/420" : "cua sandbox", steps: steps.map((s) => `${s[0]} ${s[1]}`), takeover: true } };
 }
 
 /* boat-style sandboxes: fork a running VM per experiment, keep the winner, stop the rest */
@@ -56,7 +57,7 @@ function sandboxMake(a, r) {
   const tick = () => { secs += alive; cost.textContent = "$" + (secs * 0.000011).toFixed(4); tm = setTimeout(tick, 250); };
   const keep = holdButton("Hold to keep winner", (b, t) => { t.textContent = "Kept fork-b · others stopped"; burst(b); tree.querySelectorAll(".sb-vm.running").forEach((n) => { if (!n.textContent.includes("fork-b")) { n.className = "sb-vm stopped"; n.lastChild.textContent = "stopped · $0"; } }); alive = 2; });
   const surface = appSurface(a, [appBar(["Machines", "Snapshots", "SSH"], [meter]), tree, term], { cls: "sandbox" });
-  const el = shell(a, "sandbox", { verb: "Forked a VM per experiment", status: "3 running", body: surface, foot: [keep, h("button", { class: "eu-btn ghost" }, "ssh fork-b")], summary: `Forked 3 sandboxes in ${a.name}, kept the fastest` });
+  const el = shell(a, "sandbox", { verb: "Forked a VM per experiment", status: "3 running", body: surface, foot: [keep, act("ssh fork-b", { cls: "ghost", ack: "Here's the command: ssh fork-b.sandbox — it expires with the sandbox in 2 h." })], summary: `Forked 3 sandboxes in ${a.name}, kept the fastest` });
   return { el, async play(run) {
     clearTimeout(tm); tick();
     const root = vm(20, 70, "agent-main", "running");
