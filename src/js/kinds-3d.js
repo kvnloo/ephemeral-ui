@@ -2,6 +2,7 @@
 // lighting rigs, game triggers, a live globe, image-to-3D, robot sim. All draw through stage3d.js.
 import { h, anim, stagger, typeText, pick, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg } from "./shell.js";
+import { act, tell, why, undoable, settle } from "./loop.js";
 import { stage3d, makeCity, sunRig, clayMatcap, fbm, rand } from "./stage3d.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
@@ -80,7 +81,7 @@ function sculptMake(a, r) {
     "        relative_asset_identifier=lib + brush)",
     "    agent.stroke(region)  # A: Clay Strips, B: Crease, C: Smooth",
   ] : a.ui === "zbrush" ? ["// ZScript", "[IPress, Tool:SubTool:Duplicate]", "[IPress, Brush:ClayBuildup]", "[ISet, Draw:Z Intensity, 22]", "[IPress, Brush:DamStandard]   // agent B", "[IPress, Brush:Smooth]        // agent C"] : ["// three agents, one mesh", "agentA.brush('clay').along('brow ridge')", "agentB.brush('crease').along('eye sockets')", "agentC.brush('smooth').over('cheeks')", "you.brush(picked).drag()"];
-  const el = shell(a, "sculpt", { verb: `3 agents sculpting · ${a.name}`, status: "Live", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Drag on the mesh to sculpt with the picked brush. Agents keep working around you.")), foot: [holdButton("Hold to apply Remesh", (b, t) => { t.textContent = "Remeshed · 0.02 m voxels"; burst(b); }), h("button", { class: "eu-btn ghost" }, "Export .glb")], summary: `Sculpted a head blockout in ${a.name} with 3 agents` });
+  const el = shell(a, "sculpt", { verb: `3 agents sculpting · ${a.name}`, status: "Live", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Drag on the mesh to sculpt with the picked brush. Agents keep working around you.")), foot: [holdButton("Hold to apply Remesh", (b, t) => { t.textContent = "Remeshed · 0.02 m voxels"; burst(b); }), act("Export .glb", { cls: "ghost", ack: "Exported helmet.glb (Draco, 1.2 MB) with the three agents' strokes merged." })], summary: `Sculpted a head blockout in ${a.name} with 3 agents` });
   return { el, async play(run) { stagger(brushes.children, { gap: 50 }); for (const line of script) { const s = h("div"); code.append(s); await typeText(s, line, run, 90); } }, spec: { kind: "sculpt", app: a.id, agents: AGENTS.map((g) => ({ name: g.n, brush: BRUSHES[g.brush][0], region: g.plan })), mesh: "icosphere · dyntopo" } };
 }
 
@@ -107,7 +108,7 @@ function cityMake(a, r) {
   const regen = h("button", { class: "eu-btn ghost sm", type: "button", onclick: () => { city?.restart(); runGraph(new Run()); } }, "↻ Regenerate");
   async function runGraph(run) { const ns = [...graph.children]; ns.forEach((n) => n.classList.remove("done", "on")); for (const n of ns) { n.classList.add("on"); await run.wait(380); n.classList.remove("on"); n.classList.add("done"); } }
   const surface = appSurface(a, [appBar(ue ? ["PCG Graph", "Level", "Lumen"] : [a.name, "Scene", "Generate"], [h("span", { class: "ap-stat" }, count, " buildings")]), h("div", { class: "ap-vpwrap" }, vp), graph, h("label", { class: "ap-slider" }, h("span", {}, ue ? "Density Filter · lower bound" : "Density"), dens)], { cls: "city" });
-  const el = shell(a, "city", { verb: ue ? "Generated a city with PCG" : `Blocked out a city · ${a.name}`, status: "Building", body: surface, foot: [regen, h("button", { class: "eu-btn ghost sm" }, ue ? "Convert to Level Instance" : "Bake")], summary: `Blocked out a ${steps.length}-step city in ${a.name}` });
+  const el = shell(a, "city", { verb: ue ? "Generated a city with PCG" : `Blocked out a city · ${a.name}`, status: "Building", body: surface, foot: [regen, act(ue ? "Convert to Level Instance" : "Bake", { cls: "ghost sm", ack: () => (ue ? "Converted the PCG output into a Level Instance so it's editable by hand." : "Baked the generated city into static meshes."), done: "Converted ✓" })], summary: `Blocked out a ${steps.length}-step city in ${a.name}` });
   return { el, async play(run) { await runGraph(run); }, spec: { kind: "city", app: a.id, pipeline: steps, seed: "deterministic", density: 0.62 } };
 }
 
@@ -156,7 +157,7 @@ function flyMake(a, r) {
   tt.addEventListener("pointermove", (e) => { if (scrub != null) scrub = at(e); });
   tt.addEventListener("pointerup", () => (scrub = null));
   const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Sequencer", "Cine Camera", "Movie Render Queue"] : a.ui === "gev" ? ["Cockpit", "Orbit", "Chase"] : ["Camera", "Path", "Render"], [tc]), h("div", { class: "ap-vpwrap" }, vp), track, h("div", { class: "row between" }, lens, h("span", { class: "eu-hint" }, "Drag the timeline to scrub"))], { cls: "fly" });
-  const el = shell(a, "fly", { verb: "Directed a flythrough", status: "24 fps", body: surface, foot: [h("button", { class: "eu-btn primary" }, a.ui === "unreal" ? "Render (MRQ)" : "Render shot"), h("button", { class: "eu-btn ghost" }, "Send to edit")], summary: `Rendered a 24 s flythrough in ${a.name}` });
+  const el = shell(a, "fly", { verb: "Directed a flythrough", status: "24 fps", body: surface, foot: [act(a.ui === "unreal" ? "Render (MRQ)" : "Render shot", { cls: "primary", ack: a.ui === "unreal" ? "Queued in Movie Render Queue at 4K. I'll put the file here when it's done." : "Rendering the shot at 4K. I'll put the file here when it's done." }), act("Send to edit", { cls: "ghost", ack: "Sent the flythrough to the edit timeline as a new clip." })], summary: `Rendered a 24 s flythrough in ${a.name}` });
   return { el, async play() { stagger(keys.children, { gap: 70, delay: 300, sp: "bouncy" }); }, spec: { kind: "fly", app: a.id, path: "catmull-rom · 6 keys", duration: "24s", rig: "drone" } };
 }
 
@@ -202,7 +203,7 @@ function fpvMake(a, r) {
   }, { bg: 0x9ab7c9, orbit: false, aspect: 16 / 9 });
   V.hud.append(osd);
   const surface = appSurface(a, [appBar(a.ui === "dji" ? ["Camera", "Explore", "QuickShots"] : ["OSD", "Blackbox", "Rates"], [h("span", { class: "ap-stat" }, "5.8 GHz · R4")]), h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row between" }, mode, sticks)], { cls: "fpvwrap" });
-  const el = shell(a, "fpv", { verb: a.ui === "dji" ? "Flew a QuickShot" : "FPV run through 8 gates", status: "Armed", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Save DVR clip"), h("button", { class: "eu-btn ghost" }, "Open Blackbox log")], summary: `Flew an 8-gate FPV line in ${a.name}` });
+  const el = shell(a, "fpv", { verb: a.ui === "dji" ? "Flew a QuickShot" : "FPV run through 8 gates", status: "Armed", body: surface, foot: [act("Save DVR clip", { cls: "primary", ack: "Saved the last 30 s of FPV to DVR clips.", done: "Saved ✓" }), act("Open Blackbox log", { cls: "ghost", ack: "Opened the Blackbox log at the moment of the yaw wobble." })], summary: `Flew an 8-gate FPV line in ${a.name}` });
   return { el, async play() {}, spec: { kind: "fpv", app: a.id, osd: ["battery", "rssi", "throttle", "flight time", "horizon"], gates: 8 } };
 }
 
@@ -248,7 +249,7 @@ function lightMake(a, r) {
   }, { bg: parseInt((ui.view || "#202020").slice(1), 16), shadows: true });
   kelvin.addEventListener("input", () => (kv.textContent = `${kelvin.value} K`));
   const surface = appSurface(a, [appBar([engineWord(a), "Lights", "World"], [h("span", { class: "ap-stat" }, "f/2.8 · 85 mm")]), h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row wrap" }, ...toggles, h("label", { class: "ap-slider grow" }, h("span", {}, "Key ", kv), kelvin)), pre], { cls: "lightwrap" });
-  const el = shell(a, "light", { verb: `Lit a portrait · ${engineWord(a)}`, status: "Rendering", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Render still"), h("button", { class: "eu-btn ghost" }, "Save rig")], summary: `Set a Rembrandt three-point rig in ${a.name}` });
+  const el = shell(a, "light", { verb: `Lit a portrait · ${engineWord(a)}`, status: "Rendering", body: surface, foot: [act("Render still", { cls: "primary", ack: "Rendering a 4K still with this rig — about 40 s." }), act("Save rig", { cls: "ghost", ack: "Saved the rig as a preset you can apply to other shots.", done: "Saved ✓" })], summary: `Set a Rembrandt three-point rig in ${a.name}` });
   return { el, async play() {}, spec: { kind: "light", app: a.id, rig: ["key spot 4300K", "fill point", "rim spot"], preset: "Rembrandt", engine: engineWord(a) } };
 }
 function kelvinRGB(k) { // Tanner Helland's fit
@@ -308,7 +309,7 @@ function triggerMake(a, r) {
     while (log.children.length > 3) log.lastChild.remove();
   }
   const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Viewport", "Blueprint", "▶ PIE"] : a.ui === "godot" ? ["3D", "Script", "▶"] : [a.name, "Scene", "▶ Play"], [h("span", { class: "ap-stat" }, "Tap the floor to walk")]), h("div", { class: "ap-split tr" }, h("div", { class: "ap-vpwrap" }, vp), h("div", {}, bp, log))], { cls: "trigger" });
-  const el = shell(a, "trigger", { verb: "Wired a trigger volume", status: "Playing", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Add to level"), h("button", { class: "eu-btn ghost" }, "Open graph")], summary: `Wired a door trigger in ${a.name}` });
+  const el = shell(a, "trigger", { verb: "Wired a trigger volume", status: "Playing", body: surface, foot: [act("Add to level", { cls: "primary", ack: "Added the trigger to the level, wired to the door.", done: "Added ✓" }), act("Open graph", { cls: "ghost", ack: "Opened the trigger's event graph." })], summary: `Wired a door trigger in ${a.name}` });
   return { el, async play(run) { stagger(bp.children, { gap: 90 }); }, spec: { kind: "trigger", app: a.id, event: api[0], action: api[api.length - 1] } };
 }
 
@@ -370,7 +371,7 @@ function globeMake(a, r) {
   layers.forEach((b) => b.addEventListener("click", () => b.classList.toggle("on")));
   V.hud.append(h("div", { class: "gev-hud" }, h("span", {}, "ORBITAL HUD"), h("span", { class: "gev-utc" }, "UTC 14:22:07"), h("span", {}, "LIVE · ADS-B · TLE · USGS")), trk, voice);
   const surface = appSurface(a, [h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row wrap" }, ...layers, h("button", { type: "button", class: "ap-chip hot", onclick: () => { follow = (follow + 1) % 10; showTrk(); } }, "Cockpit ▶"))], { cls: "globe" });
-  const el = shell(a, "globe", { verb: "Following live traffic", status: "Live", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Send track to fframestudio"), h("button", { class: "eu-btn ghost" }, "Export CZML")], summary: `Tracked ${ROUTES.length} flights on ${a.name}` });
+  const el = shell(a, "globe", { verb: "Following live traffic", status: "Live", body: surface, foot: [act("Send track to fframestudio", { cls: "primary", ack: "Sent the tracked path to fframestudio as a camera move." }), act("Export CZML", { cls: "ghost", ack: "Exported the track as CZML — it opens in Cesium with timestamps." })], summary: `Tracked ${ROUTES.length} flights on ${a.name}` });
   return { el, async play(run) { const s = voice.querySelector("span"); voice.classList.add("on"); await typeText(s, "“follow the flight into Tokyo”", run, 30); await run.wait(500); follow = 0; showTrk(); await run.wait(2400); voice.classList.remove("on"); }, spec: { kind: "globe", app: a.id, layers: ["flights", "satellites", "quakes"], follow: "UAL837 SFO→HND", sources: "ADS-B, TLE, USGS (demo data here)" } };
 }
 
@@ -421,7 +422,7 @@ function gen3dMake(a, r) {
   const G3 = {};
   variants.addEventListener("click", (e) => { const b = e.target.closest(".g3-v"); if (!b) return; variants.querySelectorAll(".g3-v").forEach((x) => x.classList.toggle("on", x === b)); G3.swap?.(+b.dataset.i); });
   const surface = appSurface(a, [prompt, h("div", { class: "ap-split g3" }, h("div", { class: "ap-vpwrap" }, vp), list), variants], { cls: "gen3d" });
-  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: "Generating", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Send to Blender"), h("button", { class: "eu-btn ghost" }, "Download .glb")], summary: `Generated a 3D asset with ${a.name}` });
+  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: "Generating", body: surface, foot: [act("Send to Blender", { cls: "primary", ack: "Imported into Blender at origin, scaled to 1 m, with the PBR textures." }), act("Download .glb", { cls: "ghost", ack: "Downloaded model.glb (2.3 MB)." })], summary: `Generated a 3D asset with ${a.name}` });
   return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb" } };
 }
 
@@ -476,7 +477,7 @@ function simMake(a, r) {
     };
   }, { bg: parseInt((ui.view || "#3a3d40").slice(1), 16), shadows: true });
   const surface = appSurface(a, [appBar(a.ui === "omni" ? ["Isaac Lab", "Stage", "Physics"] : [a.name, "Envs", "Physics"], [stat]), h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row between" }, h("span", { class: "eu-hint" }, "Reward · PPO"), reward)], { cls: "sim" });
-  const el = shell(a, "sim", { verb: "Training pick-and-place", status: "Running", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Export policy (.pt)"), h("button", { class: "eu-btn ghost" }, "Record rollout")], summary: `Trained a pick-and-place policy in ${a.name}` });
+  const el = shell(a, "sim", { verb: "Training pick-and-place", status: "Running", body: surface, foot: [act("Export policy (.pt)", { cls: "primary", ack: "Exported the policy (policy.pt) with its config, so the run can be reproduced." }), act("Record rollout", { cls: "ghost", ack: "Recording 10 rollouts with the current policy." })], summary: `Trained a pick-and-place policy in ${a.name}` });
   return { el, async play() {}, spec: { kind: "sim", app: a.id, task: "pick-and-place", envs: 16, algo: "PPO", physics: a.name === "Newton" ? "Newton (Warp)" : "PhysX" } };
 }
 

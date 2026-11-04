@@ -2,6 +2,7 @@
 // cards that merge wearables and food logs into the one number that matters today.
 import { h, anim, stagger, countUp, typeText, Run } from "./motion.js";
 import { shell, burst, holdButton, svg } from "./shell.js";
+import { act, tell, why, undoable, settle } from "./loop.js";
 import { appSurface, appBar } from "./chrome.js";
 import { stage3d, sunRig, rand } from "./stage3d.js";
 
@@ -76,7 +77,7 @@ function twinMake(a, r) {
   const editor = h("pre", { class: "ap-code tw-src" });
   const src = ["-- warehouse.bend · checked before any plan reaches a robot", "law no_wet_aisle(plan, map):", "  ∀ step ∈ plan.", "    robot.kind = AMR ⇒ step.aisle ∉ map.wet", "", "law dock_battery(r):", "  r.battery < 20 ⇒ next(r) = Dock", "", "$ bend_verify --verdict", "VERIFIED · 4 laws · 2,048 cases · 0 counterexamples"];
   const surface = appSurface(a, [appBar(["Twin", "Policies", "Fleet", "Replay"], [h("span", { class: "ap-stat" }, "4 robots · Bend-gated")]), h("div", { class: "ap-vpwrap" }, vp), kpi, h("div", { class: "tw-grid" }, h("div", {}, laws, log), editor)], { cls: "twin" });
-  const el = shell(a, "twin", { verb: "Fleet under proven policies", status: "Live", body: surface, foot: [holdButton("Hold to deploy policy v4", (b, t) => { t.textContent = "Deployed to 4 robots"; burst(b); }), h("button", { class: "eu-btn ghost" }, "Replay last shift")], summary: "Ran the warehouse twin with 4 Bend-proven laws, 0 violations" });
+  const el = shell(a, "twin", { verb: "Fleet under proven policies", status: "Live", body: surface, foot: [holdButton("Hold to deploy policy v4", (b, t) => { t.textContent = "Deployed to 4 robots"; burst(b); }), act("Replay last shift", { cls: "ghost", ack: "Replaying the last 8 hours at 60× — watch the dock door policy kick in at 14:20." })], summary: "Ran the warehouse twin with 4 Bend-proven laws, 0 violations" });
   return { el, async play(run) { stagger(laws.children, { gap: 80 }); for (const l of src) { const d = h("div"); editor.append(d); await typeText(d, l, run, 120); } }, spec: { kind: "twin", app: a.id, robots: ["cleaner", "AMR ×3"], laws: LAWS.map((l) => l[0]), gate: "bend_verify before every plan" } };
 }
 
@@ -103,7 +104,7 @@ function healthMake(a, r) {
   plan.addEventListener("click", (e) => { const b = e.target.closest(".ap-chip"); if (b) { b.classList.toggle("on"); if (b.classList.contains("on")) burst(b, "#22c55e", 8); } });
   const top = h("div", { class: "hl-top" }, h("div", { class: "hl-ringwrap" }, rings, h("div", { class: "hl-center" }, big, h("span", {}, label))), h("div", { class: "hl-side" }, h("span", { class: "ap-lbl" }, "HRV · 7 days (ms)"), spark, h("span", { class: "ap-lbl" }, "Sleep stages"), sleep));
   const surface = appSurface(a, [appBar([a.name, "Trends", "Journal"], [sources]), top, mode === "food" ? macros : null, verdict, plan], { cls: "health" });
-  const el = shell(a, "health", { verb: "Merged 4 sources", status: "Synced", body: surface, foot: [h("button", { class: "eu-btn primary" }, "Add plan to calendar"), h("button", { class: "eu-btn ghost" }, "Why?")], summary: "Recovery 68%: moved the hard run to tomorrow" });
+  const el = shell(a, "health", { verb: "Merged 4 sources", status: "Synced", body: surface, foot: [act("Add plan to calendar", { cls: "primary", ack: "Added three blocks this week: two zone-2 runs and a rest day. They move if a meeting lands on them.", done: "Added ✓" }), act("Why?", { cls: "ghost", ack: "Your HRV is 12% under your baseline and sleep was short two nights running — the plan trades intensity for recovery until it rebounds." })], summary: "Recovery 68%: moved the hard run to tomorrow" });
   return { el, async play(run) {
     rings.querySelectorAll(".hl-arc").forEach((c, i) => { const L = +c.getAttribute("stroke-dasharray"); anim(c, [{ strokeDashoffset: L }, { strokeDashoffset: L * (1 - +c.dataset.v) }], { duration: 1200, delay: i * 140, easing: "cubic-bezier(.16,1,.3,1)" }); });
     const v = +rings.querySelector(".hl-arc").dataset.v;

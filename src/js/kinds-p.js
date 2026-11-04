@@ -3,6 +3,7 @@
 // Tool names and costs come from each plugin's README / skill (see apps.json docs).
 import { h, anim, stagger, Run } from "./motion.js";
 import { shell, burst, holdButton } from "./shell.js";
+import { act, tell, why, undoable, settle } from "./loop.js";
 import { appSurface, appBar } from "./chrome.js";
 import { KINDS_3D } from "./kinds-3d.js";
 
@@ -47,7 +48,7 @@ function pluginMake(a, r) {
   }
   const quietPlay = (v) => v.play(new Run()).catch(() => {});
   const body = h("div", {}, appSurface(a, [appBar(["Hermes", "Plugin", a.name], [bal]), h("div", { class: "pl-task" }, h("span", { class: "kicker" }, "Task"), h("b", {}, c.title)), rows, view ? h("div", { class: "pl-view" }, view.el.querySelector(".ap") || view.el) : null], { cls: "plugin" }), h("p", { class: "eu-hint" }, total ? "The plugin's rule: name the tool and its cost, then wait for you. One hold approves the whole chain." : "Read-only tools run without asking."));
-  const el = shell(a, "plugin", { verb: `Hermes plugin · ${c.steps.length} tools`, status: total ? "Needs OK" : "Ready", body, foot: [confirm, h("button", { class: "eu-btn ghost" }, "Show calls")], summary: `${a.name}: ${c.title}` });
+  const el = shell(a, "plugin", { verb: `Hermes plugin · ${c.steps.length} tools`, status: total ? "Needs OK" : "Ready", body, foot: [confirm, act("Show calls", { cls: "ghost", ack: "Three calls: meet.join (read-only), meet.transcribe (read-only), meet.actions (writes notes — this is the one that asks first)." })], summary: `${a.name}: ${c.title}` });
   return { el, async play(rn) { stagger(rows.children, { gap: 80 }); }, spec: { kind: "plugin", app: a.id, host: "hermes", tools: c.steps.map((s) => ({ tool: s[0], args: s[1], credits: s[2] })), confirm: total ? "hold" : "none" } };
 }
 

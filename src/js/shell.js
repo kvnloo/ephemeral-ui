@@ -55,7 +55,7 @@ export function holdButton(label, done, { ms = 900, cls = "" } = {}) {
   const b = h("button", { class: `eu-btn primary hold ${cls}`, type: "button" }, fill, txt);
   let a = null, fired = false;
   const start = (e) => {
-    if (fired) return;
+    if (fired || b.disabled) return;
     e.preventDefault();
     a = fill.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: ms, easing: "linear", fill: "forwards" });
     b.classList.add("holding");
@@ -128,6 +128,8 @@ export function shell(a, kind, { verb, status, body, foot = [], summary, cls = "
   ring.b.addEventListener("click", () => {
     pinned = !pinned; card.classList.toggle("pinned", pinned); ring.b.setAttribute("aria-pressed", String(pinned));
     if (pinned) ttlAnim?.pause(); else ttlAnim?.play();
+    // The agent should know the user kept this card: pinned cards are context, not exhaust.
+    card.dispatchEvent(new CustomEvent("eui:intent", { bubbles: true, detail: { v: 0, kind, app: a.id, action: pinned ? "pin" : "unpin", label: pinned ? "Keep this card" : "Let this card go", ids: [`card:${kind}`], entities: { card: kind }, at: Date.now() } }));
     anim(ring.b, [{ transform: "scale(.8)" }, { transform: "scale(1)" }], { spring: "bouncy" });
   });
   /** Start the lifetime; resolves once the card has dissolved into its summary chip (unless pinned). */
