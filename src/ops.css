@@ -70,8 +70,9 @@
 /* context tray */
 .ops-tray { display: grid; gap: 6px; padding: 10px; border-radius: 10px; background: var(--sl-line-1); }
 .ops-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.ops-chip { display: inline-flex; gap: 6px; align-items: center; max-width: 100%; padding: 3px 8px; border-radius: 999px; background: var(--sl-sel); font-size: 12px; overflow-wrap: anywhere; }
+.ops-chip { display: inline-flex; gap: 6px; align-items: center; max-width: 100%; padding: 3px 8px; border-radius: 12px; background: var(--sl-sel); font-size: 12px; overflow-wrap: anywhere; }
 .ops-chip.pinned { outline: 1px solid var(--sl-c1); }
+.ops-chip i, .ops-chip .ops-x { flex: none; overflow-wrap: normal; }
 .ops-chip i { font-style: normal; font-size: 10.5px; color: var(--sl-ink-3); text-transform: uppercase; letter-spacing: .04em; }
 .ops-x { all: unset; cursor: pointer; padding: 0 2px; color: var(--sl-ink-3); }
 .ops-tempty { font-size: 12px; color: var(--sl-ink-3); }
@@ -87,6 +88,7 @@
 .ops-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); align-items: start; }
 .ops-intro { max-width: 760px; margin: 0 0 16px; color: var(--h-mutedFg); line-height: 1.55; }
 @media (max-width: 520px) {
-  .ops-lane { grid-template-columns: 52px minmax(60px, 1fr) 40px; grid-template-areas: "n bar v" "n m b"; }
+  .ops-lane { grid-template-columns: 52px minmax(60px, 1fr) auto; grid-template-areas: "n bar v" "n m b"; }
+  .ops-lane .sl-badge { justify-self: end; }
   .ops-ev { grid-template-columns: 74px 10px minmax(0, 1fr); }
 }

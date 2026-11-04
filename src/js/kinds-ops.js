@@ -373,7 +373,7 @@ function incidentsBoard(d, c) {
     { label: "Failed turns (48 h)", value: fmt.int(ch.length), hint: `${explained.length} right after an OOM kill or SIGKILL`, tone: bare.length ? "warn" : null },
     { label: "Unit failures (48 h)", value: fmt.int(sum(d.journalUnits ?? [], (u) => u.n)), hint: units[0] ? `top: ${units[0].unit} ×${units[0].n}` : "" },
   ], { min: 150 });
-  const ub = BarList.make(units.map((u, i) => ({ key: u.unit, label: `${u.unit} (${u.what}${chronic.has(u.unit) ? ", chronic: not counted as a cause" : ""})`, value: u.n, color: chronic.has(u.unit) ? OTHER : SERIES[(i + 3) % 10] })));
+  const ub = BarList.make(units.map((u, i) => ({ key: u.unit, label: `${u.unit} (${u.what}${chronic.has(u.unit) ? " · chronic, not a cause" : ""})`, value: u.n, color: chronic.has(u.unit) ? OTHER : SERIES[(i + 3) % 10] })));
   ub.on("select", (e) => c.emit("select", { entities: e.entities.key ? { unit: e.entities.key } : {}, label: e.entities.key ? `unit ${e.entities.key} failing repeatedly` : "cleared" }));
   return h("div", {}, head, grid.el, chainEl ? sec("Failed turns and what was logged in the 10 min before · click to send that window", chainEl) : null, sec("Last 48 h on one axis · drag to narrow the list", chart.el), sec("Events", list), units.length ? sec("Units failing most (48 h)", ub.el) : null,
     gap("which process the cgroup OOM killer picked and when: agent-oom-guard logs only its own kills, so a unit SIGKILL is read as \"likely cgroup OOM\" (agent.slice memory.events oom_kill is an untimed counter; sample it to time a kill), and the ACP error text behind \"Internal error\"."));

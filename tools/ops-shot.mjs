@@ -75,8 +75,8 @@ for (const id of ids) {
 }
 report.overflow = await overflow();
 await ctx.close();
-// deep links on fresh pages
-for (const link of ["ops", "ops=incidents", "ops=burn", "ops=fleet"]) {
+// deep links on fresh pages: #ops and every #ops=<board> on the page
+for (const link of ["ops", ...ids.map((id) => `ops=${id.replace(/^ops-/, "")}`)]) {
   ctx = await newCtx(); const p = await ctx.newPage(); watch(p);
   await p.goto(`${url}#theme=${theme}&${link}`);
   await p.waitForFunction(() => document.documentElement.classList.contains("ready"), null, { timeout: 40000 });
@@ -96,13 +96,13 @@ if (pl) {
   await p.waitForFunction(() => document.documentElement.classList.contains("ready"), null, { timeout: 40000 });
   await p.waitForTimeout(3000);
   const n = await p.$$eval("#playlist .eu-card[data-kind^='ops-']", (cs) => cs.length).catch(() => 0);
-  const dropped = await p.$eval("#playlist", (e) => /dropped|skipped/i.test(e.textContent) ? e.textContent.match(/\d+ (?:card|item)s? (?:dropped|skipped)/i)?.[0] ?? "some dropped" : null).catch(() => null);
+  const dropped = await p.$eval("#playlist .sechead", (e) => e.textContent.match(/(\d+) unknown cards? skipped/)?.[1] ?? "0").catch(() => "no header");
   report.playlist = { cards: n, dropped };
   await p.screenshot({ path: path.join(out, `${tag}-playlist.png`), animations: "disabled" });
   await ctx.close();
 }
 await browser.close();
-const bad = report.errors.length + report.http.length + report.boards.filter((b) => !b.ok).length + report.links.filter((l) => !l.ok).length + (report.overflow.out.length ? 1 : 0) + (pl && !(report.playlist?.cards >= 8) ? 1 : 0);
+const bad = report.errors.length + report.http.length + report.boards.filter((b) => !b.ok).length + report.links.filter((l) => !l.ok).length + (report.overflow.out.length ? 1 : 0) + (pl && !(report.playlist?.cards >= 8 && report.playlist?.dropped === "0") ? 1 : 0);
 report.pass = bad === 0;
 fs.writeFileSync(path.join(out, `${tag}-report.json`), JSON.stringify(report, null, 1));
 console.log(JSON.stringify({ tag, pass: report.pass, boards: report.boards.map((b) => `${b.ok ? "ok" : "FAIL"} ${b.id}`), links: report.links.map((l) => `${l.ok ? "ok" : "FAIL"} ${l.link}`), playlist: report.playlist, overflow: report.overflow.out, errors: report.errors.slice(0, 5), http: report.http.slice(0, 5) }));
