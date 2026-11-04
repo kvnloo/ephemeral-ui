@@ -436,7 +436,7 @@ GAPS = [
     {"metric": "Tool-call latency (p50/p95) for Hermes", "why": "/stats tools rows carry calls/errors/sizes, no durations", "owner": "tokenomics", "board": "tools"},
     {"metric": "Per-request success/failure for Hermes", "why": "failedRequests is always 0: rows are session usage, not requests", "owner": "tokenomics", "board": "tokens"},
     {"metric": "Claude and Codex weekly pace once a window hits 100%", "why": "burn-pace reports band=unknown, pace=null at 100%; no reset-relative projection", "owner": "z0intelligence", "board": "burn"},
-    {"metric": "Hermes model per message in AgentsView", "why": "AgentsView rows for hermes sessions have no model; mix comes from /stats instead", "owner": "z0intelligence", "board": "models"},
+    {"metric": "Hermes model per message in AgentsView", "why": "AgentsView rows for hermes sessions have no model; the board reads each profile's state.db instead, so other consumers of AgentsView still miss it", "owner": "z0intelligence", "board": "models"},
     {"metric": "Tokens / cost per verified task", "why": "no verifier outcomes are joined to usage yet (outcome tiers exist in the spec)", "owner": "tokenomics", "board": "tokens"},
     {"metric": "Free-lane quota remaining (opencode, agy)", "why": "no probe; quota exhaustion is only seen as an error string", "owner": "kerdoios", "board": "routing"},
     {"metric": "Per-pod memory and GPU share in k3s", "why": "metrics-server gives node totals; no per-workload GPU accounting", "owner": "kerdoios", "board": "fleet"},
