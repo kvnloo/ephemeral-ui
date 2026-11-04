@@ -112,7 +112,7 @@ export const TimelineCanvas = {
     let matchIds = matches();
     function draw() {
       const W = Math.max(280, el.clientWidth || 600), G = W < 520 ? 82 : 150, rs = rows();
-      const H = RULER + rs.reduce((n, r) => n + r.hgt, 0) + 4, dpr = Math.min(2, devicePixelRatio || 1);
+      const H = RULER + rs.reduce((n, r) => n + r.hgt, 0) + 4, dpr = Math.min(3, devicePixelRatio || 1, Math.sqrt(12e6 / (W * H)));
       cv.width = W * dpr; cv.height = H * dpr; cv.style.height = `${H}px`;
       const P = readPalette(el), c2 = cv.getContext("2d"), sc = view.scale;
       c2.setTransform(dpr, 0, 0, dpr, 0, 0); c2.clearRect(0, 0, W, H);
@@ -183,38 +183,76 @@ export const TimelineCanvas = {
       if (!quiet) c.emit("select", { ids: spanIds(s, t, trace), label: spanLabel(s, t) });
       o.onSelect?.(s, t, { open });
     }
-    let drag = null;
-    cv.addEventListener("pointerdown", (e) => { cv.focus({ preventScroll: true }); const r = cv.getBoundingClientRect(), x = e.clientX - r.left; drag = { x: e.clientX, u: [view.u0, view.u1], moved: false, brush: e.shiftKey && x > geo.G, ua: xToU(x) }; cv.setPointerCapture(e.pointerId); });
+    let drag = null, pinch = null, lp = 0, outside = null;
+    const pts = new Map(), touch = (e) => e.pointerType === "touch";
+    const local = (e) => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    function showTip(hit, x, y) {
+      tip.hidden = false;
+      if (hit.marker) tip.replaceChildren(h("b", {}, hit.marker.label), h("div", { class: "sl-micro" }, `${hit.marker.kind.replace("_", " ")} · ${fmt.clock(hit.marker.time)} (${formatOffset(hit.marker.time - trace.startedAt)})`));
+      else { const s = hit.s; tip.replaceChildren(...[h("b", {}, s.label), h("div", { class: "sl-micro" }, `${fmt.dur(s.end - s.start)} · ${fmt.clock(s.start)} (${formatOffset(s.start - trace.startedAt)})${s.unterminated ? " · unterminated" : ""}`), s.kind === "model" ? h("div", { class: "sl-micro" }, [s.tokens != null ? `${fmt.int(s.tokens)} tok` : "usage not recorded", s.cost != null ? `$${s.cost.toFixed(4)}` : null, s.ttft != null ? `TTFT ${fmt.dur(s.ttft)}` : null, s.isError ? "error" : null].filter(Boolean).join(" · ")) : null, s.kind === "subagent" && s.model ? h("div", { class: "sl-micro" }, s.model) : null, s.isError && s.errorKind ? h("div", { class: "sl-micro bad" }, s.errorKind) : null, s.detail ? h("div", { class: "sl-tl-tipd" }, s.detail) : null].filter(Boolean)); }
+      const tw = tip.offsetWidth || 230, th = tip.offsetHeight || 70;
+      tip.style.left = `${Math.max(0, Math.min(x + 12, geo.W - tw - 4))}px`; tip.style.top = `${y + 14 + th > geo.H ? Math.max(0, y - th - 8) : y + 14}px`;
+    }
+    // a tooltip opened by a tap stays until the next touch outside the timeline
+    const holdTip = () => { if (outside) return; outside = (ev) => { if (el.contains(ev.target)) return; removeEventListener("pointerdown", outside, true); outside = null; tip.hidden = true; if (st.hover) { st.hover = null; redraw(); } }; addEventListener("pointerdown", outside, true); };
+    const emitBrush = () => { const [a, b] = [Math.min(...st.brush), Math.max(...st.brush)], range = [Math.round(view.scale.toT(a)), Math.round(view.scale.toT(b))]; c.spec.brush = range; c.emit("brush", { ids: { session: trace.file }, range, label: `${fmt.clock(range[0])} → ${fmt.clock(range[1])} (${fmt.elapsed(range[1] - range[0])})` }); };
+    const pinchStart = () => { const [p, q] = [...pts.values()], r = cv.getBoundingClientRect(); pinch = { d0: Math.max(1, Math.hypot(p.x - q.x, p.y - q.y)), span: view.u1 - view.u0, ua: xToU((p.x + q.x) / 2 - r.left) }; };
+    // Touch: one finger drags to pan (vertical drags scroll the page), two fingers pinch-zoom around their
+    // midpoint, long-press then drag selects a time range (shift-drag on desktop), tap shows the span's tooltip.
+    cv.addEventListener("touchmove", (e) => { if (pinch || drag?.brush) e.preventDefault(); }, { passive: false });
+    let lastTouch = false, lastTap = null;
+    cv.addEventListener("contextmenu", (e) => { if (lastTouch) e.preventDefault(); });
+    cv.addEventListener("pointerdown", (e) => {
+      lastTouch = touch(e);
+      if (touch(e)) {
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); tip.hidden = true;
+        if (pts.size === 2) { clearTimeout(lp); drag = null; if (st.brush && !c.spec.brush) st.brush = null; pinchStart(); return; }
+        if (pts.size > 2) return;
+      }
+      if (!touch(e)) cv.focus({ preventScroll: true }); // keys need focus; on touch it only paints a focus ring
+      const [x] = local(e);
+      drag = { x: e.clientX, y: e.clientY, u: [view.u0, view.u1], moved: false, brush: e.shiftKey && x > geo.G, ua: xToU(x), id: e.pointerId };
+      cv.setPointerCapture(e.pointerId);
+      if (touch(e) && x > geo.G) { clearTimeout(lp); lp = setTimeout(() => { if (drag && !drag.moved && !pinch) { drag.brush = true; st.brush = [drag.ua, drag.ua]; redraw(); } }, 450); }
+    });
     cv.addEventListener("pointermove", (e) => {
-      const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const [x, y] = local(e);
+      if (touch(e)) {
+        if (!pts.has(e.pointerId)) return;
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pinch && pts.size >= 2) { const [p, q] = [...pts.values()], d = Math.max(1, Math.hypot(p.x - q.x, p.y - q.y)), ns = pinch.span * (pinch.d0 / d), mx = (p.x + q.x) / 2 - cv.getBoundingClientRect().left, frac = Math.min(1, Math.max(0, (mx - geo.G) / (geo.W - geo.G - 6))); view.set(pinch.ua - ns * frac, pinch.ua + ns * (1 - frac), "zoom"); return; }
+        if (!drag || drag.id !== e.pointerId) return;
+      }
       st.hx = x;
       if (drag) {
-        const dx = e.clientX - drag.x; if (Math.abs(dx) > 3) drag.moved = true;
+        const dx = e.clientX - drag.x; if (!drag.moved && (touch(e) ? Math.hypot(dx, e.clientY - drag.y) > 6 : Math.abs(dx) > 3)) { drag.moved = true; if (!drag.brush) clearTimeout(lp); }
         if (drag.moved && drag.brush) { st.brush = [drag.ua, xToU(x)]; redraw(); }
         else if (drag.moved) { const w = drag.u[1] - drag.u[0]; view.set(drag.u[0] - (dx / (geo.W - geo.G)) * w, drag.u[0] - (dx / (geo.W - geo.G)) * w + w, "pan"); }
         tip.hidden = true; return;
       }
       const hit = hitAt(x, y);
       if (hit !== st.hover && hit?.s !== st.hover?.s) { st.hover = hit; redraw(); }
-      if (hit) {
-        tip.hidden = false;
-        if (hit.marker) tip.replaceChildren(h("b", {}, hit.marker.label), h("div", { class: "sl-micro" }, `${hit.marker.kind.replace("_", " ")} · ${fmt.clock(hit.marker.time)} (${formatOffset(hit.marker.time - trace.startedAt)})`));
-        else { const s = hit.s; tip.replaceChildren(h("b", {}, s.label), h("div", { class: "sl-micro" }, `${fmt.dur(s.end - s.start)} · ${fmt.clock(s.start)} (${formatOffset(s.start - trace.startedAt)})${s.unterminated ? " · unterminated" : ""}`), s.kind === "model" ? h("div", { class: "sl-micro" }, [s.tokens != null ? `${fmt.int(s.tokens)} tok` : "usage not recorded", s.cost != null ? `$${s.cost.toFixed(4)}` : null, s.ttft != null ? `TTFT ${fmt.dur(s.ttft)}` : null, s.isError ? "error" : null].filter(Boolean).join(" · ")) : null, s.kind === "subagent" && s.model ? h("div", { class: "sl-micro" }, s.model) : null, s.isError && s.errorKind ? h("div", { class: "sl-micro bad" }, s.errorKind) : null, s.detail ? h("div", { class: "sl-tl-tipd" }, s.detail) : null); }
-        tip.style.left = `${Math.min(x + 12, geo.W - 230)}px`; tip.style.top = `${y + 14 > geo.H - 70 ? y - 70 : y + 14}px`; cv.style.cursor = "pointer";
-      } else { tip.hidden = true; cv.style.cursor = x > geo.G ? "grab" : "default"; }
+      if (hit) { showTip(hit, x, y); cv.style.cursor = "pointer"; } else { tip.hidden = true; cv.style.cursor = x > geo.G ? "grab" : "default"; }
     });
-    cv.addEventListener("pointerleave", () => { tip.hidden = true; st.hx = null; if (st.hover) { st.hover = null; redraw(); } });
+    cv.addEventListener("pointerleave", (e) => { if (touch(e)) return; tip.hidden = true; st.hx = null; if (st.hover) { st.hover = null; redraw(); } });
+    cv.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); clearTimeout(lp); if (pts.size < 2) pinch = null; if (drag?.id === e.pointerId) { if (drag.brush && !c.spec.brush) { st.brush = null; redraw(); } drag = null; } });
     cv.addEventListener("pointerup", (e) => {
+      if (touch(e)) { pts.delete(e.pointerId); clearTimeout(lp); if (pinch) { if (pts.size < 2) pinch = null; drag = null; return; } if (drag && drag.id !== e.pointerId) return; }
       const d = drag; drag = null;
-      if (d?.moved && d.brush && st.brush) { const [a, b] = [Math.min(...st.brush), Math.max(...st.brush)], range = [Math.round(view.scale.toT(a)), Math.round(view.scale.toT(b))]; c.spec.brush = range; c.emit("brush", { ids: { session: trace.file }, range, label: `${fmt.clock(range[0])} → ${fmt.clock(range[1])} (${fmt.elapsed(range[1] - range[0])})` }); return; }
+      // a long-press released without dragging is a tap (a slow tap can arm the long-press too)
+      if (d?.brush && st.brush && (d.moved || touch(e))) { if (Math.abs(st.brush[1] - st.brush[0]) > 0) { emitBrush(); return; } st.brush = null; if (d.moved) { redraw(); return; } }
       if (d?.moved) return;
-      const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const [x, y] = local(e);
+      // double-tap on touch: our own detector, keyed to the span under the first tap. Chrome's dblclick can land on
+      // a different span when the first tap's select reflows the page (TraceView opens its drawer, reveals the row).
+      if (touch(e) && x > geo.G) { const prev = lastTap; lastTap = { t: e.timeStamp, x: e.clientX, y: e.clientY, s: hitAt(x, y)?.s }; if (prev?.s && lastTap.t - prev.t < 500 && Math.hypot(lastTap.x - prev.x, lastTap.y - prev.y) < 40) { lastTap = null; tip.hidden = true; zoomToSpan(prev.s); return; } }
       if (x < geo.G) { const hd = geo.heads.find((q) => y >= q.y0 && y < q.y1); if (hd) c.toggle(hd.t.id); return; }
       const hit = hitAt(x, y);
       if (st.brush) { st.brush = null; delete c.spec.brush; }
       if (hit?.s) select(hit.s, hit.t); else if (st.sel) select(null, null); else redraw();
+      if (touch(e) && hit) { st.hover = hit; showTip(hit, x, y); holdTip(); }
     });
-    cv.addEventListener("dblclick", (e) => { const r = cv.getBoundingClientRect(), hit = hitAt(e.clientX - r.left, e.clientY - r.top); if (hit?.s) zoomToSpan(hit.s); });
+    cv.addEventListener("dblclick", (e) => { if (lastTouch) return; const r = cv.getBoundingClientRect(), hit = hitAt(e.clientX - r.left, e.clientY - r.top); if (hit?.s) zoomToSpan(hit.s); });
     cv.addEventListener("wheel", (e) => {
       const focused = document.activeElement === cv;
       if (!(e.ctrlKey || e.metaKey || focused)) return; // page scroll keeps working until the timeline has focus
@@ -271,7 +309,7 @@ export const Minimap = {
     let W = 600, raf = 0, drag = null;
     const tracks = trace.tracks.filter((t) => t.id === "main" || L.has("subagents"));
     function draw() {
-      W = Math.max(100, el.clientWidth || 600); const dpr = Math.min(2, devicePixelRatio || 1);
+      W = Math.max(100, el.clientWidth || 600); const dpr = Math.min(3, devicePixelRatio || 1);
       cv.width = W * dpr; cv.height = HGT * dpr; cv.style.height = `${HGT}px`;
       const c2 = cv.getContext("2d"); c2.setTransform(dpr, 0, 0, dpr, 0, 0); c2.clearRect(0, 0, W, HGT);
       const P = readPalette(el), sc = view.scale, [d0, d1] = sc.domain, ds = Math.max(d1 - d0, 1e-9), sh = HGT / KS.length;
@@ -453,6 +491,8 @@ export const TranscriptList = {
 };
 
 /* ---------------- TraceView composite (traces/TraceView.tsx) ---------------- */
+/** Touch-first device (phone, tablet): gesture hints name touch gestures instead of keys and the mouse. */
+const COARSE = () => typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 const LEGEND = [["turn", "Input"], ["model", "Model"], ["tool", "Tool"], ["subagent", "Agent"], ["background", "Background"]];
 /**
  * The whole trace page as one component: summary strip, axis/compress/search toolbar, minimap, canvas,
@@ -488,7 +528,7 @@ export const TraceView = {
     const toolbar = h("div", { class: "sl-tv-bar" }, axis.el, comp_, zoom, h("div", { class: "sl-tv-search" }, search.el, count, prev, next), h("span", { class: "sl-grow" }), legend);
     const expand = h("button", { type: "button", class: "sl-btn ghost sm", onclick: () => tl.collapseAll(false) }, "Expand all"), collapse = h("button", { type: "button", class: "sl-btn ghost sm", onclick: () => tl.collapseAll(true) }, "Collapse all");
     const titleRow = o.title === false ? null : h("div", { class: "sl-tv-title" }, o.onBack ? h("button", { type: "button", class: "sl-btn ghost sm", onclick: o.onBack }, "← Sessions") : null, h("b", {}, trace.title ?? trace.file), h("span", { class: "sl-dim" }, `${fmt.day(trace.startedAt)} · ${fmt.elapsed(trace.summary.wallMs)} · ${fmt.int(trace.summary.requests)} requests · ${trace.tracks.length} tracks`), trace.cwd ? mono(trace.cwd, "dim") : null);
-    el.append(...[titleRow, summary.el, card({ title: "Timeline", desc: "W/S zoom · A/D pan · drag pan · ⌘/ctrl-wheel zoom (plain wheel once focused) · shift-drag selects a range · 0 fit · F focus · dbl-click focus · Esc deselect · P pins", actions: [expand, collapse], body: h("div", { class: "sl-tv-tl" }, toolbar, mini.el, tl.el, drawerSlot) }), L.has("transcript") || o.transcript !== false ? card({ title: "Transcript", desc: `Every span and marker in order; click to inspect${o.withheld ? ". Message text is withheld in the public fixture." : ""}`, body: tx.el, flush: true }) : null, o.aggregates !== false && trace.summary.toolStats?.length ? card({ title: "Tool aggregates", desc: `${trace.summary.toolStats.length} tools, by total time`, body: fwd(AggregatesPanel.make(trace.summary.toolStats, { session: trace.file, pinnable: true }), "aggregates").el, flush: true }) : null].filter(Boolean));
+    el.append(...[titleRow, summary.el, card({ title: "Timeline", desc: COARSE() ? "Drag to pan · pinch to zoom · tap a span for its details · double-tap focuses it · long-press then drag selects a time range · tap a track name to fold it" : "W/S zoom · A/D pan · drag pan · ⌘/ctrl-wheel zoom (plain wheel once focused) · shift-drag selects a range · 0 fit · F focus · dbl-click focus · Esc deselect · P pins", actions: [expand, collapse], body: h("div", { class: "sl-tv-tl" }, toolbar, mini.el, tl.el, drawerSlot) }), L.has("transcript") || o.transcript !== false ? card({ title: "Transcript", desc: `Every span and marker in order; click to inspect${o.withheld ? ". Message text is withheld in the public fixture." : ""}`, body: tx.el, flush: true }) : null, o.aggregates !== false && trace.summary.toolStats?.length ? card({ title: "Tool aggregates", desc: `${trace.summary.toolStats.length} tools, by total time`, body: fwd(AggregatesPanel.make(trace.summary.toolStats, { session: trace.file, pinnable: true }), "aggregates").el, flush: true }) : null].filter(Boolean));
     Object.assign(c, { timeline: tl, minimap: mini, transcript: tx, view, select: (s, t, x) => tl.select(s, t, { reveal: true, ...x }), draw: () => { tl.draw(); mini.draw(); } });
     return c;
   },

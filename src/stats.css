@@ -147,6 +147,7 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-brush { fill: color-mix(in srgb, var(--sl-c1) 14%, transparent); stroke: var(--sl-c1); stroke-width: 1; }
 .sl-line { fill: none; stroke-width: 1.75; stroke-linejoin: round; }
 .sl-bar { transition: opacity .12s; }
+.sl-chart-hit { position: absolute; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
 .sl-chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--sl-ink-3); font-size: 12.5px; pointer-events: none; }
 .sl-chart-tip { position: absolute; z-index: 3; min-width: 150px; max-width: 260px; padding: 8px 10px; border-radius: 8px; background: var(--h-card-solid); border: 1px solid var(--sl-line-2); box-shadow: var(--h-shadow, 0 6px 24px rgb(0 0 0 / .18)); pointer-events: none; font-size: 12px; }
 .sl-tip-t { font-weight: 600; margin-bottom: 5px; }
@@ -176,6 +177,8 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-table tr[data-selected="true"] td { background: var(--sl-sel); }
 .sl-table tr:focus-visible { outline: 2px solid var(--sl-c1); outline-offset: -2px; }
 .sl-tr-detail > td { background: color-mix(in srgb, var(--h-fg) 2.5%, transparent); padding: 12px 14px; white-space: normal; max-width: none; }
+/* --sl-wrap-w is the wrapper's visible width (Table sets it): on a sideways-scrolling table the detail stays in view */
+.sl-tr-detail-in { position: sticky; left: 14px; width: calc(var(--sl-wrap-w) - 28px); min-width: 0; }
 .sl-td-empty { padding: 0 !important; }
 .sl-sort { color: var(--sl-c1); }
 .sl-pin { border: 1px solid var(--h-border); background: transparent; color: var(--sl-ink-2); border-radius: 6px; padding: 1px 7px; font: 11.5px var(--h-font); cursor: pointer; }
@@ -185,9 +188,14 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 
 /* drawer, modal, json */
 .sl-drawerhost[hidden] { display: none; }
-.sl-drawer { border: 1px solid var(--sl-line-2); border-radius: var(--rl, 12px); background: var(--h-card-solid); margin-top: 12px; display: flex; flex-direction: column; min-width: 0; max-height: 640px; overflow: hidden; outline: 0; }
+.sl-drawer { border: 1px solid var(--sl-line-2); border-radius: var(--rl, 12px); background: var(--h-card-solid); margin-top: 12px; display: flex; flex-direction: column; min-width: 0; max-height: min(640px, 85vh); max-height: min(640px, 85dvh); overflow: hidden; outline: 0; }
 .sl-drawer.overlay { position: fixed; z-index: 80; top: 12px; right: 12px; bottom: 12px; width: min(var(--dw, 560px), calc(100vw - 24px)); margin: 0; max-height: none; box-shadow: 0 20px 60px rgb(0 0 0 / .35); }
 .sl-scrim { position: fixed; inset: 0; z-index: 79; background: rgb(0 0 0 / .32); }
+.sl-drawer.overlay .sl-drawer-b { min-height: 0; }
+/* phones: the side sheet becomes a bottom sheet sized to the visible viewport, with the scrim tappable above it */
+@media (max-width: 600px) {
+  .sl-drawer.overlay { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-height: 85vh; max-height: 85dvh; border-radius: var(--rl, 12px) var(--rl, 12px) 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom); }
+}
 .sl-drawer-h { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--sl-line-1); }
 .sl-drawer-ts { flex: 1 1 auto; min-width: 0; }
 .sl-drawer-t { margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
@@ -198,7 +206,7 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-reqerr[data-tone="warn"] { background: color-mix(in srgb, var(--sl-warn) 10%, transparent); }
 .sl-reqerr pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 var(--h-mono); }
 .sl-modal-ov { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .42); }
-.sl-modal { width: min(480px, 100%); max-height: calc(100vh - 32px); overflow: auto; border-radius: var(--rl, 12px); background: var(--h-card-solid); border: 1px solid var(--sl-line-2); box-shadow: 0 24px 70px rgb(0 0 0 / .4); color: var(--h-fg); font: 13px var(--h-font); }
+.sl-modal { width: min(480px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; border-radius: var(--rl, 12px); background: var(--h-card-solid); border: 1px solid var(--sl-line-2); box-shadow: 0 24px 70px rgb(0 0 0 / .4); color: var(--h-fg); font: 13px var(--h-font); }
 .sl-modal-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 8px; }
 .sl-modal-h h4 { margin: 0; font-size: 15px; font-weight: 600; }
 .sl-modal-b { padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -215,6 +223,10 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-tl-cv:focus-visible { box-shadow: inset 0 0 0 2px var(--sl-c1); border-radius: 6px; }
 .sl-tl-tip[hidden] { display: none; }
 .sl-tl-tipd { margin-top: 4px; font: 11px/1.4 var(--h-mono); color: var(--sl-ink-2); max-height: 64px; overflow: hidden; overflow-wrap: anywhere; }
+/* the tip is inverted (fg background), so its secondary lines dim the tip's own ink, not the page's */
+.sl-tl-tip { max-width: min(300px, 92%); }
+.sl-tl-tip .sl-micro, .sl-tl-tip .sl-tl-tipd { color: color-mix(in srgb, var(--h-bg) 72%, transparent); white-space: normal; }
+.sl-tl-tip .sl-micro.bad { color: var(--sl-bad); }
 .sl-miniwrap { margin: 6px 0; min-width: 0; }
 .sl-mini { display: block; width: 100%; border-radius: 6px; background: color-mix(in srgb, var(--h-fg) 3%, transparent); touch-action: none; }
 .sl-sd { margin-top: 10px; }
@@ -279,7 +291,8 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-judge { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--sl-ink-2); }
 
 /* dashboard composite */
-.sl-dash { display: grid; grid-template-columns: 188px minmax(0, 1fr); border: 1px solid var(--sl-line-2); border-radius: var(--rl, 12px); background: color-mix(in srgb, var(--h-card-solid) 60%, var(--h-bg)); overflow: hidden; min-width: 0; }
+/* overflow: clip, not hidden: a hidden box is a scroll container and would stop .sl-dash-top from sticking */
+.sl-dash { display: grid; grid-template-columns: 188px minmax(0, 1fr); border: 1px solid var(--sl-line-2); border-radius: var(--rl, 12px); background: color-mix(in srgb, var(--h-card-solid) 60%, var(--h-bg)); overflow: hidden; overflow: clip; min-width: 0; }
 .sl-dash-side { border-right: 1px solid var(--sl-line-1); padding: 12px 8px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .sl-dash-grp { display: flex; flex-direction: column; gap: 1px; }
 .sl-dash-grp > span { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--sl-ink-3); padding: 0 8px 4px; }
@@ -289,7 +302,7 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-dash-nav kbd { margin-left: auto; font: 10px var(--h-mono); color: var(--sl-ink-3); }
 .sl-dash-keys { margin-top: auto; font-size: 11px; color: var(--sl-ink-3); padding: 0 8px; line-height: 1.6; }
 .sl-dash-main { min-width: 0; display: flex; flex-direction: column; }
-.sl-dash-top { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--sl-line-1); flex-wrap: wrap; position: sticky; top: 0; z-index: 2; background: var(--h-card-solid); }
+.sl-dash-top { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--sl-line-1); flex-wrap: wrap; position: sticky; top: var(--sl-sticky-top, 0px); z-index: 2; background: var(--h-card-solid); }
 .sl-dash-top b { font-size: 13.5px; }
 .sl-dash-body { padding: 14px; min-width: 0; }
 @media (max-width: 760px) {
@@ -309,6 +322,7 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-lib-tab[aria-pressed="true"] { background: var(--h-fg); color: var(--h-bg); border-color: transparent; }
 .sl-lib-grp { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--sl-ink-3); align-self: center; margin: 0 4px 0 8px; }
 .sl-lib-demo { display: flex; flex-direction: column; gap: 10px; min-width: 0; scroll-margin-top: 80px; }
+.sl-lib-demo:focus { outline: none; }
 .sl-lib-demo[data-flash] { animation: sl-flash 1.2s ease-out 1; border-radius: var(--rl, 12px); }
 @keyframes sl-flash { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sl-c1) 60%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
 .sl-lib-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -321,3 +335,9 @@ button.sl-legend-i:hover { background: var(--sl-hover); }
 .sl-ev-h b { color: var(--h-fg); font-weight: 600; }
 .sl-ev-list { max-height: 180px; overflow: auto; margin: 0; padding: 6px 12px; font: 11.5px/1.55 var(--h-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--sl-ink-2); }
 .sl-ev-list:empty::before { content: "Click, pin, drag or filter in the component above: its events land here, the same JSON a host bridge sends to the agent."; color: var(--sl-ink-3); font-family: var(--h-font); }
+
+/* touch: a title's text on long-press (stats-lib.js touchTip). Without this, Chrome's long-press selects the
+   word under the finger and opens its search panel instead of the explanation. */
+@media (pointer: coarse) { [data-stats-kind] [title], [data-stats-kind][title] { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } }
+.sl-touch-tip { position: fixed; z-index: 95; max-width: min(300px, calc(100vw - 16px)); padding: 7px 10px; border-radius: 8px; background: var(--h-card-solid); color: var(--h-fg); border: 1px solid var(--sl-line-2); box-shadow: var(--h-shadow, 0 6px 24px rgb(0 0 0 / .25)); font: 12.5px/1.45 var(--h-font); pointer-events: none; overflow-wrap: anywhere; }
+.sl-touch-tip[hidden] { display: none; }
