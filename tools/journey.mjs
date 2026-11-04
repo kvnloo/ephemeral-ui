@@ -1,4 +1,4 @@
-// Interaction journey: hero 3D scene, Blender drawer, sculpt drag, CAD click, combos tap-order, OSS swap, palette.
+// Interaction journey: hero 3D scene, Blender drawer, sculpt drag, CAD click, combos flow graph run + checkpoint, OSS swap, palette.
 import { createRequire } from "node:module";
 import fs from "node:fs";
 const require = createRequire("~/.t3/worktrees/t3code/experiment-openui-android-replay/apps/web/package.json");
@@ -46,21 +46,19 @@ await cad.click({ position: { x: cb.width * 0.7, y: cb.height * 0.86 } });
 r.cadUserPts = await p.evaluate(() => document.querySelector("#kindgrid .cad-l.you")?.getAttribute("points"));
 r.cadDims = await p.evaluate(() => document.querySelectorAll("#kindgrid .cad-dim g").length);
 await p.locator('#kindgrid .eu-card[data-kind=cad]').screenshot({ path: `${out}/${tag}-cad.png` });
-// combos: tap pieces in order on combo 2 (crash)
+// combos: the flow graph composes from the prompt, runs, stops at a checkpoint, and resumes on approve
 await p.evaluate(() => document.getElementById("combos").scrollIntoView());
-await p.locator(".cb-tab").nth(1).click(); await p.waitForTimeout(800);
-const order = ["sentry", "linear", "github", "vercel", "slack"];
-// tap a decoy first: should be rejected
-const decoy = await p.evaluate(() => [...document.querySelectorAll('.cb-tray .cb-p[data-k="-1"]')][0]?.dataset.app);
-await p.locator(`.cb-tray .cb-p[data-app="${decoy}"]`).click(); await p.waitForTimeout(500);
-r.decoyRejected = await p.evaluate(() => document.querySelectorAll(".cb-board .cb-p").length === 0);
-console.log("tray", await p.evaluate(() => [...document.querySelectorAll(".cb-tray .cb-p")].map((e) => e.dataset.app + ":" + e.dataset.k).join(" ")), "board", await p.evaluate(() => [...document.querySelectorAll(".cb-board .cb-p")].map((e) => e.dataset.app).join(" ")));
-for (const id of order) { const loc = p.locator(`.cb-tray .cb-p[data-app="${id}"]:not([data-used="1"])`).first(); if (!(await loc.count())) { console.log("missing", id); continue; } await loc.click(); await p.waitForTimeout(450); }
-await p.waitForTimeout(2500);
+await p.locator(".cb-tab").nth(0).click(); await p.waitForTimeout(900);
+r.comboNodes = await p.locator("#combos .fl-node").count();
+await p.locator("#combos .fl-run").click();
+await p.waitForSelector('#combos .fl-node[data-st="wait"]', { timeout: 30000 });
+r.comboGate = await p.locator("#combos .fl-ask").textContent();
+await p.locator("#combos .fl-approve").click();
+await p.waitForSelector("#combos .fl-insp.done", { timeout: 30000 });
+r.comboFactsAtDone = await p.locator("#combos .fl-fact").count();
 await p.locator("#combos").screenshot({ path: `${out}/${tag}-combos-flow.png` });
-r.comboPlaced = await p.evaluate(() => document.querySelectorAll(".cb-board .cb-p").length);
-r.comboNow = await p.evaluate(() => document.querySelector(".cb-out")?.innerText.slice(0, 120));
-r.xp = await p.evaluate(() => localStorage.getItem("eu-xp"));
+r.comboFacts = await p.locator("#combos .fl-fact").count();
+r.comboDone = await p.evaluate(() => document.querySelector("#combos .fl-insp.done")?.innerText.slice(0, 120));
 // OSS swap
 await p.evaluate(() => document.getElementById("oss").scrollIntoView()); await p.waitForTimeout(1500);
 const k1 = await p.evaluate(() => document.querySelector("#ossstage .eu-card")?.dataset.app);

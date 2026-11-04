@@ -1,0 +1,56 @@
+// Flow-graph combos: real-browser check. Runs a flow, waits at the checkpoint, approves, swaps an app, switches
+// prompt style; collects page errors, 4xx/5xx and horizontal overflow; screenshots each state.
+//   node tools/flow-shot.mjs <url> <outdir> <w> <h> <theme>
+import { createRequire } from "node:module";
+import fs from "node:fs";
+const require = createRequire(process.env.PLAYWRIGHT_FROM ?? "~/.t3/worktrees/t3code/experiment-openui-android-replay/apps/web/package.json");
+const { chromium } = require("playwright");
+const [url, out, w = 1440, hh = 900, theme = "t3-dark"] = process.argv.slice(2);
+fs.mkdirSync(out, { recursive: true });
+const browser = await chromium.launch({ executablePath: `${process.env.HOME}/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome` });
+const page = await browser.newPage({ viewport: { width: +w, height: +hh } });
+const errors = [];
+page.on("pageerror", (e) => errors.push("pageerror: " + e));
+page.on("console", (m) => m.type() === "error" && errors.push("console: " + m.text()));
+page.on("response", (r) => r.status() >= 400 && errors.push(`${r.status()} ${r.url()}`));
+const tag = `${w}-${theme}`;
+const shot = async (n, sel = "#combos .cb-tabs") => { await page.evaluate((q) => { const e = document.querySelector(q); scrollTo(0, e.getBoundingClientRect().top + scrollY - 64); }, sel); await page.waitForTimeout(150); await page.screenshot({ path: `${out}/${tag}-${n}.png`, animations: "disabled" }); };
+await page.goto(`${url}#theme=${theme}`);
+await page.waitForFunction(() => document.documentElement.classList.contains("ready"));
+await page.evaluate(() => { const s = document.getElementById("c-speed"); s.value = 2; s.dispatchEvent(new Event("input")); });
+await page.evaluate(() => document.querySelector("#combos .cb-tabs").scrollIntoView({ block: "start" }));
+await page.waitForTimeout(800);
+const checks = {};
+checks.nodes = await page.locator("#combos .fl-node").count();
+checks.labels = await page.locator("#combos .fl-lab").count();
+await page.waitForTimeout(1500);
+await shot("1-composed");
+await page.click("#combos .fl-run");
+await page.waitForSelector('#combos .fl-node[data-st="wait"]', { timeout: 20000 });
+await page.waitForTimeout(400);
+await shot("2-gate", +w < 700 ? "#combos .fl-insp" : "#combos .cb-tabs");
+checks.gateAsk = await page.locator("#combos .fl-ask").textContent();
+const decisions = []; await page.exposeFunction("_dec", (d) => decisions.push(d));
+await page.evaluate(() => document.getElementById("combos").addEventListener("eui:decision", (e) => window._dec(e.detail)));
+await page.click("#combos .fl-approve");
+await page.waitForFunction(() => document.querySelector("#combos .fl-insp.done"), null, { timeout: 25000 });
+await shot("3-done", +w < 700 ? "#combos .fl-insp" : "#combos .cb-tabs");
+checks.facts = await page.locator("#combos .fl-fact").count();
+checks.decisions = decisions;
+// personalize: walk-through adds checkpoints; swap github → gitlab
+await page.click('#combos .fl-style button[data-style="walk"]');
+await page.waitForTimeout(600);
+checks.walkGates = await page.locator("#combos .fl-gate-b").count();
+await page.click('#combos .fl-chip[data-node="g"]');
+await page.waitForTimeout(400);
+checks.swapped = await page.locator('#combos .fl-node[data-id="g"] .fl-nh b').textContent();
+await page.locator('#combos .fl-lab').nth(2).dispatchEvent('click');
+await page.waitForTimeout(300);
+await shot("4-walk-swap-wire");
+await page.click('#combos .fl-style button[data-style="voice"]');
+await page.waitForTimeout(500);
+await shot("5-voice");
+checks.overflowX = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+checks.errors = errors;
+console.log(JSON.stringify(checks));
+await browser.close();

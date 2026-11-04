@@ -26,7 +26,7 @@ for (let i = 0; i < cells; i++) {
   await c.screenshot({ path: `${out}/${tag}-k-${k}.png` });
 }
 await p.evaluate(() => document.getElementById("combos").scrollIntoView()); await p.waitForTimeout(500); await shot("combos-0", "#combos");
-await p.click(".cb-auto"); await p.waitForTimeout(3500); await shot("combos-1", "#combos"); await p.waitForTimeout(5000); await shot("combos-2", "#combos");
+await p.click("#combos .fl-run"); await p.waitForTimeout(3500); await shot("combos-1", "#combos"); await p.waitForTimeout(5000); await shot("combos-2", "#combos");
 await p.evaluate(() => document.getElementById("oss").scrollIntoView()); await p.waitForTimeout(2500); await shot("oss", "#oss");
 const ov = await p.evaluate((W) => { const o = []; const sc = (el) => { for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (/(auto|scroll|hidden|clip)/.test(s.overflowX)) return true; } return false; }; for (const el of document.querySelectorAll("body *")) { const r = el.getBoundingClientRect(); if (r.width && r.right > W + 1 && !sc(el) && el.parentElement.getBoundingClientRect().right <= W + 1) o.push(`${el.tagName}.${el.className?.baseVal ?? el.className} r=${Math.round(r.right)}`); } return o.slice(0, 20); }, +W);
 console.log("overflow:", JSON.stringify(ov));
