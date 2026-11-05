@@ -224,3 +224,23 @@
   .os-table .os-barc .os-mono { margin-left: 0; }
   .os-table td, .os-table th { padding: 6px 7px; }
 }
+
+/* K16 (2026-11-05): trace cards wear omp /stats' own dark skin, scoped to the card the way GEV's HUD is
+   scoped to .k-gev-contacts. Tokens copied from omp-stats client/styles.css [data-theme="dark"]; the host
+   theme still owns the page around the card. */
+.k-trace {
+  --h-bg: #000; --h-card: #0e0e10; --h-input: #17171a; --h-muted: #17171a; --h-sidebar: #09090a;
+  --h-fg: #ededef; --h-mutedFg: #a0a0a8; --h-border: rgba(255, 255, 255, .09); --h-sidebarBorder: rgba(255, 255, 255, .06);
+  --h-card-solid: #17171a; --h-accent: #17171a; --h-message: #0e0e10; --h-messageBorder: rgba(255, 255, 255, .09);
+  --h-primary: #f068c8; --h-primary-ink: #0a0a0b; --h-success: #3ecf8e; --h-successFg: #0a0a0b; --h-dangerFg: #0a0a0b; --h-warning: #f5a524; --h-danger: #ff6166;
+  --h-font: "Inter var", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --h-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  background: #09090a; color: #ededef; border: 1px solid rgba(255, 255, 255, .09);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .05) inset; color-scheme: dark;
+}
+.k-trace .eu-h { border-image: linear-gradient(100deg, #5ad8e6, #ed4abf) 0 0 1 0 / 0 0 1px 0; }
+.k-trace .os {
+  --os-ink-3: #a0a0a8;
+  --os-turn: #a0a0a8; --os-model: #5ad8e6; --os-tool: #f5a524; --os-agent: #ed4abf; --os-bg: #46464c;
+  --os-bad: #ff6166; --os-bad-soft: rgba(255, 97, 102, .13); --os-ok: #3ecf8e; --os-focus: #5ad8e6; --os-inv: #0a0a0b;
+}
