@@ -1,4 +1,5 @@
-"""Real-phone check of the Cua Driver card on a focus-safe S22 virtual display (never display 0).
+"""PAUSED for Cua until the display-0 guard (fsdisplay OwnerTaskConflict/check_owner) is in use; CDP probes target Chrome and need rework for Samsung Internet.
+Real-phone check of the Cua Driver card on a focus-safe S22 virtual display (never display 0).
 Reuses chatgpt-driver/focus_safe/fsdisplay.FocusSafe, same pattern as phone-parallel-20261105/play_check.py."""
 import json, subprocess, sys, time
 from pathlib import Path
@@ -36,7 +37,7 @@ def find(fs, pred):
 try:
     with FocusSafe(DEV, name="cua-card-check", keep_awake=True) as fs:
         rec["display"] = fs.id
-        fs.sh(f"am start --display {fs.id} -f 0x18000000 -a android.intent.action.VIEW -d '{URL}?t={T}#app=cua' com.android.chrome")
+        fs.start_url(f"{URL}?t={T}#app=cua")  # guarded: explicit display, refuses a browser with an owner task
         fs.check_focus(); time.sleep(14)
         rec["cdp_open"] = cdp("JSON.stringify({drawer: !document.getElementById('drawer').hidden, card: !!document.querySelector('.k-cua-action')})")
         rec["steps"].append({"open": fs.screenshot(str(OUT / "01-open.png"))})

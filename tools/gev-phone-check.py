@@ -26,7 +26,7 @@ rec = {"url": URL, "device": DEV, "before": owner_focus(), "steps": []}
 try:
     with FocusSafe(DEV, name="gev-card-check", keep_awake=True) as fs:
         rec["display"] = fs.id; rec["size"] = [fs.w, fs.h]
-        fs.sh(f"am start --display {fs.id} -f 0x18000000 -a android.intent.action.VIEW -d '{URL}?t={int(time.time())}#app=god-s-eye-view' com.android.chrome")
+        fs.start_url(f"{URL}?t={int(time.time())}#app=god-s-eye-view")  # guarded: explicit display, refuses a browser with an owner task
         fs.check_focus(); time.sleep(12)
         probe = "JSON.stringify({hash: location.hash, drawer: !document.getElementById('drawer').hidden, gev: !!document.querySelector('.k-gev-contacts'), blips: document.querySelectorAll('.gc-scope .blip').length, w: innerWidth})"
         rec["cdp_open"] = subprocess.run(["python3", str(Path(__file__).with_name("cdp_eval.py")), ":18802/", probe], capture_output=True, text=True, timeout=30).stdout.strip()
