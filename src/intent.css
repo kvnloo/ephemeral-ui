@@ -74,3 +74,6 @@ button.ic-bar:hover {background:var(--ic-soft)}
 .ik-hostnote {padding:12px;border:1px solid var(--h-border);border-radius:6px;color:var(--h-mutedFg);font:11px/1.6 var(--h-mono);white-space:pre-wrap;overflow-wrap:anywhere}
 .ik-hostnote:empty {display:none}
 @media(max-width:720px) { .ik-grid{grid-template-columns:1fr}.ik-head{flex-direction:column}.ik-context{flex-direction:column}.ic-sentence>span:first-child{font-size:15px}.ic-slice{flex-wrap:wrap}.ic-slicetext{flex-basis:65%}.ic-slice>.ic-chip{margin-left:44px}.ic-bar{grid-template-columns:minmax(90px,1.3fr) minmax(30px,1fr) auto;gap:8px} }
+
+/* P09: on phones the eight intent/intelligence subtitles wrapped to ellipsis (5 of 8 at 390px); let them wrap. */
+.ic-card .eu-verb{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}
