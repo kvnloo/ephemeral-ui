@@ -8,6 +8,28 @@ let THREE = null, R = null, raf = 0, last = 0;
 const live = new Set();
 export async function loadThree() { if (!THREE) THREE = await import("../vendor/three.min.js"); return THREE; }
 
+/** Load a .glb (meshopt-compressed is fine), path relative to this module; resolves to { scene, animations }. Loaders load on first use. */
+export async function loadGLB(path) {
+  await loadThree();
+  const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([import("../vendor/addons/loaders/GLTFLoader.js"), import("../vendor/addons/libs/meshopt_decoder.module.js")]);
+  const l = new GLTFLoader();
+  l.setMeshoptDecoder(MeshoptDecoder);
+  return l.loadAsync(new URL(path, import.meta.url).href);
+}
+
+/** A neutral studio environment map (three's RoomEnvironment), so metals read as metal. Built once. */
+let ENV = null;
+export function roomEnv() {
+  return (ENV ||= (async () => {
+    await loadThree();
+    const { RoomEnvironment } = await import("../vendor/addons/environments/RoomEnvironment.js");
+    const pm = new THREE.PMREMGenerator(renderer());
+    const tex = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    pm.dispose();
+    return tex;
+  })());
+}
+
 function renderer() {
   if (R) return R;
   R = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });

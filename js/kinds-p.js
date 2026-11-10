@@ -8,12 +8,12 @@ import { appSurface, appBar } from "./chrome.js";
 import { KINDS_3D } from "./kinds-3d.js";
 
 const CHAINS = {
-  meshy: { title: "low-poly treasure chest for Godot", steps: [
+  meshy: { title: "clockwork heron fountain, animated", steps: [
     ["meshy_check_balance", "", 0, "1,240 credits"],
-    ["meshy_text_to_3d", 'prompt: "low-poly treasure chest", ai_model: meshy-6', 20, "preview ✓ 2m 14s"],
-    ["meshy_text_to_3d_refine", "texture: hand-painted", 10, "PBR textures ✓"],
-    ["meshy_remesh", "target_polycount: 3000, topology: quad", 5, "2,986 quads"],
-    ["meshy_download_model", "format: glb", 0, "chest.glb · 1.8 MB → res://assets/"]], viewer: true },
+    ["meshy_text_to_3d", 'prompt: "clockwork heron on an octagonal fountain basin", ai_model: meshy-6', 20, "preview ✓ 2m 14s"],
+    ["meshy_text_to_3d_refine", "texture: PBR, brass + verdigris", 10, "PBR textures ✓"],
+    ["meshy_remesh", "keep_detail: true", 5, "175k verts"],
+    ["meshy_download_model", "format: glb", 0, "heron.glb · 1.6 MB → ./assets/"]], viewer: true },
   "hermes-talk": { title: "duplex voice call", steps: [["talk.start", "voice: realtime, barge-in: on", 0, "connected · 180 ms"], ["memory.recall", "“the Acme deal”", 0, "3 notes"], ["calendar.create", "Thu 10:00 · Acme sync", 0, "booked"], ["talk-hangup", "", 0, "summary saved"]] },
   "phone-harness": { title: "check the T3 Code build on the S25", steps: [["phone.open", "app: T3 Code (virtual display)", 0, "launched"], ["phone.tree", "", 0, "142 nodes"], ["phone.tap", "“Threads”", 0, "ok"], ["phone.screenshot", "", 0, "390×844 ✓"]] },
   firecrawl: { title: "crawl the Godot docs for triggers", steps: [["firecrawl.map", "docs.godotengine.org", 1, "1,904 URLs"], ["firecrawl.crawl", "include: /tutorials/physics/*", 18, "18 pages"], ["firecrawl.extract", "schema: {signal, args}", 5, "body_entered(body)"]] },
