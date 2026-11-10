@@ -3,7 +3,7 @@
 import { h, anim, stagger, typeText, pick, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg } from "./shell.js";
 import { act, tell, why, undoable, settle } from "./loop.js";
-import { stage3d, makeCity, sunRig, clayMatcap, fbm, rand } from "./stage3d.js";
+import { stage3d, makeCity, sunRig, clayMatcap, fbm, rand, loadGLB, roomEnv } from "./stage3d.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
 const isGame = (a) => ["unreal", "unity", "godot", "roblox", "playcanvas", "gamemaker"].includes(a.ui);
@@ -380,12 +380,66 @@ function gen3dMake(a, r) {
   const ui = uiOf(a) || {};
   const vp = h("div", { class: "vp" });
   const trellis = /trellis|hunyuan|open3d/i.test(a.name);
-  const stages = trellis ? ["Image → DINOv2 features", "Sparse structure (64³)", "Structured latent (SLat)", "Decode → Gaussians + mesh", "GLB · 1.2 MB"] : a.name === "StableGen" ? ["Depth + normal passes", "SDXL + ControlNet per view", "Project to UVs", "Bake texture", "Done"] : ["Preview mesh", "Remesh · 30k tris", "Refine", "Texture · PBR", "Ready"];
+  // Meshy shows a real model: the clockwork heron (media/3d/heron.glb), a Blender build used as sample output.
+  const heron = a.id === "meshy";
+  const stages = heron ? ["Preview mesh", "Remesh · 175k verts", "Refine", "Texture · PBR", "Ready · heron.glb"] : trellis ? ["Image → DINOv2 features", "Sparse structure (64³)", "Structured latent (SLat)", "Decode → Gaussians + mesh", "GLB · 1.2 MB"] : a.name === "StableGen" ? ["Depth + normal passes", "SDXL + ControlNet per view", "Project to UVs", "Bake texture", "Done"] : ["Preview mesh", "Remesh · 30k tris", "Refine", "Texture · PBR", "Ready"];
   const list = h("ol", { class: "g3-st" }, stages.map((s) => h("li", {}, h("i"), s)));
   const prompt = h("div", { class: "g3-p" }, h("span", { class: "g3-img" }), h("span", { class: "g3-t" }, ""));
   const variants = h("div", { class: "g3-var" }, [0, 1, 2, 3].map((i) => h("button", { type: "button", class: "g3-v" + (i === 0 ? " on" : ""), "data-i": i, style: { "--h": i * 70 + 20 } }, h("i"))));
   let phase = 0, P = 0, pick = 0;
+  const markStages = () => { const idx = Math.min(stages.length - 1, Math.floor(P * stages.length)); [...list.children].forEach((li, i) => { li.classList.toggle("done", i < idx || P >= 1); li.classList.toggle("on", i === idx && P < 1); }); };
+  // heron: particles gather into the loaded model, it fades in, then its own six-second fountain cycle plays.
+  const heronScene = (T, v) => {
+    v.orbit = { yaw: 0.6, pitch: 0.16, dist: 2.95, target: [0, 0.14, 0] };
+    const accent = parseInt((ui.acc || "#c4f042").slice(1), 16);
+    v.scene.add(new T.HemisphereLight(0xffffff, 0x222233, 0.5)); const d = new T.DirectionalLight(0xfff1dc, 2.2); d.position.set(2, 4, 3); v.scene.add(d);
+    roomEnv().then((e) => { v.scene.environment = e; }).catch(() => {});
+    const N = 2400, ptsGeo = new T.BufferGeometry(), src = new Float32Array(N * 3), dst = new Float32Array(N * 3), cur = new Float32Array(N * 3);
+    const scatter = () => { for (let i = 0; i < N * 3; i++) src[i] = (Math.random() - 0.5) * 4; };
+    scatter(); cur.set(src); dst.set(src);
+    ptsGeo.setAttribute("position", new T.BufferAttribute(cur, 3));
+    const pts = new T.Points(ptsGeo, new T.PointsMaterial({ color: accent, size: 0.022, transparent: true }));
+    v.scene.add(pts);
+    let model = null, mixer = null, meshes = [], finishes = [], mats = [], shown = false;
+    const fade = (s) => {
+      if (s >= 1 && shown) return;
+      for (const m of mats) {
+        m.userData.o0 ??= m.opacity; m.userData.t0 ??= m.transparent;
+        if (s < 1) { if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = m.userData.o0 * s; }
+        else { m.opacity = m.userData.o0; if (m.transparent !== m.userData.t0) { m.transparent = m.userData.t0; m.needsUpdate = true; } }
+      }
+      shown = s >= 1;
+    };
+    const use = (i) => { meshes.forEach((m) => (m.material = finishes[i] || m.userData.mat)); mats = [...new Set(meshes.map((m) => m.material))]; shown = false; };
+    loadGLB("../media/3d/heron.glb").then((gl) => {
+      const g = gl.scene, box = new T.Box3().setFromObject(g), size = box.getSize(new T.Vector3()), c = box.getCenter(new T.Vector3()), k = 2.2 / Math.max(size.x, size.y, size.z);
+      g.scale.setScalar(k); g.position.set(-c.x * k, -c.y * k, -c.z * k); g.updateMatrixWorld(true);
+      g.traverse((o) => { if (o.isMesh) { meshes.push(o); o.userData.mat = o.material; } });
+      const counts = meshes.map((m) => m.geometry.attributes.position.count), tot = counts.reduce((x, n) => x + n, 0), q = new T.Vector3();
+      for (let i = 0; i < N; i++) { let r = Math.random() * tot, j = 0; while (r >= counts[j]) r -= counts[j++]; q.fromBufferAttribute(meshes[j].geometry.attributes.position, Math.floor(r)).applyMatrix4(meshes[j].matrixWorld); dst[i * 3] = q.x; dst[i * 3 + 1] = q.y; dst[i * 3 + 2] = q.z; }
+      finishes = [null, new T.MeshMatcapMaterial({ matcap: clayMatcap(T) }), new T.MeshStandardMaterial({ color: 0xc9a25a, metalness: 0.95, roughness: 0.28 }), new T.MeshStandardMaterial({ color: 0x5f9e8f, metalness: 0.4, roughness: 0.5 })];
+      use(0);
+      if (gl.animations.length) { mixer = new T.AnimationMixer(g); gl.animations.forEach((clip) => mixer.clipAction(clip).play()); }
+      model = g; g.visible = false; v.scene.add(g);
+      src.set(cur); P = 0;
+      v.hud.textContent = `heron.glb · ${tot.toLocaleString()} verts · sample model`;
+    }).catch((e) => { v.hud.textContent = "heron.glb didn't load"; console.error(e); });
+    G3.swap = (i) => { pick = i; if (!model) return; use(i); scatter(); cur.set(src); P = 0; };
+    return (dt, t) => {
+      if (v.auto) v.orbit.yaw += dt * 0.4;
+      v.applyOrbit();
+      if (!model) { for (let i = 0; i < N * 3; i++) cur[i] = src[i] + Math.sin(i * 1.7 + t * 1.3) * 0.05; ptsGeo.attributes.position.needsUpdate = true; return; }
+      P = Math.min(1, P + dt * 0.35);
+      const e = 1 - Math.pow(1 - Math.min(1, P / 0.55), 3), s = Math.max(0, Math.min(1, (P - 0.6) / 0.35));
+      if (s < 1) { for (let i = 0; i < N * 3; i++) cur[i] = src[i] + (dst[i] - src[i]) * e; ptsGeo.attributes.position.needsUpdate = true; }
+      pts.material.opacity = 1 - s; pts.visible = s < 1;
+      model.visible = s > 0.01; fade(s);
+      if (shown && mixer) mixer.update(dt);
+      markStages();
+    };
+  };
   const V = stage3d(vp, (T, v) => {
+    if (heron) return heronScene(T, v);
     v.orbit = { yaw: 0.4, pitch: 0.2, dist: 3.4, target: [0, 0.1, 0] };
     const merge = (...gs) => { const parts = gs.map((g) => g.toNonIndexed()); const n = parts.reduce((s, g) => s + g.attributes.position.count, 0); const pos = new Float32Array(n * 3); let o = 0; for (const g of parts) { pos.set(g.attributes.position.array, o); o += g.attributes.position.array.length; } const m = new T.BufferGeometry(); m.setAttribute("position", new T.BufferAttribute(pos, 3)); m.computeVertexNormals(); return m; };
     // low-poly treasure chest (what the Meshy plugin task asks for): body, barrel lid, two bands, lock
@@ -422,8 +476,8 @@ function gen3dMake(a, r) {
   const G3 = {};
   variants.addEventListener("click", (e) => { const b = e.target.closest(".g3-v"); if (!b) return; variants.querySelectorAll(".g3-v").forEach((x) => x.classList.toggle("on", x === b)); G3.swap?.(+b.dataset.i); });
   const surface = appSurface(a, [prompt, h("div", { class: "ap-split g3" }, h("div", { class: "ap-vpwrap" }, vp), list), variants], { cls: "gen3d" });
-  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: "Generating", body: surface, foot: [act("Send to Blender", { cls: "primary", ack: "Imported into Blender at origin, scaled to 1 m, with the PBR textures." }), act("Download .glb", { cls: "ghost", ack: "Downloaded model.glb (2.3 MB)." })], summary: `Generated a 3D asset with ${a.name}` });
-  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb" } };
+  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: "Generating", body: surface, foot: [act("Send to Blender", { cls: "primary", ack: "Imported into Blender at origin, scaled to 1 m, with the PBR textures." }), act("Download .glb", { cls: "ghost", ack: heron ? "Downloaded heron.glb (1.6 MB, meshopt + WebP, with its fountain animation)." : "Downloaded model.glb (2.3 MB)." })], summary: `Generated a 3D asset with ${a.name}` });
+  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : heron ? "clockwork heron on an octagonal fountain basin, brass and verdigris" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb" } };
 }
 
 /* ---------------- sim: robot arm pick-and-place with parallel envs ---------------- */
