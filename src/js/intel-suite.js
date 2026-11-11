@@ -141,7 +141,7 @@ function make(a, _r, _data, opts = {}) {
     const chart = svg("svg", { viewBox: `0 0 ${W} ${top + 3 * rowH + 22}`, class: "is-chart" }, ...marks);
     return h("div", { class: "is-pane is-trace" },
       h("div", { class: "is-hero" }, h("p", { class: "is-q" }, "Where did the 90 seconds go?"), chart,
-        h("p", { class: "is-legend" }, h("span", { class: "is-lm" }, "model"), h("span", { class: "is-lt" }, "tool"), h("span", { class: "is-le" }, "error"), "after omp /stats")),
+        h("p", { class: "is-legend" }, h("span", { class: "is-lm" }, "model"), h("span", { class: "is-lt" }, "tool"), h("span", { class: "is-le" }, "error"), "omp /stats trace")),
       h("aside", { class: "is-side" }, h("div", { class: "is-big" }, h("b", {}, "88s"), h("small", {}, "3 tracks · 2 lanes")),
         h("div", { class: "is-stats" }, stat("Tokens", "182k"), stat("Cost", "$0.41"), stat("Tools", "11"), stat("Errors", "1", "", "is-bad")),
         btn("Jump to failure", (b) => { errSpan?.classList.add("is-flash"); b.textContent = "fast lane · 25s ✓"; emit("jump", "Jump to failed span", ["span:fast-25"], { entities: [{ type: "span", id: "fast-25", track: "lane · fast" }] }); say("Opened span: tool timeout in lane · fast at +00:25"); }, "is-primary")));

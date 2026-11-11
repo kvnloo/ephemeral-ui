@@ -12,6 +12,11 @@ import { loadThemes } from "./js/themes.js";
 import { KINDS_INTEL, INTEL_APPS } from "./js/intel-suite.js";
 await loadThemes(); await loadApps();
 const q = new URLSearchParams(location.search), stage = document.getElementById("stage");
+// ?theme=ruins : film palette sampled from the live Ruins wallpaper (films/glide-hackathon-v3/src/theme.json). Solid card, no see-through.
+const THEMES = { ruins: { "--h-bg": "transparent", "--h-card": "#0f1e1a", "--h-card-solid": "#0f1e1a", "--h-muted": "#16281f", "--h-input": "#1d2e2a",
+  "--h-border": "rgba(217,194,126,.20)", "--h-fg": "#eef3ec", "--h-mutedFg": "#a8bbb2", "--h-primary": "#d9c27e", "--h-primaryFg": "#0d1a17",
+  "--h-accent": "#27402f", "--h-success": "#7db84a", "--h-warning": "#e3a94e", "--h-danger": "#e0795e" } };
+for (const [k, v] of Object.entries(THEMES[q.get("theme")] || {})) document.documentElement.style.setProperty(k, v);
 if (q.get("w")) stage.style.setProperty("--w", q.get("w") + "px");
 window.__intel = { intents: [] };
 document.addEventListener("eui:intent", e => window.__intel.intents.push(e.detail));
