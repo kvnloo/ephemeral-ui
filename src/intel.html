@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intel suite harness</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="fleet.css"><link rel="stylesheet" href="intel.css">
+<style>body{margin:0;padding:24px;background:var(--h-bg,#000)} #stage{display:grid;justify-content:center} #stage>.cell{width:var(--w,1100px)}</style>
+</head><body><div id="stage"></div>
+<script type="module">
+// Harness: intel.html?tab=0..4&w=1100 . Sets html.ready when mounted; window.__intel.intents collects eui:intent.
+import { loadApps, catalog } from "./js/shell.js";
+import { loadThemes } from "./js/themes.js";
+import { KINDS_INTEL, INTEL_APPS } from "./js/intel-suite.js";
+await loadThemes(); await loadApps();
+const q = new URLSearchParams(location.search), stage = document.getElementById("stage");
+if (q.get("w")) stage.style.setProperty("--w", q.get("w") + "px");
+window.__intel = { intents: [] };
+document.addEventListener("eui:intent", e => window.__intel.intents.push(e.detail));
+const id = INTEL_APPS["intel-suite"], a = catalog.byId[id] || { id, name: "Glide", hex: "#e6cd96" };
+const c = KINDS_INTEL["intel-suite"].make(a, null, null, { tab: +(q.get("tab") || 0) });
+const cell = document.createElement("div"); cell.className = "cell"; cell.append(c.el); stage.append(cell); window.__intel.card = c;
+document.documentElement.classList.add("ready");
+</script></body></html>
