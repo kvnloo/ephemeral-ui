@@ -1,0 +1,684 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fleet.v0 card",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "fleet-hosts"
+        },
+        "app": {
+          "const": "k3s"
+        },
+        "data": {
+          "$ref": "#/$defs/fleet-hosts"
+        },
+        "demo": {
+          "const": true
+        }
+      },
+      "required": [
+        "kind",
+        "app",
+        "data"
+      ],
+      "additionalProperties": false,
+      "x-actions": [
+        "open-chat",
+        "nudge",
+        "open-pod"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "fleet-portfolio"
+        },
+        "app": {
+          "const": "dash"
+        },
+        "data": {
+          "$ref": "#/$defs/fleet-portfolio"
+        },
+        "demo": {
+          "const": true
+        }
+      },
+      "required": [
+        "kind",
+        "app",
+        "data"
+      ],
+      "additionalProperties": false,
+      "x-actions": [
+        "open-task",
+        "set-next"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "fleet-factory"
+        },
+        "app": {
+          "const": "aodl"
+        },
+        "data": {
+          "$ref": "#/$defs/fleet-factory"
+        },
+        "demo": {
+          "const": true
+        }
+      },
+      "required": [
+        "kind",
+        "app",
+        "data"
+      ],
+      "additionalProperties": false,
+      "x-actions": [
+        "queue-fix",
+        "open-node"
+      ]
+    }
+  ],
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "working",
+            "blocked",
+            "idle",
+            "offline"
+          ],
+          "maxLength": 200
+        },
+        "line": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "age": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "model": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "state",
+        "line",
+        "age",
+        "model"
+      ],
+      "additionalProperties": false
+    },
+    "host": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "boolean"
+        },
+        "gauges": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "mem": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "swap": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "disk": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "gpu": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "cpu",
+            "mem",
+            "swap",
+            "disk",
+            "gpu"
+          ],
+          "additionalProperties": false
+        },
+        "k3s": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "version": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "pods": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      }
+                    ],
+                    "minItems": 5,
+                    "maxItems": 5,
+                    "items": false
+                  },
+                  "maxItems": 512
+                }
+              },
+              "required": [
+                "node",
+                "version",
+                "pods"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "harnesses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "agents": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/agent"
+                },
+                "maxItems": 512
+              }
+            },
+            "required": [
+              "kind",
+              "agents"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 512
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "role",
+        "online",
+        "gauges",
+        "k3s",
+        "harnesses"
+      ],
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "done",
+            "active",
+            "next",
+            "blocked"
+          ],
+          "maxLength": 200
+        },
+        "defect": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "feature": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "horizon": {
+          "type": "string",
+          "enum": [
+            "now",
+            "next",
+            "later"
+          ],
+          "maxLength": 200
+        },
+        "uses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 512
+        },
+        "owns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 512
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task"
+          },
+          "maxItems": 512
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "horizon",
+        "tasks"
+      ],
+      "additionalProperties": false
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "horizon": {
+          "type": "string",
+          "enum": [
+            "now",
+            "next",
+            "later"
+          ],
+          "maxLength": 200
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/feature"
+          },
+          "maxItems": 512
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "horizon",
+        "features"
+      ],
+      "additionalProperties": false
+    },
+    "portfolio": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "lead": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/product"
+          },
+          "maxItems": 512
+        },
+        "shared": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "owner": {
+                "type": "string",
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "owner"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 512
+        }
+      },
+      "required": [
+        "label",
+        "lead",
+        "products",
+        "shared"
+      ],
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "col": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "subagent",
+            "host",
+            "repo"
+          ],
+          "maxLength": 200
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "idle",
+            "live",
+            "needs-you",
+            "failing",
+            "done"
+          ],
+          "maxLength": 200
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "id",
+        "col",
+        "label",
+        "kind",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "fleet-hosts": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "maxLength": 200,
+          "format": "date-time"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/host"
+          },
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "at",
+        "hosts"
+      ],
+      "additionalProperties": false
+    },
+    "fleet-portfolio": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "maxLength": 200,
+          "format": "date-time"
+        },
+        "portfolios": {
+          "type": "object",
+          "maxProperties": 512,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/portfolio"
+          }
+        }
+      },
+      "required": [
+        "at",
+        "portfolios"
+      ],
+      "additionalProperties": false
+    },
+    "fleet-factory": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "maxLength": 200,
+          "format": "date-time"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "queue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "depth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sendsHour": {
+              "type": "number",
+              "minimum": 0
+            },
+            "capHour": {
+              "type": "number",
+              "minimum": 0
+            },
+            "posted": {
+              "type": "number",
+              "minimum": 0
+            },
+            "verifyPass": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "queue",
+            "depth",
+            "sendsHour",
+            "capHour",
+            "posted",
+            "verifyPass"
+          ],
+          "additionalProperties": false
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "maxItems": 512
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "delegated",
+                  "touched",
+                  "hosted",
+                  "workspace"
+                ],
+                "maxLength": 200
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "minItems": 4,
+            "maxItems": 4,
+            "items": false
+          },
+          "maxItems": 512
+        }
+      },
+      "required": [
+        "at",
+        "stats",
+        "nodes",
+        "edges"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
