@@ -1,0 +1,26 @@
+/* Fleet surfaces inherit the host theme, including light presets. */
+.fl-root {
+  --fl-bg: var(--h-card-solid, var(--h-card));
+  --fl-surface: var(--h-muted); --fl-raised: var(--h-input); --fl-border: var(--h-border);
+  --fl-hair: var(--h-border); --fl-hair2: var(--h-border);
+  --fl-ink: var(--h-fg); --fl-ink2: var(--h-fg); --fl-ink3: var(--h-mutedFg);
+  --fl-gold: var(--h-primary); --fl-gold-ink: var(--h-primaryFg);
+  --fl-gold-glow: color-mix(in srgb, var(--h-primary) 40%, transparent);
+  --fl-gold-glass: color-mix(in srgb, var(--h-primary) 72%, transparent);
+  --fl-ok: var(--h-success); --fl-warn: var(--h-warning); --fl-danger: var(--h-danger);
+  --fl-glass: var(--h-card); --fl-glass-raised: var(--h-muted); --fl-chip: var(--h-muted); --fl-chip-on: var(--h-accent);
+  --fl-r-sm: 10px; --fl-r-md: 16px; --fl-r-lg: 22px;
+  --fl-serif: Georgia, serif; --fl-sans: var(--h-font, system-ui); --fl-mono: var(--h-mono, monospace);
+  background: var(--fl-bg); color: var(--fl-ink); font-family: var(--fl-sans); border-radius: var(--fl-r-md);
+  min-width: 0; max-width: 100%; overflow-wrap: anywhere;
+}
+.fl-root *, .fl-root *::before, .fl-root *::after { box-sizing: border-box; }
+.fl-updated { display: block; color: var(--fl-ink3); font: 11px/1.4 var(--fl-mono); margin-bottom: 10px; }
+.fl-unavailable { padding: 20px; }
+.fl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 14px; }
+.fl-root select { font: inherit; color: var(--fl-ink); background: var(--fl-surface); border: 1px solid var(--fl-hair); border-radius: 8px; padding: 8px; min-width: 0; max-width: 100%; }
+.fl-root summary { cursor: pointer; }
+.fl-root button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.fl-root button:disabled { cursor: not-allowed; opacity: .65; }
+.fl-root :focus-visible { outline: 2px solid var(--fl-gold); outline-offset: 2px; }
+.fl-root .fl-updated { grid-column: 1 / -1; }

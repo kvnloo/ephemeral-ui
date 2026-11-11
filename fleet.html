@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fleet kit harness</title><link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="fleet.css">
+<link rel="stylesheet" href="fleet-hosts.css"><link rel="stylesheet" href="fleet-pm.css"><link rel="stylesheet" href="fleet-factory.css">
+<style>body{margin:0;padding:24px;background:var(--h-bg,#000)} #stage{display:grid;gap:24px;justify-content:center} #stage>.cell{width:min(var(--w,900px),calc(100vw - 48px));min-width:0} @media(max-width:520px){body{padding:12px}#stage>.cell{width:min(var(--w,900px),calc(100vw - 24px))}.eu-h{flex-wrap:wrap}.eu-t{min-width:0}.eu-verb{overflow-wrap:anywhere}}</style>
+</head><body><div id="stage"></div>
+<script type="module">
+// Harness: fleet.html?kind=fleet-hosts&w=420#theme=t3-dark   (no kind = all three). Sets html.ready when mounted.
+import { loadApps, catalog } from "./js/shell.js";
+import { loadThemes } from "./js/themes.js";
+import { KINDS_FLEET, FLEET_APPS } from "./js/kinds-fleet.js";
+await loadThemes(); await loadApps();
+const q = new URLSearchParams(location.search), only = q.get("kind"), stage = document.getElementById("stage");
+if (q.get("w")) stage.style.setProperty("--w", q.get("w") + "px");
+window.__fleet = { cards: {}, intents: [] };
+document.addEventListener("eui:intent", e => window.__fleet.intents.push(e.detail));
+for (const [kind, K] of Object.entries(KINDS_FLEET)) {
+  if (only && kind !== only) continue;
+  const id = FLEET_APPS[kind], a = catalog.byId[id] || { id, name: id, hex: null };
+  const c = K.make(a, null, { demo: true }); const cell = document.createElement("div"); cell.className = "cell"; cell.dataset.kind = kind;
+  cell.append(c.el); stage.append(cell); window.__fleet.cards[kind] = c; await c.play?.();
+  if (q.get("view")) c.show?.(q.get("view"));
+}
+document.documentElement.classList.add("ready");
+</script></body></html>
