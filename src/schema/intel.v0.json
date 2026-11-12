@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "intel.v0 card",
+  "$comment": "validateIntel additionally enforces the x-maxTotalSpans aggregate and x-orderedMinutes ordering. Standard JSON Schema validators do not evaluate these annotations.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "intel-suite"
+    },
+    "app": {
+      "const": "glide"
+    },
+    "data": {
+      "$ref": "#/$defs/intel-suite"
+    },
+    "demo": {
+      "const": true
+    }
+  },
+  "required": [
+    "kind",
+    "app",
+    "data"
+  ],
+  "additionalProperties": false,
+  "x-actions": [
+    "tab",
+    "open-climb",
+    "open-skill",
+    "open-failure",
+    "refresh"
+  ],
+  "$defs": {
+    "climb": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "metric": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 64
+        },
+        "best": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "metric",
+        "points",
+        "best"
+      ],
+      "additionalProperties": false
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "skill": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "hits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "corrected": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "skill",
+        "hits",
+        "corrected"
+      ],
+      "additionalProperties": false
+    },
+    "layer": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "maxLength": 200,
+          "enum": [
+            "L0",
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "L5"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "size": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "fresh": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "stale": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "level",
+        "name",
+        "size",
+        "fresh",
+        "stale"
+      ],
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "sig": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "spark": {
+          "type": "string",
+          "maxLength": 14,
+          "pattern": "^[01]*$"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "maxLength": 200,
+          "enum": [
+            "open",
+            "fixed",
+            "law"
+          ]
+        }
+      },
+      "required": [
+        "sig",
+        "source",
+        "spark",
+        "count",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "span": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "maxLength": 200,
+          "enum": [
+            "m",
+            "t",
+            "e"
+          ]
+        }
+      ],
+      "minItems": 3,
+      "maxItems": 3,
+      "items": false,
+      "x-orderedMinutes": true
+    },
+    "track": {
+      "type": "object",
+      "properties": {
+        "lane": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "spans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/span"
+          },
+          "maxItems": 200
+        }
+      },
+      "required": [
+        "lane",
+        "spans"
+      ],
+      "additionalProperties": false
+    },
+    "intel-suite": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "maxLength": 200,
+          "format": "date-time"
+        },
+        "tab": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "climbs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/climb"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          },
+          "maxItems": 12
+        },
+        "memory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/layer"
+          }
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failure"
+          },
+          "maxItems": 12
+        },
+        "trace": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/track"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      },
+      "required": [
+        "at",
+        "climbs",
+        "routes",
+        "memory",
+        "failures",
+        "trace",
+        "notes"
+      ],
+      "additionalProperties": false,
+      "x-maxTotalSpans": 200
+    }
+  }
+}
