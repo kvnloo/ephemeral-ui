@@ -79,7 +79,7 @@ export function act(text, { say = text, ack, entities = {}, action, cls = "ghost
     const card = b.closest(".eu-card");
     if (!card) return;
     tell(card, { action: action || text.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""), label: say, entities, ack: typeof ack === "function" ? ack(card) : ack });
-    if (done) { b.textContent = done; b.disabled = true; }
+    if (done) { b.title = 'Already completed'; b.textContent = `${done} · ${b.title}`; b.disabled = true; }
   };
   return b;
 }
