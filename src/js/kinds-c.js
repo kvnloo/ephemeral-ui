@@ -3,7 +3,7 @@
 // stages and Anatomy figures. Terms and defaults come from each app's docs (see apps.json `docs`).
 import { h, anim, stagger, typeText, flip, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg, avatar, PEOPLE } from "./shell.js";
-import { act, tell, why, undoable, settle } from "./loop.js";
+import { act, tell, why, undoable, settle, setDisabled } from "./loop.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
 const sleep = (run, ms) => run.wait(ms);
@@ -65,7 +65,7 @@ function nodesMake(a, r) {
   }
   const queue = h("button", { class: "eu-btn primary", type: "button" }, graphFor(a) === "comfy" ? "Queue Prompt" : graphFor(a) === "unreal" ? "▶ Compile & Play" : "Cook");
   async function exec(run) {
-    queue.disabled = true;
+    setDisabled(queue, "Render queued");
     nodes.forEach((n) => n.classList.remove("ran", "running"));
     for (const i of g.run) {
       const n = nodes[i]; n.classList.add("running");
@@ -77,7 +77,7 @@ function nodesMake(a, r) {
     }
     if (graphFor(a) === "comfy") { const img = h("div", { class: "ng-img" }); nodes[6].querySelector(".ng-b").replaceChildren(img); anim(img, [{ opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0)" }], { duration: 900 }); }
     out.textContent = graphFor(a) === "comfy" ? "Prompt executed in 3.1 s · ComfyUI_00042_.png" : graphFor(a) === "unreal" ? "LogBlueprintUserMessages: Drone spawned" : "Cooked in 0.4 s";
-    queue.disabled = false;
+    setDisabled(queue);
   }
   queue.onclick = () => exec(new Run());
   const surface = appSurface(a, [appBar(graphFor(a) === "comfy" ? ["Workflow", "Queue", "History"] : graphFor(a) === "unreal" ? ["Event Graph", "Construction Script", "Compile"] : [a.name, "Network", "Cook"], [h("span", { class: "ap-stat" }, `${nodes.length} nodes`)]), h("div", { class: "ng-scroll" }, cv), out], { cls: "nodes" });
@@ -174,7 +174,7 @@ function reviewMake(a, r) {
   const send = h("button", { class: "eu-btn primary", type: "button" }, "Send to agent");
   send.onclick = async () => {
     const run = new Run();
-    send.disabled = true;
+    setDisabled(send, "Revision requested");
     bundle.hidden = false;
     bundle.replaceChildren(h("b", {}, "Bundle"), h("span", {}, `contact sheet · ${n} marks · transcript · 3 keyframes`));
     anim(bundle, [{ opacity: 0, transform: "translateY(6px) scale(.96)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" });
@@ -183,7 +183,7 @@ function reviewMake(a, r) {
     handle.hidden = false; frame.classList.add("cmp");
     anim(handle, [{ left: "100%" }, { left: "50%" }], { spring: "soft" });
     frame.style.setProperty("--cmp", "50%");
-    send.textContent = "Approve v2"; send.disabled = false; send.onclick = () => { burst(send); send.textContent = "Approved ✓"; };
+    send.textContent = "Approve v2"; setDisabled(send); send.onclick = () => { burst(send); send.textContent = "Approved ✓"; };
   };
   let dragC = false;
   handle.addEventListener("pointerdown", (e) => { dragC = true; handle.setPointerCapture(e.pointerId); });
@@ -222,7 +222,7 @@ function layersMake(a, r) {
     }
   }
   async function generate(run) {
-    const go = bar.querySelector(".ly-go"); go.disabled = true; go.textContent = "Generating…"; bar.classList.add("busy");
+    const go = bar.querySelector(".ly-go"); go.textContent = "Generating…"; setDisabled(go, "Generation running"); bar.classList.add("busy");
     await sleep(run, 1100);
     vars.replaceChildren(...variants.map((_, i) => { const b = h("button", { type: "button", class: "ly-v" + (i === 0 ? " on" : ""), "aria-label": `Variation ${i + 1}` }, h("canvas", { width: 104, height: 64 })); b.onclick = () => choose(i); return b; }));
     vars.querySelectorAll("canvas").forEach((c, i) => { paint(i); c.getContext("2d").drawImage(cv, 0, 0, 520, 320, 0, 0, 104, 64); });
@@ -230,7 +230,7 @@ function layersMake(a, r) {
     choose(0);
     const li = h("li", { class: "on" }, h("i", { class: "ly-th gen" }), "Generative Layer 1", h("span", { class: "eu-hint" }, "mask"));
     layers.querySelector("li").classList.remove("on"); layers.prepend(li); anim(li, [{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
-    ants.classList.add("done"); go.textContent = "Generate"; go.disabled = false; bar.classList.remove("busy");
+    ants.classList.add("done"); go.textContent = "Generate"; setDisabled(go); bar.classList.remove("busy");
   }
   function choose(i) { pick = i; paint(i); vars.querySelectorAll(".ly-v").forEach((b, j) => b.classList.toggle("on", j === i)); }
   bar.querySelector(".ly-go").onclick = () => generate(new Run());
@@ -371,7 +371,7 @@ function boardMake(a, r) {
   s.addEventListener("pointermove", (e) => { const [x, y] = pt(e); const b = wrap.getBoundingClientRect(); you.style.translate = `${(x / W) * b.width}px ${(y / H) * b.height}px`; if (!pen) return; if (mode === "Draw") pen.setAttribute("d", pen.getAttribute("d") + ` L${x.toFixed(1)} ${y.toFixed(1)}`); else pen.setAttribute("d", shapeOf(p0[0], p0[1], x, y)); });
   s.addEventListener("pointerup", (e) => { if (!pen) return; const [x, y] = pt(e); const big = Math.hypot(x - p0[0], y - p0[1]) > 18; if (big) { mine++; tell(el, { action: "draw", label: `Drew a ${mode.toLowerCase()}`, entities: { shape: `${mode.toLowerCase()}-${mine}` }, quiet: true }); } else pen.remove(); pen = null; });
   real.onclick = async () => {
-    real.disabled = true; real.textContent = "Generating…";
+    real.textContent = "Generating…"; setDisabled(real, "Generation running");
     const out = h("div", { class: "bd-out" }, h("div", { class: "bd-win" }, h("div", { class: "bd-wb" }, h("i"), h("i"), h("i")), h("div", { class: "bd-ui" }, h("b", {}, "USD composition"), h("div", { class: "bd-chips" }, ..."L I V R P S".split(" ").map((c) => h("span", {}, c))), h("div", { class: "bd-bar" }, h("i")), h("button", { type: "button" }, "Start review (12 cards)"))));
     await new Promise((res) => setTimeout(res, 900));
     wrap.append(out); anim(out, [{ opacity: 0, transform: "scale(.85) translateY(10px)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" });

@@ -183,6 +183,26 @@ test('completed shared footer actions explain why they are disabled (W5 Oura)', 
   assert.match(button.textContent, /already|completed/i, 'visible text must explain the disabled state');
 });
 
+test('gallery action states cannot bypass the shared disabled-reason helper', () => {
+  for (const registry of ['a', 'b', 'c']) {
+    const source = fs.readFileSync(new URL(`../src/js/kinds-${registry}.js`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /\.disabled\s*=/, `kinds-${registry}: use setDisabled(button, reason)`);
+  }
+});
+
+test('disabled reasons survive label changes and clear on undo', async () => {
+  const { setDisabled } = await import('../src/js/loop.js');
+  const button = document.createElement('button'); button.title = 'Original hint'; button.textContent = 'Apply';
+  setDisabled(button, 'Issue triaged'); setDisabled(button, 'Issue triaged');
+  assert.equal(button.querySelectorAll('[data-disabled-reason]').length, 1);
+  assert.equal(button.title, 'Issue triaged'); assert.ok(button.textContent.includes(button.title));
+  button.textContent = 'Applied'; setDisabled(button, 'Issue closed');
+  assert.ok(button.textContent.includes(button.title));
+  setDisabled(button);
+  assert.equal(button.disabled, false); assert.equal(button.title, 'Original hint');
+  assert.equal(button.querySelector('[data-disabled-reason]'), null);
+});
+
 test('every disabled fleet action names its reason across all views', () => {
   let checked = 0;
   for (const [kind, data] of Object.entries(fixtures)) {

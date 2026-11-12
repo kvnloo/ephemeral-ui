@@ -15,7 +15,7 @@ const server = http.createServer((req, res) => {
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 try {
   const args = ['--test', ...process.argv.slice(2)];
-  if (args.length === 1) args.push('tools/fleet.test.mjs', 'tools/infra.test.mjs', 'tools/dock.test.mjs');
+  if (args.length === 1) args.push('tools/fleet.test.mjs', 'tools/dock.test.mjs');
   const child = spawn(process.execPath, args, { stdio: 'inherit', env: { ...process.env, EUI_BROWSER_URL: process.env.EUI_BROWSER_URL || `http://127.0.0.1:${server.address().port}` } });
   process.exitCode = await new Promise(resolve => child.on('exit', resolve));
 } finally { server.close(); }

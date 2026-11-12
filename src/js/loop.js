@@ -73,13 +73,22 @@ export function tell(card, { action, label, entities = {}, text, ack, quiet = fa
  * (export, open in the app, sync): the button confirms in place, and the agent says what it did.
  *   act("Export MIDI", { ack: "Saved progression.mid to Downloads.", entities: { clip: "am-f-c-g" } })
  */
+const enabledTitles = new WeakMap();
+export function setDisabled(button, reason = "") {
+  if (!enabledTitles.has(button)) enabledTitles.set(button, button.title);
+  button.disabled = !!reason;
+  button.title = reason || enabledTitles.get(button);
+  button.querySelector('[data-disabled-reason]')?.remove();
+  if (reason) button.append(h('span', { 'data-disabled-reason': '' }, ` · ${reason}`));
+}
+
 export function act(text, { say = text, ack, entities = {}, action, cls = "ghost", done } = {}) {
   const b = h("button", { class: `eu-btn ${cls}`, type: "button" }, text);
   b.onclick = () => {
     const card = b.closest(".eu-card");
     if (!card) return;
     tell(card, { action: action || text.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""), label: say, entities, ack: typeof ack === "function" ? ack(card) : ack });
-    if (done) { b.title = 'Already completed'; b.textContent = `${done} · ${b.title}`; b.disabled = true; }
+    if (done) { b.textContent = done; setDisabled(b, 'Already completed'); }
   };
   return b;
 }

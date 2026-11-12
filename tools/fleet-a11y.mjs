@@ -73,14 +73,41 @@ export async function checkFleetA11y(base) {
     await page.evaluate(async () => {
       const { KINDS_F } = await import('./js/kinds-f.js');
       const { catalog } = await import('./js/shell.js');
-      const { rng } = await import('./js/motion.js');
+      const { rng, Run } = await import('./js/motion.js');
       const card = KINDS_F.health.make(catalog.byId.oura, rng('w5-health'));
-      document.body.replaceChildren(card.el);
+      document.body.replaceChildren(card.el); await card.play(new Run());
     });
     await page.getByRole('button', { name: 'Add plan to calendar', exact: true }).click();
     const completed = page.locator('button:disabled');
     if (!(await completed.getAttribute('title'))?.trim() || !/already|completed/i.test(await completed.innerText())) report.disabledFailures.push({ gallery: 'health', text: await completed.innerText(), title: await completed.getAttribute('title') });
     if (process.env.EUI_SCREENSHOTS) await page.screenshot({ path: `${process.env.EUI_SCREENSHOTS}/gallery-health.png` });
+    const gallery = await page.evaluate(async () => {
+      const { KINDS_A } = await import('./js/kinds-a.js'), { KINDS_B } = await import('./js/kinds-b.js');
+      const { KINDS_C } = await import('./js/kinds-c.js'), { KINDS_F } = await import('./js/kinds-f.js');
+      const { catalog } = await import('./js/shell.js'), { rng } = await import('./js/motion.js');
+      const failures = []; let checked = 0;
+      for (const [kind, K] of Object.entries({ ...KINDS_A, ...KINDS_B, ...KINDS_C, ...KINDS_F })) {
+        const app = catalog.apps.find(a => a.kinds.includes(kind)) || catalog.byId.github;
+        const build = () => { const c = K.make(app, rng('w5-gallery')); document.body.replaceChildren(c.el); return c; };
+        const check = c => {
+          for (const b of c.el.querySelectorAll('footer button:disabled')) {
+            checked++;
+            if (!b.title.trim() || !b.innerText.includes(b.title) || !b.checkVisibility({ checkVisibilityCSS: true })) failures.push({ kind, title: b.title, text: b.innerText });
+          }
+        };
+        const first = build(); check(first);
+        const count = first.el.querySelectorAll('footer button').length;
+        for (let i = 0; i < count; i++) {
+          const c = build(), button = c.el.querySelectorAll('footer button')[i];
+          if (!button || button.disabled) continue;
+          button.click(); await new Promise(resolve => setTimeout(resolve, 80)); check(c);
+        }
+      }
+      return { checked, failures };
+    });
+    if (!gallery.checked) throw new Error('No disabled gallery actions exercised');
+    report.gallery = gallery;
+    report.disabledFailures.push(...gallery.failures);
   } finally { await browser.close(); }
   return report;
 }
