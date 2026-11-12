@@ -108,7 +108,7 @@ test('headless browser checks real layout, all controls and intent entities', { 
   const { createRequire } = await import('node:module');
   const require = createRequire(process.env.PLAYWRIGHT_FROM);
   const { chromium } = require('playwright');
-  const browser = await chromium.launch({ executablePath: `${process.env.HOME}/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome` });
+  const browser = await chromium.launch({ ...(process.env.EUI_CHROMIUM ? { executablePath: process.env.EUI_CHROMIUM } : {}), headless: true });
   try {
     for (const width of [1440, 390]) for (const theme of ['t3-dark', 't3-light', 'hermes-nous-dark']) {
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
@@ -169,6 +169,43 @@ test('fleet CSS uses theme tokens for every colour, no literal colours except va
     const css = fs.readFileSync(new URL(`../src/${name}.css`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/var\(--[\w-]+,\s*(?:#[\da-f]+|rgba?\([^)]*\))\)/gi, 'var(--fallback)');
     assert.doesNotMatch(css, /#[\da-f]{3,8}\b|rgba?\(/i, name);
   }
+});
+
+test('completed shared footer actions explain why they are disabled (W5 Oura)', async () => {
+  const { act } = await import('../src/js/loop.js');
+  const button = act('Add plan to calendar', { done: 'Added ✓' });
+  const card = document.createElement('article'); card.className = 'eu-card'; card.append(button);
+  const animate = window.Element.prototype.animate;
+  window.Element.prototype.animate = () => ({ finished: Promise.resolve() });
+  try { button.onclick(); } finally { window.Element.prototype.animate = animate; }
+  assert.equal(button.disabled, true);
+  assert.ok(button.title.trim(), 'completed action needs a title');
+  assert.match(button.textContent, /already|completed/i, 'visible text must explain the disabled state');
+});
+
+test('every disabled fleet action names its reason across all views', () => {
+  let checked = 0;
+  for (const [kind, data] of Object.entries(fixtures)) {
+    const card = make(kind, data);
+    for (const view of kind === 'fleet-hosts' ? ['agents', 'machines', 'k3s'] : kind === 'fleet-portfolio' ? ['tree', 'roadmap', 'links'] : ['spine', 'radial']) {
+      card.show?.(view);
+      for (const button of card.el.querySelectorAll('button[disabled]')) {
+        checked++;
+        assert.ok(button.title.trim(), `${kind}/${view}: missing title`);
+        assert.ok(button.textContent.includes(button.title), `${kind}/${view}: reason must be visible`);
+      }
+    }
+  }
+  assert.ok(checked > 0, 'must exercise disabled actions');
+});
+
+test('all preset muted fleet text has computed AA contrast and disabled reasons', { skip: !process.env.EUI_BROWSER_URL }, async () => {
+  const { checkFleetA11y } = await import('./fleet-a11y.mjs');
+  const report = await checkFleetA11y(process.env.EUI_BROWSER_URL);
+  if (process.env.EUI_A11Y_REPORT) fs.writeFileSync(process.env.EUI_A11Y_REPORT, JSON.stringify(report, null, 2));
+  assert.deepEqual(report.errors, [], 'browser console/page errors');
+  assert.deepEqual(report.contrastFailures, [], 'computed contrast >= 4.5 in light AND dark themes');
+  assert.deepEqual(report.disabledFailures, [], 'disabled reasons');
 });
 
 test('counts are pluralised correctly (regression: "1 agents")', async () => {

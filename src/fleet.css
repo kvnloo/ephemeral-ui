@@ -3,7 +3,8 @@
   --fl-bg: var(--h-card-solid, var(--h-card));
   --fl-surface: var(--h-muted); --fl-raised: var(--h-input); --fl-border: var(--h-border);
   --fl-hair: var(--h-border); --fl-hair2: var(--h-border);
-  --fl-ink: var(--h-fg); --fl-ink2: var(--h-fg); --fl-ink3: var(--h-mutedFg);
+  --fl-ink: var(--h-fg); --fl-ink2: var(--h-fg);
+  --fl-ink3: color-mix(in srgb, var(--h-mutedFg) 92%, var(--h-fg));
   --fl-gold: var(--h-primary); --fl-gold-ink: var(--h-primaryFg);
   --fl-gold-glow: color-mix(in srgb, var(--h-primary) 40%, transparent);
   --fl-gold-glass: color-mix(in srgb, var(--h-primary) 72%, transparent);
