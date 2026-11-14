@@ -35,7 +35,7 @@ if (!items.length) throw Error("no cards: pass --playlist or --cards app:kind,�
 themeId ??= "hermes-nous"; title ??= "ephemeral-ui cards";
 
 // ---- kind → module (keys of each top-level KINDS_* object); fail loudly on an unknown kind
-const MOD_CSS = { "kinds-3d": "studio.css", "kinds-c": "studio.css", "kinds-e": "studio.css", "kinds-f": "studio.css", "kinds-p": "studio.css", "kinds-t": "trace.css", "kinds-i": "intent.css", "kinds-infra": "infra.css", "kinds-ops": ["stats.css", "ops.css"] };
+const MOD_CSS = { "kinds-3d": "studio.css", "kinds-c": "studio.css", "kinds-e": "studio.css", "kinds-f": "studio.css", "kinds-p": "studio.css", "kinds-t": "trace.css", "kinds-i": "intent.css", "kinds-infra": "infra.css", "kinds-fleet": ["fleet.css", "fleet-hosts.css", "fleet-pm.css", "fleet-factory.css"], "kinds-ops": ["stats.css", "ops.css"] };
 const owner = {};
 for (const f of fs.readdirSync(path.join(src, "js")).filter((f) => /^kinds-.*\.js$/.test(f))) {
   const s = fs.readFileSync(path.join(src, "js", f), "utf8"); const m = s.match(/export const (KINDS_\w+) = \{([\s\S]*?)\n\};?/) || s.match(/export const (KINDS_\w+) = \{(.*)\};/);
@@ -57,6 +57,8 @@ if (mods.includes("kinds-t")) data["data/trace-fixture.json"] = JSON.parse(fs.re
 
 const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), "eui-export-"));
 const J = (p) => JSON.stringify(path.join(src, "js", p));
+// --host-vars: kit token -> the host page's own CSS variable (shadcn names: T3 html_render, Hermex HTML reports).
+const HOST_VARS = [["bg", "--background"], ["fg", "--foreground"], ["card", "--card"], ["card-solid", "--card"], ["mutedFg", "--muted-foreground"], ["muted", "--muted", "color-mix(in srgb, var(--card) 88%, var(--foreground))"], ["border", "--border"], ["primary", "--primary"], ["primaryFg", "--primary-foreground"], ["success", "--success"], ["warning", "--warning"], ["danger", "--destructive"], ["font", "--font-sans"], ["mono", "--font-mono"]];
 const entry = `
 const DATA = ${JSON.stringify(data)};
 const realFetch = globalThis.fetch;
@@ -69,7 +71,21 @@ const KINDS = Object.assign({}, ${mods.map((_, i) => `K${i}`).join(", ")});
 const ITEMS = ${JSON.stringify(items)}, NOTES = ${JSON.stringify(notes)};
 (async () => {
   try { await loadThemes(); } catch (e) { state.themes = DATA["data/themes.json"].themes; }
-  state.base = state.themes.find((t) => t.id === ${JSON.stringify(themeId)}); state.over = {}; apply(false);
+  const chosen = state.themes.find((t) => t.id === ${JSON.stringify(themeId)}); state.over = {};
+  const HOST_VARS = ${JSON.stringify(flag("host-vars") ? HOST_VARS : [])};
+  // --host-vars: apply() writes the kit theme (tokens, color-scheme, ink) inline on <html>, beating the host.
+  // Follow the host instead: take the same-host kit theme for the host's color-scheme, then rewrite each mapped
+  // token as var(<host var>, <fallback>) so host colors win. Re-sync when the host rewrites its theme style live.
+  const sync = () => {
+    const r = document.documentElement;
+    if (HOST_VARS.length) { r.style.removeProperty("color-scheme"); }
+    const scheme = HOST_VARS.length ? (getComputedStyle(r).colorScheme.match(/light|dark/) || [chosen.scheme])[0] : chosen.scheme;
+    state.base = state.themes.find((t) => t.host === chosen.host && t.scheme === scheme && t.id.startsWith(chosen.id.replace(/-dark$/, ""))) || chosen;
+    apply(false);
+    for (const [k, v, fb] of HOST_VARS) { const cur = r.style.getPropertyValue("--h-" + k).trim(); r.style.setProperty("--h-" + k, \`var(\${v}, \${fb || cur || "initial"})\`); }
+  };
+  sync();
+  if (HOST_VARS.length) new MutationObserver(sync).observe(document.head, { childList: true, subtree: true, characterData: true });
   await loadApps();
   const grid = document.getElementById("cards");
   const settled = [];
@@ -94,10 +110,12 @@ fs.rmSync(dir, { recursive: true });
 
 const css = ["styles.css", ...new Set(mods.flatMap((m) => MOD_CSS[m] ?? []))].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
 // T3 html_render: frame owns background + exposes its own tokens; plain hosts get the kit theme as is.
-const hostVars = flag("host-vars") ? `:root{--h-bg:var(--background);--h-fg:var(--foreground);--h-card:var(--card);--h-card-solid:var(--card);--h-mutedFg:var(--muted-foreground);--h-muted:var(--muted);--h-border:var(--border);--h-primary:var(--primary);--h-primaryFg:var(--primary-foreground);--h-success:var(--success);--h-warning:var(--warning);--h-danger:var(--destructive);--h-font:var(--font-sans);--h-mono:var(--font-mono)}html,body{background:none!important}` : `html,body{background:var(--h-bg);color:var(--h-fg)}`;
-const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title.replace(/</g, "&lt;")}</title><style>${css}
+const hostVars = flag("host-vars") ? `:root{${HOST_VARS.map(([k, v]) => `--h-${k}:var(${v})`).join(";")}}html,body{background:none!important}` : `html,body{background:var(--h-bg);color:var(--h-fg)}`;
+let page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title.replace(/</g, "&lt;")}</title><style>${css}
 body{margin:0;padding:12px;font-family:var(--h-font,system-ui)}.xc-head{font:600 15px var(--h-font);margin:0 0 12px}.xc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;align-items:start}.xc-cell{min-width:0}.xc-cell .eu-card{width:100%;max-width:none}.xc-note{margin:0 0 6px;font:12px/1.5 var(--h-font);color:var(--h-mutedFg)}.xc-foot{margin-top:14px;font:11px var(--h-font);color:var(--h-mutedFg)}
 ${hostVars}</style></head><body><h1 class="xc-head">${title.replace(/</g, "&lt;")}</h1><div id="cards" class="xc-grid"></div><p class="xc-foot">ephemeral-ui · ${items.length} card${items.length === 1 ? "" : "s"} · theme ${themeId} · read-only snapshot data</p><script>${bundle.replaceAll("</script", "<\\/script")}</script></body></html>`;
+const VH = /(?<![\w.+/])(?:\d+(?:\.\d+)?|\.\d+)[sld]?vh(?![\w-])/gi;
+if (flag("host-vars")) { page = page.replace(VH, (m) => `${Math.round(parseFloat(m) * 9)}px`); if (VH.test(page)) throw Error("vh units left in a T3 export"); }
 const bytes = Buffer.byteLength(page);
 if (bytes > maxBytes) throw Error(`export is ${bytes} bytes > --max-bytes ${maxBytes} (drop trace/3D kinds or raise the limit for file-based hosts)`);
 fs.writeFileSync(out, page);
