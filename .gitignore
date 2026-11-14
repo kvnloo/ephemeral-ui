@@ -2,3 +2,4 @@ tools/node_modules/
 out/
 dist/
 src/classic/
+node_modules/
