@@ -1,7 +1,8 @@
 // List outermost elements whose right edge passes the viewport at a phone width.
 //   node tools/overflow.mjs <url> [width=390]
 //   env: ENGINE=webkit (Hermex/WKWebView, Tern) | chromium (default); PLAYWRIGHT_FROM=<package.json that can resolve playwright>;
-//        SHOT=<png> full-page screenshot after the check; CLICK=1 click the first visible button and report it.
+//        SHOT=<png> full-page screenshot after the check; CLICK=1 click the first visible button and report it;
+//        LOOK=1 report themed colors; RESTYLE=<css> swap Hermex's theme style live and report colors before/after.
 //   Ready when the site sets html.ready or an export sets html[data-ready="1"].
 import { createRequire } from "node:module";
 const require = createRequire(process.env.PLAYWRIGHT_FROM ?? "~/.t3/worktrees/t3code/experiment-openui-android-replay/apps/web/package.json");
@@ -25,11 +26,16 @@ const r = await p.evaluate((W) => {
 if (process.env.CLICK) { const btn = p.locator("button:visible").first(); r.clicked = (await btn.count()) ? (await btn.innerText()).trim().slice(0, 40) : null; if (r.clicked != null) { await btn.click(); await p.waitForTimeout(500); } }
 if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT, fullPage: true });
 // RESTYLE=<css>: replace <style id="hermex-theme"> live (as Hermex does on a theme switch) and shoot again.
+// Snapshot of themed colors (scheme, key tokens, heading + each button) so a restyle can be diffed against a fresh load.
+const look = () => p.evaluate(() => { const cs = getComputedStyle(document.documentElement), c = (e) => { const s = getComputedStyle(e); return `${s.color} on ${s.backgroundColor}`; };
+  return { scheme: document.documentElement.dataset.scheme, tokens: Object.fromEntries(["card", "fg", "primary", "primary-ink", "ink-strong", "muted"].map((k) => [k, cs.getPropertyValue(`--h-${k}`).trim()])),
+    heading: [...document.querySelectorAll("h1,h2")].slice(0, 1).map(c)[0], buttons: [...document.querySelectorAll("button")].slice(0, 6).map((e) => `${e.innerText.trim().slice(0, 18)}: ${c(e)}`) }; });
+if (process.env.LOOK) r.look = await look();
 if (process.env.RESTYLE) {
-  r.before = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--h-card").trim());
+  r.before = await look();
   await p.evaluate((c) => { document.getElementById("hermex-theme").textContent = c; document.getElementById("hermex-canvas")?.remove(); }, process.env.RESTYLE);
-  await p.waitForTimeout(400);
-  r.after = await p.evaluate(() => ({ scheme: document.documentElement.dataset.scheme, card: getComputedStyle(document.documentElement).getPropertyValue("--h-card").trim() }));
+  await p.waitForTimeout(1500); // let the kit's color transitions finish before sampling
+  r.after = await look();
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT.replace(/\.png$/, "-restyled.png"), fullPage: true });
 }
 r.engine = engine;
