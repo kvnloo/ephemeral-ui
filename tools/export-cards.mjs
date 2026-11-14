@@ -7,6 +7,7 @@
 //
 //   node tools/export-cards.mjs --playlist '<site url with #pl=…>' --theme hermes-nous --out cards.html
 //   node tools/export-cards.mjs --cards ripple:intent-declare,z0intelligence:intel-value --theme t3-dark --out x.html
+//   node tools/export-cards.mjs --program reply.md   (```ephemeral-ui card.v0 fences, the Glide contract)
 //   node tools/export-cards.mjs --program reply.openui --theme hermes-nous --host-vars --out x.html   (OPENUI_FROM=<dir with @openuidev/lang-core>/package.json)
 //   node tools/export-cards.mjs --catalog-prompt merge,ci   (prints the minimal catalog prompt for those kinds)
 //   options: --title <text>  --host-vars (map --h-* onto the host page's own CSS vars, for T3 html_render)
@@ -45,6 +46,10 @@ function check(v, s, at) { // the JSON Schema subset appInput uses; first proble
 }
 const RULES = { merge: (p) => p.state === "conflict" && p.conflicts < 1 ? "conflict state needs conflicts >= 1" : !["open", "conflict"].includes(p.state) && p.conflicts ? "only open/conflict PRs have conflicts" : p.state === "ready" && p.checks.some((c) => c.status === "fail" || c.status === "running") ? "ready needs every check passed" : p.url && !p.url.endsWith(`/pull/${p.number}`) ? "url does not match number" : null };
 async function fromProgram(text) {
+  // Glide's contract (glide ephemeral_cards.py): one ```ephemeral-ui fence per card, holding a card.v0 object.
+  // The agent writes the same fence in every host; HTML-only hosts (Hermex) get it through this export.
+  const fences = [...text.matchAll(/```ephemeral-ui[^\n]*\n([\s\S]*?)\n```/g)];
+  if (fences.length) return cardsToItems(fences.map((m, i) => { try { return JSON.parse(m[1]); } catch (e) { throw Error(`--program: ephemeral-ui fence ${i + 1} is not JSON: ${e.message}`); } }));
   const { createRequire } = await import("node:module");
   const from = process.env.OPENUI_FROM || path.join(root, "package.json");
   const { createParser } = await import(createRequire(from).resolve("@openuidev/lang-core"));
@@ -55,7 +60,9 @@ async function fromProgram(text) {
   if (bad) throw Error(`--program: ${bad}`);
   const panels = r.root.typeName === "Board" ? r.root.props.panels.filter((p) => p?.typeName === "EphemeralCards") : [r.root];
   title ??= r.root.props.title;
-  const cards = panels.flatMap((p) => p.props.cards);
+  return cardsToItems(panels.flatMap((p) => p.props.cards));
+}
+function cardsToItems(cards) {
   if (!cards.length || cards.length > MAX_CARDS) throw Error(`--program: need 1..${MAX_CARDS} cards, got ${cards.length}`);
   const apps = JSON.parse(fs.readFileSync(path.join(src, "data/apps.json"), "utf8")).apps;
   return cards.map((c, i) => {
@@ -67,6 +74,8 @@ async function fromProgram(text) {
       const e = check(c.input, APP_INPUT[c.kind], `${at}.input`) ?? RULES[c.kind]?.(c.input);
       if (e) throw Error(`--program: ${e}`);
     }
+    if (c.title !== undefined && (typeof c.title !== "string" || c.title.length > 200)) throw Error(`--program: ${at}.title must be a string up to 200 chars`);
+    if (c.title && cards.length === 1) title ??= c.title;
     return [app, c.kind, c.input];
   });
 }
@@ -163,7 +172,7 @@ const ITEMS = ${JSON.stringify(items)}, NOTES = ${JSON.stringify(notes)};
   if (window.parent && window.parent !== window) window.parent.postMessage({ type: "eui:ready", cards: ITEMS.length - failed, failed }, "*");
 })();`;
 fs.writeFileSync(path.join(dir, "entry.js"), entry);
-const esbuild = process.env.ESBUILD || "esbuild";
+const esbuild = process.env.ESBUILD || [path.join(root, "node_modules/.bin/esbuild")].find((f) => fs.existsSync(f)) || "esbuild";
 const bundle = execFileSync(esbuild, [path.join(dir, "entry.js"), "--bundle", "--format=iife", "--minify", "--log-level=error", "--legal-comments=none"], { encoding: "utf8", maxBuffer: 64 << 20 });
 fs.rmSync(dir, { recursive: true });
 
