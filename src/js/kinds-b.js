@@ -243,7 +243,8 @@ export const KINDS_B = {
   },
   merge: {
     label: "PR merge (after @pitus_)", verb: () => "Opened PR #128",
-    make(a, r) {
+    make(a, r, input) {
+      if (input) return this.real(a, input);
       const commits = [["Refresh sessions in middleware", "Ivy", "feat"], ["Rotate session keys", "Sam", "feat"], ["Bump deps", "Theo", "main"], ["Fix cookie SameSite", "Priya", "main"]];
       const graph = h("ol", { class: "cgraph" }, commits.map(([m, who, lane], i) => h("li", { class: lane }, h("span", { class: "node" }), h("span", { class: "msg" }, m), h("span", { class: "eu-hint" }, `${who} · ${i + 1}h`))));
       const state = h("span", { class: "prstate open" }, "Open");
@@ -278,6 +279,19 @@ export const KINDS_B = {
       };
       btn.onclick = () => sequence(new Run()).catch(() => {});
       return { el, async play(run) { stagger(graph.children, { gap: 70 }); anim(conflict, [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { spring: "soft", delay: 500 }); }, async auto(run) { await run.wait(900); await sequence(run); await run.wait(700); await sequence(run); }, spec: { kind: "merge", app: a.id, pr: 128, base: "main", head: "feat/session", checks: 4 } };
+    },
+    // Host- or model-supplied PR ($defs.appInput.merge): drawn as is, read-only. No simulated resolve/merge.
+    real(a, pr) {
+      const LANE = { head: "feat", base: "main", side: "main" }, CHK = { pass: "ok", fail: "fail", running: "run", skip: "skip" };
+      const STATE = { open: "Open", conflict: "Conflicts", ready: "Ready", merged: "Merged", closed: "Closed" };
+      const graph = h("ol", { class: "cgraph" }, (pr.commits || []).map((c) => h("li", { class: LANE[c.lane] + (c.conflict ? " conflict" : "") }, h("span", { class: "node" }), h("span", { class: "msg" }, c.title), h("span", { class: "eu-hint" }, `${c.author} · ${c.age}`))));
+      const checks = h("div", { class: "checks on" }, pr.checks.map((c) => h("span", { class: "chk " + CHK[c.status], title: c.detail }, h("i"), c.name)));
+      const conflict = pr.conflicts ? h("div", { class: "conflict" }, h("b", {}, `${pr.base} moved · ${pr.conflicts} conflict${pr.conflicts === 1 ? "" : "s"}`)) : null;
+      const head = h("div", { class: "row between" }, h("div", {}, h("b", {}, pr.title), h("span", { class: "eu-hint" }, ` #${pr.number} · ${pr.head} → ${pr.base}`)), h("span", { class: "prstate " + pr.state }, STATE[pr.state]));
+      const passed = pr.checks.filter((c) => c.status === "pass").length;
+      const foot = pr.url ? [h("a", { class: "eu-btn ghost", href: pr.url, target: "_blank", rel: "noopener" }, "Open on GitHub")] : [];
+      const el = shell(a, "merge", { verb: `PR #${pr.number} · ${STATE[pr.state].toLowerCase()}`, body: h("div", { class: "merge" }, head, pr.commits?.length ? graph : null, conflict, checks), foot, summary: `#${pr.number} ${STATE[pr.state].toLowerCase()} · ${passed}/${pr.checks.length} checks passed` });
+      return { el, async play() { stagger(graph.children, { gap: 70 }); }, spec: { kind: "merge", app: a.id, input: pr } };
     },
   },
   ci: {

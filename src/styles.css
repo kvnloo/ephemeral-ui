@@ -508,6 +508,8 @@ p.eu-hint { margin: 8px 0 0; }
 .cgraph.folded li.feat::after { opacity: 0; transform: translateX(-14px); }
 .prstate { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; color: #fff; transition: background .4s; }
 .prstate.open { background: #1f883d; } .prstate.merged { background: #8250df; }
+.prstate.ready { background: #1f883d; } .prstate.conflict { background: #bf8700; } .prstate.closed { background: #cf222e; }
+.chk.fail i { background: #cf222e; } .chk.fail { border-color: color-mix(in srgb, #cf222e 45%, transparent); } .chk.skip { opacity: .7; } .chk.skip i { background: none; border: 1.5px solid var(--h-mutedFg); box-sizing: border-box; }
 .conflict { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r); background: color-mix(in srgb, var(--h-warning) 14%, transparent); border: 1px solid color-mix(in srgb, var(--h-warning) 40%, transparent); font-size: 12px; overflow: hidden; }
 .checks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; opacity: .4; transition: opacity .4s; }
 .checks.on { opacity: 1; }

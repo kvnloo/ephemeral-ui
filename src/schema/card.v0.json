@@ -11,12 +11,26 @@
     "ttl": { "description": "How long the card lives: 'until-done' (default), 'pinned', or milliseconds.", "oneOf": [{ "type": "string", "enum": ["until-done", "pinned"] }, { "type": "integer", "minimum": 0 }] },
     "actions": { "type": "string", "enum": ["read-only", "host-confirmed"], "description": "Writes are only allowed through a confirmation the host draws (hold, tap). Trace kinds never write." },
     "render": { "type": "object", "properties": { "host": { "type": "string" }, "theme": { "type": "string" }, "brand": { "enum": ["accent", "full", "mono"] } } },
-    "input": { "description": "Trace kinds: the omp-stats endpoint the card was fed from (path + query), or the payload itself. $defs.traceInput lists the shape each kind takes.", "oneOf": [{ "type": "string", "pattern": "^/api/" }, { "type": "object" }, { "type": "array" }] },
+    "input": { "description": "Trace kinds: the omp-stats endpoint the card was fed from (path + query), or the payload itself. $defs.traceInput lists the shape each kind takes. App kinds listed in $defs.appInput take that object and draw it instead of sample data.", "oneOf": [{ "type": "string", "pattern": "^/api/" }, { "type": "object" }, { "type": "array" }] },
     "layers": { "type": "array", "description": "Trace kinds: which data layers are drawn. Toggling a layer re-renders the card; it never refetches.", "items": { "$ref": "#/$defs/layer" }, "uniqueItems": true },
     "options": { "type": "object", "description": "Trace kinds: per-kind view state.", "properties": { "range": { "enum": ["1h", "24h", "7d", "30d", "90d", "all"] }, "view": { "enum": ["models", "providers", "components", "agents"] }, "sort": { "enum": ["calls", "errors", "rate", "p95", "cost"] }, "tab": { "enum": ["requests", "spans"] }, "focusTool": { "type": "string" }, "scope": { "enum": ["trace", "range"] } } }
   },
   "additionalProperties": true,
   "$defs": {
+    "appInput": {
+      "description": "Real data for app kinds, keyed by kind. Hosts validate before drawing (tools/export-cards.mjs --program). Shapes follow hermes-agent feat/p1103-desktop-app-cards.",
+      "merge": { "type": "object", "additionalProperties": false, "required": ["number", "title", "state", "head", "base", "checks", "conflicts"], "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "state": { "enum": ["open", "conflict", "ready", "merged", "closed"], "description": "conflict needs conflicts >= 1; only open/conflict may have conflicts; ready needs no failing or running check." },
+        "head": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "base": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "checks": { "type": "array", "maxItems": 24, "items": { "type": "object", "additionalProperties": false, "required": ["name", "status", "detail"], "properties": { "name": { "type": "string", "minLength": 1, "maxLength": 200 }, "status": { "enum": ["pass", "fail", "running", "skip"] }, "detail": { "type": "string", "maxLength": 400 } } } },
+        "conflicts": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "commits": { "type": "array", "maxItems": 12, "items": { "type": "object", "additionalProperties": false, "required": ["title", "sha", "author", "age", "lane"], "properties": { "title": { "type": "string", "minLength": 1, "maxLength": 200 }, "sha": { "type": "string", "pattern": "^[0-9a-f]{4,12}$" }, "author": { "type": "string", "minLength": 1, "maxLength": 200 }, "age": { "type": "string", "maxLength": 400 }, "lane": { "enum": ["base", "head", "side"] }, "conflict": { "type": "boolean" } } } },
+        "url": { "type": "string", "pattern": "^https://github\\.com/[^/]+/[^/]+/pull/[1-9][0-9]*$", "maxLength": 2000 }
+      } }
+    },
     "layer": { "enum": ["spans", "tokens", "cost", "errors", "subagents", "transcript"], "description": "spans: span blocks and lanes. tokens: model spans scaled by tokens, token columns. cost: cost cells and per-track cumulative cost lanes. errors: failed spans in red, error columns. subagents: child tracks and per-track rows. transcript: ordered span list under the timeline (message text is never shown on the public site)." },
     "traceInput": {
       "description": "What each trace kind takes. Shapes are omp-stats' own (packages/stats/src/shared-types.ts): an agent fetches the endpoint and passes the JSON straight in.",
