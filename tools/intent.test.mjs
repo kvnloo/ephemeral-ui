@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-const { parseHTML } = await import(pathToFileURL(process.env.EUI_DOM_MODULE).href);
+const { parseHTML } = await import((process.env.EUI_DOM_MODULE ? pathToFileURL(process.env.EUI_DOM_MODULE).href : 'linkedom'));
 const { document, window } = parseHTML("<html><body></body></html>");
 Object.assign(globalThis, { document, window, matchMedia: () => ({ matches: true, addEventListener() {} }), requestAnimationFrame: f => f() });
 const D = JSON.parse(fs.readFileSync(new URL("../src/data/intent-snapshot.json", import.meta.url)));

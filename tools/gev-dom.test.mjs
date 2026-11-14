@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-const {parseHTML} = await import(process.env.EUI_DOM_MODULE || '$DATA/host-offload/_home_kvn_.bun_install_cache/linkedom@0.18.13@@@1/worker.js');
+const {parseHTML} = await import(process.env.EUI_DOM_MODULE || 'linkedom');
 const {document,window}=parseHTML('<html><body></body></html>');
 Object.assign(globalThis,{document,window,CustomEvent:window.CustomEvent,matchMedia:()=>({matches:true,addEventListener(){}}),requestAnimationFrame:f=>f()});
 const {state}=await import('../src/js/themes.js');

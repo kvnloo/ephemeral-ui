@@ -2,7 +2,7 @@
 //   EUI_DOM_MODULE=<linkedom>/worker.js node tools/export-check.mjs <file.html> [--expect N]
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-const { parseHTML } = await import(pathToFileURL(process.env.EUI_DOM_MODULE).href);
+const { parseHTML } = await import((process.env.EUI_DOM_MODULE ? pathToFileURL(process.env.EUI_DOM_MODULE).href : 'linkedom'));
 const file = process.argv[2], ei = process.argv.indexOf("--expect"), expect = ei > 0 ? +process.argv[ei + 1] : null;
 const html = fs.readFileSync(file, "utf8");
 const script = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));

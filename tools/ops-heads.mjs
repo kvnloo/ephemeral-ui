@@ -2,7 +2,7 @@
 // the boards actually say.   EUI_DOM_MODULE=… node tools/ops-heads.mjs [snapshot.json]
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-const { parseHTML } = await import(pathToFileURL(process.env.EUI_DOM_MODULE).href);
+const { parseHTML } = await import((process.env.EUI_DOM_MODULE ? pathToFileURL(process.env.EUI_DOM_MODULE).href : 'linkedom'));
 const { document, window } = parseHTML("<html><body></body></html>");
 const noop = () => {};
 window.HTMLElement.prototype.animate = () => ({ finished: Promise.resolve(), cancel: noop, set onfinish(f) {} });

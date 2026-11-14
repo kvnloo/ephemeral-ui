@@ -2,10 +2,11 @@
   "name": "ephemeral-ui-kit-tools",
   "private": true,
   "type": "module",
-  "description": "Tool deps for tools/export-cards.mjs: esbuild bundles the cards; lang-core (same pin as glide frontend/openui/openui-generation) parses --program (zod is its peer, same pin as glide).",
+  "description": "Tool deps for tools/export-cards.mjs: esbuild bundles the cards; lang-core (same pin as glide frontend/openui/openui-generation) parses --program (zod is its peer, same pin as glide). linkedom runs the DOM tests (override with EUI_DOM_MODULE).",
   "devDependencies": {
     "@openuidev/lang-core": "0.3.1",
     "esbuild": "0.25.10",
-    "zod": "4.0.0"
+    "zod": "4.0.0",
+    "linkedom": "0.18.13"
   }
 }

@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const css = readFileSync(new URL("../src/trace.css", import.meta.url), "utf8");
-const omp = "$DATA/worktrees/omp-artifact-leases/packages/stats/src/client/styles.css";
+const omp = (process.env.OMP_CHECKOUT || "../omp") + "/packages/stats/src/client/styles.css";
 
 test("trace cards carry omp-stats' dark tokens inside .k-trace", () => {
   const block = css.match(/\n\.k-trace \{([^}]*)\}/)?.[1] ?? "";

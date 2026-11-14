@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-const { parseHTML } = await import(pathToFileURL(process.env.EUI_DOM_MODULE).href);
+const { parseHTML } = await import((process.env.EUI_DOM_MODULE ? pathToFileURL(process.env.EUI_DOM_MODULE).href : 'linkedom'));
 const { document, window } = parseHTML("<html><body></body></html>");
 const noop = () => {};
 const ctx = new Proxy({}, { get: (_, k) => (k === "measureText" ? (s) => ({ width: String(s).length * 6 }) : noop), set: () => true });

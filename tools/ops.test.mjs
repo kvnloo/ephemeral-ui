@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-const { parseHTML } = await import(pathToFileURL(process.env.EUI_DOM_MODULE).href);
+const { parseHTML } = await import((process.env.EUI_DOM_MODULE ? pathToFileURL(process.env.EUI_DOM_MODULE).href : 'linkedom'));
 const { document, window } = parseHTML("<html><body></body></html>");
 const noop = () => {};
 window.HTMLElement.prototype.animate = () => ({ finished: Promise.resolve(), cancel: noop, pause: noop, play: noop, set onfinish(f) {} });
