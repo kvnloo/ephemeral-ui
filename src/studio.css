@@ -40,6 +40,7 @@
 .v3 { position: relative; width: 100%; aspect-ratio: var(--ar, 1.6); min-height: 150px; touch-action: none; overflow: hidden; cursor: grab; }
 .v3.grab { cursor: grabbing; }
 .v3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.v3-cv:focus-visible { outline: 2px solid var(--ap-hot, currentColor); outline-offset: -3px; }
 .v3-hud { position: absolute; inset: 0; pointer-events: none; }
 .v3-tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; font: 600 10px var(--h-font); color: #fff; white-space: nowrap; transform: translate(-6px, -6px); }
 .v3-tag i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent); }
@@ -64,6 +65,8 @@
 .seq-t { position: relative; height: 22px; background: color-mix(in srgb, var(--ap-fg) 7%, transparent); border-radius: 3px; cursor: ew-resize; touch-action: none; }
 .seq-keys i { position: absolute; top: 50%; width: 8px; height: 8px; background: var(--ap-hot); transform: translate(-50%, -50%) rotate(45deg); }
 .seq-head { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #e64b3d; translate: -1px 0; }
+.seq-seek { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.seq-t:focus-within { outline: 2px solid var(--ap-hot); outline-offset: 2px; }
 .seq-head::before { content: ""; position: absolute; top: -4px; left: -4px; width: 10px; height: 6px; background: #e64b3d; clip-path: polygon(0 0, 100% 0, 50% 100%); }
 /* fpv osd */
 .osd { position: absolute; inset: 0; font: 600 12px/1 "IBM Plex Mono", monospace; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 3px #000; }
@@ -327,7 +330,8 @@
 .us-tree li.sel { background: color-mix(in srgb, var(--ap-acc) 35%, transparent); }
 .us-t { font: 9px var(--h-mono); color: color-mix(in srgb, var(--ap-fg) 50%, transparent); width: 52px; overflow: hidden; text-overflow: ellipsis; }
 .us-stack { list-style: none; margin: 0; padding: 0 8px; display: flex; flex-direction: column; gap: 3px; counter-reset: l; }
-.us-stack li { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; border-radius: 4px; background: color-mix(in srgb, var(--ap-fg) 6%, transparent); font-size: 11px; cursor: pointer; transition: opacity .2s; gap: 8px; }
+.us-stack li { border-radius: 4px; background: color-mix(in srgb, var(--ap-fg) 6%, transparent); font-size: 11px; cursor: pointer; transition: opacity .2s; gap: 8px; }
+.us-stack li button { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; color: inherit; background: transparent; border: 0; border-radius: inherit; font: inherit; cursor: pointer; gap: 8px; }
 .us-stack li b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .us-stack li.us-win { box-shadow: inset 0 0 0 1.5px var(--ap-acc); }
 .us-stack li.muted { opacity: .35; text-decoration: line-through; }

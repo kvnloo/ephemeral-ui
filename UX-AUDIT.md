@@ -1,5 +1,7 @@
 # ephemeral-ui UX audit: every card, every control
 
+> November follow-up: [Per-kind inventory and Chromium replay](qa/README.md) supersede the grouped grades below. The original audit is retained as historical context; the inventory identifies which shipped kinds still fall below A.
+
 November 2026. This audit covers every card kind in `src/js/kinds-*.js` except `ops-*` and `infra-*`,
 which another session is still building (see "Not changed here").
 

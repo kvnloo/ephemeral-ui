@@ -471,11 +471,11 @@ function stageMake(a, r) {
   const prims = [["/World", 0], ["Robot", 1, "Xform"], ["base_link", 2, "Mesh"], ["arm", 2, "Xform"], ["gripper", 3, "Mesh"], ["Lights", 1, "Scope"], ["DomeLight", 2, "DomeLight"]];
   const tree = h("ul", { class: "us-tree" }, prims.map(([n, d, t], i) => h("li", { style: { "--d": d }, class: i === 4 ? "sel" : "" }, h("span", { class: "us-t" }, t || "def"), n)));
   const layers = [["session layer", null], ["shot_042.usda", "#d94b3d"], ["anim.usda", null], ["robot.usd (reference)", "#3d7ad9"], ["robot_payload.usdc", "#7a7a7a"]];
-  const stack = h("ol", { class: "us-stack" }, layers.map(([n, c], i) => h("li", { "data-i": i }, h("b", {}, n), h("span", { class: "us-op", style: { "--c": c || "transparent" } }, c ? "color" : "—"))));
+  const stack = h("ol", { class: "us-stack" }, layers.map(([n, c], i) => h("li", { "data-i": i }, h("button", { type: "button", "aria-pressed": "false", "aria-label": `Mute layer: ${n}` }, h("b", {}, n), h("span", { class: "us-op", style: { "--c": c || "transparent" } }, c ? "color" : "—")))));
   const result = h("div", { class: "us-res" });
   const variant = seg(["red", "blue", "steel"], (k) => { const cols = ["#d94b3d", "#3d7ad9", "#9aa3ad"]; stack.children[1].querySelector(".us-op").style.setProperty("--c", cols[k]); resolve(); }, 0);
   let muted = new Set();
-  stack.addEventListener("click", (e) => { const li = e.target.closest("li"); if (!li) return; const i = +li.dataset.i; muted.has(i) ? muted.delete(i) : muted.add(i); li.classList.toggle("muted"); resolve(); });
+  stack.addEventListener("click", (e) => { const control = e.target.closest("button"); if (!control) return; const li = control.closest("li"), i = +li.dataset.i; muted.has(i) ? muted.delete(i) : muted.add(i); li.classList.toggle("muted", muted.has(i)); control.setAttribute("aria-pressed", String(muted.has(i))); resolve(); });
   function resolve() {
     const win = [...stack.children].findIndex((li, i) => !muted.has(i) && li.querySelector(".us-op").textContent !== "—");
     [...stack.children].forEach((li, i) => li.classList.toggle("us-win", i === win));
@@ -493,7 +493,22 @@ function stageMake(a, r) {
 function anatomyMake(a, r) {
   const vid = h("video", { muted: true, loop: true, playsinline: true, autoplay: true, src: "media/anatomy/raptor-engine.mp4", poster: "media/anatomy/raptor-engine.jpg" });
   const cap = h("div", { class: "an-cap" }, h("b", {}, "Fig 1"), h("span", {}, "raptor engine"));
-  const chips = h("div", { class: "row wrap" }, ANATOMY.map((n, i) => h("button", { type: "button", class: "ap-chip" + (i === 0 ? " on" : ""), onclick: (e) => { chips.querySelectorAll(".ap-chip").forEach((c) => c.classList.toggle("on", c === e.currentTarget)); anim(vid, [{ opacity: 1 }, { opacity: 0 }], { duration: 160 }).onfinish = () => { vid.src = `media/anatomy/${n}.mp4`; vid.poster = `media/anatomy/${n}.jpg`; vid.play().catch(() => {}); cap.lastChild.textContent = n.replace(/-/g, " "); cap.firstChild.textContent = `Fig ${i + 1}`; anim(vid, [{ opacity: 0 }, { opacity: 1 }], { duration: 260 }); }; } }, n.replace(/-/g, " "))));
+  const chips = h("div", { class: "row wrap", role: "group", "aria-label": "Recorded figures" }, ANATOMY.map((n, i) => h("button", {
+    type: "button", class: "ap-chip" + (i === 0 ? " on" : ""), "aria-pressed": i === 0 ? "true" : "false",
+    onclick: (e) => {
+      chips.querySelectorAll(".ap-chip").forEach((c) => {
+        const selected = c === e.currentTarget;
+        c.classList.toggle("on", selected);
+        c.setAttribute("aria-pressed", String(selected));
+      });
+      vid.poster = `media/anatomy/${n}.jpg`;
+      vid.src = `media/anatomy/${n}.mp4`;
+      vid.play().catch(() => {});
+      cap.lastChild.textContent = n.replace(/-/g, " ");
+      cap.firstChild.textContent = `Fig ${i + 1}`;
+      anim(vid, [{ opacity: 0 }, { opacity: 1 }], { duration: 260 });
+    },
+  }, n.replace(/-/g, " "))));
   const surface = appSurface(a, [h("div", { class: "an" }, vid, cap), chips], { cls: "anatomy" });
   const el = shell(a, "anatomy", { verb: "Built a working figure", status: "SVG + WebGL", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Loops recorded from the examples in wheresryan22/anatomy (MIT).")), foot: [h("a", { class: "eu-btn primary", href: "https://skills.wheresryan.sh/anatomy", target: "_blank", rel: "noopener" }, "Open interactive"), h("a", { class: "eu-btn ghost", href: "https://github.com/kvnloo/anatomy", target: "_blank", rel: "noopener" }, "kvnloo/anatomy")], summary: "Explained an idea as a working machine" });
   return { el, async play() { vid.play().catch(() => {}); }, spec: { kind: "anatomy", app: a.id, figures: ANATOMY, source: "github.com/wheresryan22/anatomy" } };

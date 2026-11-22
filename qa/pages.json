@@ -1,0 +1,11 @@
+{
+  "revision": "2ee7aa0c9d8d808d412dc76bc4827bc2fc288e11",
+  "moduleSha256": "882368a33abaf1e75c239ed7e1445930fda9d30497c18c00fb4ca592efe8d947",
+  "module": "js/kinds-infra.js",
+  "fixtures": {
+    "infra-architecture": "google-cloud",
+    "infra-cluster": "k3s",
+    "infra-iac": "terraform",
+    "infra-models": "unsloth"
+  }
+}

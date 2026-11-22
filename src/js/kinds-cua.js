@@ -41,7 +41,7 @@ export function cuaActionMake(app, rng, opts = {}) {
     wins.replaceChildren(...fx.windows.map(w => h('button', { type: 'button', class: 'cd-win', 'aria-pressed': String(w === win), onclick: () => { win = w; el = null; tool = null; emit('select_window', `Window ${w.app} · ${w.title}`); render(); } },
       h('b', {}, w.app), h('span', {}, w.title), h('code', {}, `pid ${w.pid} · wid ${w.window_id}${w.on_screen ? '' : ' · off-screen'}`))));
     const st = fx.state[win.window_id];
-    els.replaceChildren(...(st ? st.map(e => h('button', { type: 'button', class: 'cd-el', 'aria-pressed': String(e === el), disabled: !toolsFor(e.role).length, onclick: () => { el = e; tool = toolsFor(e.role)[0]; emit('select_element', `Element ${e.label}`); render(); } },
+    els.replaceChildren(...(st ? st.map(e => h('button', { type: 'button', class: 'cd-el', 'aria-label': `Select ${e.label} (${e.role})`, 'aria-pressed': String(e === el), disabled: !toolsFor(e.role).length, onclick: () => { el = e; tool = toolsFor(e.role)[0]; emit('select_element', `Element ${e.label}`); render(); } },
       h('span', { class: 'r' }, e.role), h('b', {}, e.label), e.value != null ? h('span', { class: 'v' }, `= ${e.value || '""'}`) : '', h('code', {}, e.token))) : [h('p', { class: 'cd-none' }, 'No window state in this example. The agent would call get_window_state first.')]));
     tools.replaceChildren(...(el ? toolsFor(el.role) : []).map(t => h('button', { type: 'button', class: 'cd-tool', 'aria-pressed': String(t === tool), onclick: () => { tool = t; render(); } }, t)));
     text.hidden = !(tool === 'type_text' || tool === 'set_value');

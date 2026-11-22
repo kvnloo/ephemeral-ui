@@ -118,10 +118,19 @@ function flyMake(a, r) {
   const vp = h("div", { class: "vp cine" });
   const keys = h("div", { class: "seq-keys" });
   const head = h("i", { class: "seq-head" });
-  const track = h("div", { class: "seq" }, h("span", { class: "seq-l" }, a.ui === "unreal" ? "CineCameraActor" : a.ui === "blender" ? "Camera · Follow Path" : "Camera"), h("div", { class: "seq-t" }, keys, head));
+  const seek = h("input", { class: "seq-seek", type: "range", min: 0, max: 575, value: 0, "aria-label": "Flythrough position" });
+  const resume = h("button", { class: "eu-btn ghost sm", type: "button", disabled: true }, "Resume");
+  const track = h("div", { class: "seq" }, h("span", { class: "seq-l" }, a.ui === "unreal" ? "CineCameraActor" : a.ui === "blender" ? "Camera · Follow Path" : "Camera"), h("div", { class: "seq-t" }, keys, head, seek));
   const tc = h("span", { class: "ap-stat" }, "00:00:00");
   const lens = seg(["Drone", "Crane", "Rail"], (i) => (mode = i), 0);
-  let mode = 0, scrub = null, T0 = 0;
+  let mode = 0, scrub = null;
+  seek.addEventListener("focus", () => { if (scrub === null) scrub = Number(seek.value) / 576; resume.disabled = false; });
+  seek.addEventListener("input", () => {
+    scrub = Number(seek.value) / 576;
+    seek.setAttribute("aria-valuetext", `${(scrub * 24).toFixed(1)} seconds`);
+    resume.disabled = false;
+  });
+  resume.onclick = () => { scrub = null; };
   const V = stage3d(vp, (T, v) => {
     v.shadows = true;
     v.scene.fog = new T.Fog(0xc9d6e3, 25, 80);
@@ -148,15 +157,14 @@ function flyMake(a, r) {
       line.visible = false;
       city.step(dt);
       head.style.left = `${u * 100}%`;
+      if (scrub === null) {
+        seek.value = Math.floor(u * 576);
+        seek.setAttribute("aria-valuetext", `${(u * 24).toFixed(1)} seconds`);
+      }
       const s = u * 24; tc.textContent = `00:00:${String(Math.floor(s)).padStart(2, "0")}:${String(Math.floor((s % 1) * 24)).padStart(2, "0")}`;
     };
   }, { bg: 0xc9d6e3, orbit: false, aspect: 2.1 });
-  const tt = track.querySelector(".seq-t");
-  const at = (e) => { const b = tt.getBoundingClientRect(); return Math.max(0, Math.min(0.999, (e.clientX - b.left) / b.width)); };
-  tt.addEventListener("pointerdown", (e) => { tt.setPointerCapture(e.pointerId); scrub = at(e); });
-  tt.addEventListener("pointermove", (e) => { if (scrub != null) scrub = at(e); });
-  tt.addEventListener("pointerup", () => (scrub = null));
-  const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Sequencer", "Cine Camera", "Movie Render Queue"] : a.ui === "gev" ? ["Cockpit", "Orbit", "Chase"] : ["Camera", "Path", "Render"], [tc]), h("div", { class: "ap-vpwrap" }, vp), track, h("div", { class: "row between" }, lens, h("span", { class: "eu-hint" }, "Drag the timeline to scrub"))], { cls: "fly" });
+  const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Sequencer", "Cine Camera", "Movie Render Queue"] : a.ui === "gev" ? ["Cockpit", "Orbit", "Chase"] : ["Camera", "Path", "Render"], [tc]), h("div", { class: "ap-vpwrap" }, vp), track, h("div", { class: "row between" }, lens, resume)], { cls: "fly" });
   const el = shell(a, "fly", { verb: "Directed a flythrough", status: "24 fps", body: surface, foot: [act(a.ui === "unreal" ? "Render (MRQ)" : "Render shot", { cls: "primary", ack: a.ui === "unreal" ? "Queued in Movie Render Queue at 4K. I'll put the file here when it's done." : "Rendering the shot at 4K. I'll put the file here when it's done." }), act("Send to edit", { cls: "ghost", ack: "Sent the flythrough to the edit timeline as a new clip." })], summary: `Rendered a 24 s flythrough in ${a.name}` });
   return { el, async play() { stagger(keys.children, { gap: 70, delay: 300, sp: "bouncy" }); }, spec: { kind: "fly", app: a.id, path: "catmull-rom · 6 keys", duration: "24s", rig: "drone" } };
 }

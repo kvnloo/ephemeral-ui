@@ -100,7 +100,7 @@ export function timeline(trace, entries, o = {}) {
   const root = h("div", { class: "os-tl" });
   const legend = h("div", { class: "os-legend" }, ["turn", "model", "tool", "subagent", "background"].map((k) => h("span", {}, h("i", { class: `os-lg k-${k}` }), k === "turn" ? "Input" : k === "subagent" ? "Agent" : k === "background" ? "Background" : LANE[k].replace("Tools", "Tool"))));
   const search = h("input", { class: "os-search", type: "search", placeholder: "Filter spans…", value: st.filter, oninput: (e) => { st.filter = e.target.value.trim().toLowerCase(); draw(); } });
-  const compress = h("label", { class: "os-check" }, h("input", { type: "checkbox", checked: st.compress, onchange: (e) => { st.compress = e.target.checked; sc = timeScale(trace, st.compress); st.view = [...sc.domain]; draw(); } }), "Compress idle");
+  const compress = h("label", { class: "os-check" }, h("input", { type: "checkbox", "aria-label": "Compress idle", checked: st.compress, onchange: (e) => { st.compress = e.target.checked; sc = timeScale(trace, st.compress); st.view = [...sc.domain]; draw(); } }), "Compress idle");
   const zoom = (f, cx = 0.5) => { const [a, b] = st.view, w = b - a, nw = Math.min(sc.domain[1] - sc.domain[0], Math.max(400, w * f)); const c = a + w * cx; let na = c - nw * cx; na = Math.max(sc.domain[0], Math.min(sc.domain[1] - nw, na)); st.view = [na, na + nw]; draw(); };
   const tools = h("div", { class: "os-tlbar" }, h("div", { class: "os-zoom" }, h("button", { type: "button", "aria-label": "Zoom out", onclick: () => zoom(1.6) }, "−"), h("button", { type: "button", "aria-label": "Zoom in", onclick: () => zoom(1 / 1.6) }, "+"), h("button", { type: "button", onclick: () => { st.view = [...sc.domain]; draw(); } }, "Fit")), compress, search, h("span", { class: "grow" }), legend);
   const mini = h("canvas", { class: "os-mini", "aria-label": "Trace minimap: drag to scrub" });
@@ -477,7 +477,7 @@ function compareNode(d, o, card) {
   const st = { a: o.a ?? pool[1]?.file, b: o.b ?? pool[0]?.file };
   const root = h("div", {});
   const body = h("div", { class: "os-stack" });
-  const pick = (k) => h("select", { class: "os-select", onchange: (e) => { st[k] = e.target.value; render(); } }, pool.map((s) => h("option", { value: s.file, selected: s.file === st[k] }, `${s.title} · ${fDay(s.startedAt)}`)));
+  const pick = (k) => h("select", { class: "os-select", "aria-label": k === "a" ? "First session" : "Second session", onchange: (e) => { st[k] = e.target.value; render(); } }, pool.map((s) => h("option", { value: s.file, selected: s.file === st[k] }, `${s.title} · ${fDay(s.startedAt)}`)));
   const render = () => {
     const L = lay(o), A = d.traces[st.a], B = d.traces[st.b];
     const errs = (t) => allSpans(t).filter(({ s }) => s.isError).length;
@@ -489,7 +489,13 @@ function compareNode(d, o, card) {
     body.replaceChildren(h("div", { class: "os-cmp-head" }, side(A, "a"), side(B, "b")), h("div", { class: "os-cmp" }, rows));
     card.spec.a = st.a; card.spec.b = st.b;
   };
-  root.append(h("div", { class: "os-toolbar wrap" }, h("span", { class: "os-dot a" }), pick("a"), h("span", { class: "os-vs" }, "vs"), h("span", { class: "os-dot b" }), pick("b")), body);
+  const a = pick("a"), b = pick("b");
+  const swap = h("button", { type: "button", class: "os-btn", onclick: () => {
+    [st.a, st.b] = [st.b, st.a];
+    a.value = st.a; b.value = st.b;
+    render();
+  } }, "Swap sessions");
+  root.append(h("div", { class: "os-toolbar wrap" }, h("span", { class: "os-dot a" }), a, h("span", { class: "os-vs" }, "vs"), h("span", { class: "os-dot b" }), b, swap), body);
   render();
   return { node: root };
 }
