@@ -1249,6 +1249,30 @@
         }
       }
     },
+    "cua-spaces": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Desktop and window targets are pressed toggles that switch the simulated display readout and emit a typed preview-display intent; the card is labelled fixture-only and claims no live Space.",
+      "receipts": {
+        "390": {
+          "fixture": "cua-spaces/cua",
+          "control": "Window · Browser",
+          "keyboard": "event:preview-display",
+          "pointer": "event:preview-display",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "cua-spaces/cua",
+          "control": "Window · Browser",
+          "keyboard": "event:preview-display",
+          "pointer": "event:preview-display",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
     "screen": {
       "surface": "catalog",
       "grade": "A",
