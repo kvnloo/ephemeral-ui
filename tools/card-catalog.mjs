@@ -24,7 +24,7 @@ const FIXED_MS = Date.parse(FIXED_AT);
 // INTEL_APPS do for theirs): the app their own tests mount them with.
 const OWN_APP = { "cua-action": "cua", "work-dock": "z0", "gev-contacts": "god-s-eye-view", "intel-suite": "glide" /* INTEL_APPS, intel-suite.js */ };
 // Card modules by role, for grouping in galleries. A new kinds-*.js lands in "app" until it is named here.
-const GROUP = { "kinds-a": "app", "kinds-b": "app", "kinds-3d": "studio", "kinds-c": "studio", "kinds-e": "studio", "kinds-f": "studio", "kinds-p": "studio",
+const GROUP = { "kinds-a": "app", "kinds-b": "app", "kinds-3d": "studio", "kinds-c": "studio", "kinds-e": "studio", "kinds-f": "studio", "kinds-h": "app", "kinds-p": "studio",
   "kinds-t": "trace", "kinds-i": "intent", "kinds-ops": "ops", "kinds-fleet": "fleet", "kinds-intel": "intel", "kinds-cua": "agent", "kinds-dock": "agent", "kinds-gev": "agent" };
 // Fixture files a module's reference renderer reads (fetches) besides apps.json and themes.json.
 const DATA = { "kinds-i": ["src/data/intent-snapshot.json"], "kinds-ops": ["src/data/ops-fixture.json"], "kinds-t": ["src/data/trace-fixture.json"] };
