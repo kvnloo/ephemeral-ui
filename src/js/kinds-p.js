@@ -13,7 +13,7 @@ const CHAINS = {
     ["meshy_text_to_3d", 'prompt: "clockwork heron on an octagonal fountain basin", ai_model: meshy-6', 20, "preview ✓ 2m 14s"],
     ["meshy_text_to_3d_refine", "texture: PBR, brass + verdigris", 10, "PBR textures ✓"],
     ["meshy_remesh", "keep_detail: true", 5, "175k verts"],
-    ["meshy_download_model", "format: glb", 0, "heron.glb · 1.6 MB → ./assets/"]], viewer: true },
+    ["meshy_download_model", "format: glb", 0, "Simulated download · see Blender placeholder below"]], viewer: true },
   "hermes-talk": { title: "duplex voice call", steps: [["talk.start", "voice: realtime, barge-in: on", 0, "connected · 180 ms"], ["memory.recall", "“the Acme deal”", 0, "3 notes"], ["calendar.create", "Thu 10:00 · Acme sync", 0, "booked"], ["talk-hangup", "", 0, "summary saved"]] },
   "phone-harness": { title: "check the T3 Code build on the S25", steps: [["phone.open", "app: T3 Code (virtual display)", 0, "launched"], ["phone.tree", "", 0, "142 nodes"], ["phone.tap", "“Threads”", 0, "ok"], ["phone.screenshot", "", 0, "390×844 ✓"]] },
   firecrawl: { title: "crawl the Godot docs for triggers", steps: [["firecrawl.map", "docs.godotengine.org", 1, "1,904 URLs"], ["firecrawl.crawl", "include: /tutorials/physics/*", 18, "18 pages"], ["firecrawl.extract", "schema: {signal, args}", 5, "body_entered(body)"]] },
@@ -34,7 +34,7 @@ function pluginMake(a, r) {
   let view = null;
   if (c.viewer) { view = KINDS_3D.gen3d.make(a, r); }
   let go = null;
-  const confirm = holdButton(total ? `Hold to spend ${total} credits` : "Hold to run", async (b, t) => { t.textContent = "Running…"; await run(new Run()); t.textContent = "Done ✓"; burst(b); });
+  const confirm = holdButton(c.viewer ? "Hold to simulate run" : total ? `Hold to spend ${total} credits` : "Hold to run", async (b, t) => { t.textContent = "Running…"; await run(new Run()); t.textContent = "Done ✓"; burst(b); });
   async function run(rn) {
     const lis = [...rows.children];
     for (let i = 0; i < c.steps.length; i++) {
@@ -47,9 +47,9 @@ function pluginMake(a, r) {
     }
   }
   const quietPlay = (v) => v.play(new Run()).catch(() => {});
-  const body = h("div", {}, appSurface(a, [appBar(["Hermes", "Plugin", a.name], [bal]), h("div", { class: "pl-task" }, h("span", { class: "kicker" }, "Task"), h("b", {}, c.title)), rows, view ? h("div", { class: "pl-view" }, view.el.querySelector(".ap") || view.el) : null], { cls: "plugin" }), h("p", { class: "eu-hint" }, total ? "The plugin's rule: name the tool and its cost, then wait for you. One hold approves the whole chain." : "Read-only tools run without asking."));
-  const el = shell(a, "plugin", { verb: `Hermes plugin · ${c.steps.length} tools`, status: total ? "Needs OK" : "Ready", body, foot: [confirm, act("Show calls", { cls: "ghost", ack: "Three calls: meet.join (read-only), meet.transcribe (read-only), meet.actions (writes notes — this is the one that asks first)." })], summary: `${a.name}: ${c.title}` });
-  return { el, async play(rn) { stagger(rows.children, { gap: 80 }); }, spec: { kind: "plugin", app: a.id, host: "hermes", tools: c.steps.map((s) => ({ tool: s[0], args: s[1], credits: s[2] })), confirm: total ? "hold" : "none" } };
+  const body = h("div", {}, appSurface(a, [appBar(["Hermes", "Plugin", a.name], [bal]), h("div", { class: "pl-task" }, h("span", { class: "kicker" }, "Task"), h("b", {}, c.title)), rows, view ? h("div", { class: "pl-view" }, view.el.querySelector(".ap") || view.el) : null], { cls: "plugin" }), h("p", { class: "eu-hint" }, c.viewer ? "Simulated tool calls and credit costs. No request is sent to Meshy and no credits are spent." : total ? "The plugin's rule: name the tool and its cost, then wait for you. One hold approves the whole chain." : "Read-only tools run without asking."));
+  const el = shell(a, "plugin", { verb: `Hermes plugin · ${c.steps.length} tools`, status: c.viewer ? "Demo" : total ? "Needs OK" : "Ready", body, foot: [confirm, act("Show calls", { cls: "ghost", ack: c.viewer ? "These are sample Meshy calls; the model below is a Blender placeholder." : "Three calls: meet.join (read-only), meet.transcribe (read-only), meet.actions (writes notes — this is the one that asks first)." })], summary: `${a.name}: ${c.title}` });
+  return { el, async play(rn) { stagger(rows.children, { gap: 80 }); }, spec: { kind: "plugin", app: a.id, host: "hermes", tools: c.steps.map((s) => ({ tool: s[0], args: s[1], credits: s[2] })), confirm: total ? "hold" : "none", ...(view ? { simulated: true, previewAsset: view.spec.previewAsset } : {}) } };
 }
 
 export const KINDS_P = { plugin: { label: "Hermes plugin chain", verb: () => "Hermes plugin", make: pluginMake } };
