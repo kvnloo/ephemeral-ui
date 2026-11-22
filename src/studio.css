@@ -544,3 +544,42 @@
 .hl-src { display: flex; gap: 3px; } .hl-src span { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--ap-fg) 8%, transparent); opacity: .7; } .hl-src span.on { opacity: 1; background: var(--ap-acc); color: #fff; }
 .hl-acts { padding: 8px 10px 10px; }
 @media (max-width: 720px) { .tw-grid { grid-template-columns: minmax(0, 1fr); } .hl-top { grid-template-columns: minmax(0, 1fr); justify-items: center; } .hl-side { width: 100%; } .hl-src { display: none; } }
+/* advanced kits (kinds-k.js): ACE campus twin, form analysis, tennis swing */
+.ak-truth { font: 600 8.5px/1 var(--h-mono); letter-spacing: .04em; padding: 2px 4px; border-radius: 3px; margin-left: 5px; vertical-align: middle; background: color-mix(in srgb, var(--ap-fg) 12%, transparent); }
+.ak-spec { background: #1f7a4d; color: #fff; } .ak-planned { background: #a16207; color: #fff; } .ak-vision { background: #4f46e5; color: #fff; } .ak-mock { background: none; }
+span.ak-truth.ak-mock { background: #6b7280; color: #fff; }
+.ak-floors { display: flex; gap: 4px; padding: 10px 12px 4px; flex-wrap: wrap; }
+.ak-floor, .ak-zone, .ak-fix, .ak-phase, .ak-mark { all: unset; cursor: pointer; box-sizing: border-box; }
+.ak-floor { padding: 4px 10px; border-radius: 999px; font: 500 11px var(--h-font); background: var(--ap-panel); }
+.ak-floor[aria-pressed="true"] { background: var(--ap-acc); color: #fff; }
+.ak-fhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; padding: 4px 12px 8px; font-size: 11px; } .ak-fhead span:last-child { opacity: .7; flex-basis: 100%; }
+.ak-twin { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 8px; padding: 0 12px 8px; }
+.ak-plan { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; align-content: start; }
+.ak-zone { display: flex; flex-direction: column; gap: 5px; padding: 7px 8px; border-radius: 7px; background: var(--ap-panel); font-size: 11px; border: 1px solid transparent; }
+.ak-zone[aria-pressed="true"] { border-color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-acc); }
+.ak-cells { display: flex; flex-wrap: wrap; gap: 2px; } .ak-cells i { width: 7px; height: 10px; border-radius: 1.5px; background: color-mix(in srgb, var(--ap-fg) 16%, transparent); } .ak-cells i.on { background: var(--ap-acc); }
+.ak-detail { padding: 8px 10px; border-radius: 8px; border: 1px dashed color-mix(in srgb, var(--ap-fg) 22%, transparent); font-size: 11px; min-width: 0; }
+.ak-detail p { margin: 5px 0 0; } .ak-detail code { font: 9.5px var(--h-mono); opacity: .7; } .ak-dh { display: flex; align-items: baseline; }
+.ak-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 0 12px 10px; font-size: 10px; opacity: .8; } .ak-legend .ak-truth { margin-left: 0; }
+.ak-stage { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 10px; padding: 10px 12px 4px; align-items: start; }
+.ak-figwrap { background: var(--ap-view, var(--ap-panel)); border-radius: 8px; aspect-ratio: 1; }
+.ak-fig { width: 100%; height: 100%; display: block; }
+.ak-bone { stroke: color-mix(in srgb, var(--ap-fg) 70%, transparent); stroke-width: 1.6; stroke-linecap: round; } .ak-joint { fill: var(--ap-fg); } .ak-joint.hot { fill: #ef4444; r: 3; }
+.ak-floorline { stroke: color-mix(in srgb, var(--ap-fg) 25%, transparent); stroke-width: .8; }
+.ak-trail { fill: none; stroke: color-mix(in srgb, var(--ap-acc) 45%, transparent); stroke-width: .8; stroke-dasharray: 1.5 1.5; } .ak-racket { stroke: var(--ap-acc); stroke-width: 1.8; stroke-linecap: round; } .ak-tip { fill: var(--ap-acc); }
+.ak-side { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ak-read { display: flex; flex-wrap: wrap; gap: 3px 10px; font: 10.5px var(--h-mono); } .ak-read .ak-t { font-weight: 600; } .ak-flags { color: #ef4444; } .ak-ph { font: 600 13px var(--h-font); flex-basis: 100%; }
+.ak-fixes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ak-fix { display: grid; gap: 1px; width: 100%; padding: 6px 8px; border-radius: 6px; background: var(--ap-panel); font-size: 10.5px; }
+.ak-fix[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px #ef4444; } .ak-fix code { font: 9.5px var(--h-mono); opacity: .7; } .ak-fix em { font-style: normal; opacity: .8; }
+.ak-scrubwrap { padding: 4px 12px 6px; display: grid; gap: 4px; } .ak-scrub { width: 100%; accent-color: var(--ap-acc); margin: 0; }
+.ak-track { position: relative; height: 10px; border-radius: 4px; background: color-mix(in srgb, var(--ap-fg) 8%, transparent); }
+.ak-mark { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: #ef4444; opacity: .75; } .ak-mark:hover, .ak-mark:focus-visible { opacity: 1; outline: 1px solid var(--ap-fg); }
+.ak-cue { padding: 0 12px 10px; font-size: 11px; min-height: 16px; }
+.ak-phases { position: relative; display: flex; gap: 2px; }
+.ak-phase { min-width: 0; padding: 5px 2px; text-align: center; font-size: 9.5px; border-radius: 4px; background: var(--ap-panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-phase[aria-pressed="true"] { background: var(--ap-acc); color: #fff; }
+.ak-contact { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #ef4444; pointer-events: none; }
+.ak-note { margin: 0; font-size: 10.5px; opacity: .8; }
+.ak-floor:focus-visible, .ak-zone:focus-visible, .ak-fix:focus-visible, .ak-phase:focus-visible { outline: 2px solid var(--ap-acc); outline-offset: 1px; }
+@media (max-width: 720px) { .ak-twin, .ak-stage { grid-template-columns: minmax(0, 1fr); } .ak-figwrap { max-width: 240px; } .ak-phase { font-size: 8.5px; } }
