@@ -33,6 +33,9 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   brand mode (accent / full / host only), logos. Exports CSS or JSON tokens.
 - **Flows**: three cards wired with draggable cables; Run sends a packet down the line.
 - **Spec**: the card JSON of whatever you last clicked; draft schema at `src/schema/card.v0.json`.
+- **Card catalog**: `catalog/catalog.json` lists every kind with 1-3 fixtures, generated from the
+  kind modules (`tools/card-catalog.mjs`). Apps pin a tag and render it in their gallery; see
+  [catalog/README.md](catalog/README.md).
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
 ## Ripple intent kits
@@ -136,6 +139,8 @@ run the leak check. DOM suite: `EUI_DOM_MODULE=<linkedom>/worker.js node --test 
 
     python3 tools/catalog.py > out/catalog.json && node tools/build-apps.mjs   # src/data/apps.json
     python3 tools/themes.py tools/vendor/hermes-themes.json > src/data/themes.json
+    node tools/card-catalog.mjs                                                # catalog/catalog.json (--check in CI)
+    node --test tools/*.test.mjs                                               # all suites
     python3 -m http.server 0 --bind 127.0.0.1 --directory src                  # any free port
     node tools/shot.mjs http://127.0.0.1:<port>/ out/shots --theme hermes-nous  # screenshots + page errors
     tools/deploy.sh                                                            # dist/ -> production

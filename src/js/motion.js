@@ -131,3 +131,9 @@ export function rng(seedStr) {
   return () => { s = Math.imul(s ^ (s >>> 15), 2246822507); s = Math.imul(s ^ (s >>> 13), 3266489909); s ^= s >>> 16; return (s >>> 0) / 4294967296; };
 }
 export const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+/** A seeded Fisher-Yates shuffle (a copy). sort(() => r() - 0.5) orders differently per JS engine, so cards would too. */
+export function shuffle(r, arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}

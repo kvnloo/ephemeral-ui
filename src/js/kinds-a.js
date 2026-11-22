@@ -1,5 +1,5 @@
 // Card kinds, part A: messages, work, knowledge, approvals.
-import { h, anim, stagger, countUp, typeText, pick, flip, Run } from "./motion.js";
+import { h, anim, stagger, countUp, typeText, pick, shuffle, flip, Run } from "./motion.js";
 import { shell, icon, avatar, PEOPLE, COMPANIES, holdButton, burst, seg, svg } from "./shell.js";
 import { tell, undoable, why, settle, roving, setDisabled } from "./loop.js";
 
@@ -13,8 +13,8 @@ export const KINDS_A = {
   inbox: {
     label: "Inbox search", verb: (a) => `Searched ${a.name} · "invoice"`,
     make(a, r) {
-      const rows = SUBJECTS.email.slice().sort(() => r() - 0.5).slice(0, 4);
-      rows.sort((x) => (x[0].includes("Invoice") ? -1 : 1));
+      const rows = shuffle(r, SUBJECTS.email).slice(0, 4);
+      rows.sort((x, y) => y[0].includes("Invoice") - x[0].includes("Invoice")); // the invoice first, the rest in shuffled order
       const ids = rows.map((x, i) => `m${4471 - i * 13}`);
       let picked = 0;
       const status = () => el.querySelector(".eu-status");
@@ -124,7 +124,8 @@ export const KINDS_A = {
   notify: {
     label: "Notification stack", verb: () => "3 updates",
     make(a, r) {
-      const items = [["Deploy succeeded", "main · 2m ago"], ["New comment from " + pick(r, PEOPLE).split(" ")[0], "\"Looks great, one nit\""], ["Reminder: standup", "in 10 minutes"], [`${a.name} digest`, "5 things you missed"]].sort(() => r() - 0.5).slice(0, 3);
+      const all = [["Deploy succeeded", "main · 2m ago"], ["New comment from " + pick(r, PEOPLE).split(" ")[0], "\"Looks great, one nit\""], ["Reminder: standup", "in 10 minutes"], [`${a.name} digest`, "5 things you missed"]];
+      const items = shuffle(r, all).slice(0, 3);
       const stack = h("div", { class: "nstack", tabindex: 0, role: "button", "aria-label": "Fan out notifications", onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); stack.click(); } } }, items.map(([t, s], i) => { const n = h("div", { class: "note", style: { "--i": i }, "data-t": t }, icon(a, 22), h("div", { class: "grow" }, h("b", {}, t), h("span", {}, s)), h("time", {}, ["now", "2m", "9m"][i])); swipeAway(n, null, () => n.closest(".nstack")?.classList.contains("open"), () => undoable(el, `Cleared “${t}”`, () => stack.insertBefore(n, stack.children[i] || null), { ms: 5000 })); n.addEventListener("click", (e) => { if (!stack.classList.contains("open") || n.classList.contains("swiping")) return; e.stopPropagation(); tell(el, { action: "open", label: `Open “${t}”`, entities: { notification: t }, ack: t.startsWith("New comment") ? "It's on the Checkout frame: “Looks great, one nit” — the nit is the button weight. Want me to reply?" : t.startsWith("Deploy") ? "main is live. No new errors in the first 2 minutes." : "Opened. I'll fold the rest into tonight's digest." }); }); return n; }));
       stack.addEventListener("click", () => { if (stack.classList.contains("open")) return; flip(stack.children, () => stack.classList.add("open"), { spring: "soft" }); });
       const body = h("div", {}, stack, h("p", { class: "eu-hint" }, "Tap to fan out · swipe to clear"));
@@ -179,7 +180,7 @@ export const KINDS_A = {
   kanban: {
     label: "Board move", verb: () => "Moved 1 card",
     make(a, r) {
-      const tasks = ["Fix login loop on Safari", "Ship onboarding v2", "Write release notes", "Audit API rate limits", "Migrate billing tables", "Polish empty states"].sort(() => r() - 0.5);
+      const tasks = shuffle(r, ["Fix login loop on Safari", "Ship onboarding v2", "Write release notes", "Audit API rate limits", "Migrate billing tables", "Polish empty states"]);
       const cols = [["Todo", tasks.slice(0, 2)], ["In progress", tasks.slice(2, 4)], ["Done", tasks.slice(4, 5)]].map(([n, ts]) => h("div", { class: "kcol", "data-col": n }, h("span", { class: "kh" }, n, h("em", {}, ts.length)), ts.map((t, i) => kcard(t, i))));
       function kcard(t, i) { const id = `${a.name.slice(0, 3).toUpperCase()}-${100 + Math.floor(r() * 400)}`; const c = h("div", { class: "kcard", tabindex: 0, role: "button", "aria-label": `${id} ${t}. Arrow left or right to move.`, "data-id": id, "data-t": t }, h("span", { class: "kid" }, id), h("span", {}, t), avatar(PEOPLE[(i + t.length) % PEOPLE.length], i)); dragCard(c); c.addEventListener("click", () => { if (c.dataset.moved) { delete c.dataset.moved; return; } board.querySelectorAll(".kcard").forEach((x) => x.classList.toggle("lp-sel", x === c)); tell(el, { action: "select", label: `${id}: ${t}`, entities: { issue: id }, ack: `${id} is in ${c.parentElement.dataset.col}. Want me to pick it up, or move it?` }); }); c.addEventListener("keydown", (e) => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return; e.preventDefault(); const cs = [...board.querySelectorAll(".kcol")]; const j = cs.indexOf(c.parentElement) + (e.key === "ArrowRight" ? 1 : -1); if (cs[j]) { move(c, cs[j]); c.focus(); } }); return c; }
       function move(c, col, { silent = false } = {}) {
