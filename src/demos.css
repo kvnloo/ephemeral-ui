@@ -8,3 +8,5 @@
 .demo-index { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 8px; padding: 0; list-style: none; }
 .demo-index a { display: block; padding: 8px 10px; border: 1px solid var(--h-border); border-radius: var(--h-radius); }
 .demo-index a[aria-current="page"] { border-color: var(--h-primary); }
+.demo-brand { border: 1px solid var(--h-border); border-radius: var(--h-radius); margin: 0 0 12px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.demo-brand input { accent-color: var(--h-primary); }

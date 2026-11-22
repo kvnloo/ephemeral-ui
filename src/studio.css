@@ -2,8 +2,21 @@
    .ap surfaces take the app's editor colours (--ap-*), set from src/js/chrome.js. */
 
 /* ---------- app surface ---------- */
-.ap { --ap-bg: var(--h-muted); --ap-panel: var(--h-card-solid); --ap-view: var(--soft); --ap-fg: var(--h-fg); --ap-acc: var(--a); --ap-hot: var(--a); --ap-font: var(--h-font);
+.ap {
+  --ap-bg: var(--editor-bg, var(--h-muted));
+  --ap-panel: var(--editor-panel, var(--h-card-solid));
+  --ap-view: var(--editor-view, var(--soft));
+  --ap-fg: var(--editor-fg, var(--h-fg));
+  --ap-acc: var(--editor-acc, var(--a));
+  --ap-hot: var(--editor-hot, var(--a));
+  --ap-font: var(--editor-font, var(--h-font));
   background: var(--ap-bg); color: var(--ap-fg); border-radius: calc(var(--r) - 2px); overflow: hidden; font: 12px/1.4 var(--ap-font); display: flex; flex-direction: column; gap: 0; border: 1px solid color-mix(in srgb, var(--ap-fg) 10%, transparent); min-width: 0; }
+[data-brand="mono"] .eu-card .ap {
+  --ap-bg: var(--h-muted); --ap-panel: var(--h-card-solid); --ap-view: var(--soft);
+  --ap-fg: var(--h-fg); --ap-acc: var(--a); --ap-hot: var(--a); --ap-font: var(--h-font);
+}
+[data-brand="mono"] .eu-card .ap-tool.on,
+[data-brand="mono"] .eu-card .ap-chip.on { color: var(--a-ink); }
 .ap > * { min-width: 0; }
 .ap-host { background: var(--soft); }
 .ap-bar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; background: var(--ap-panel); border-bottom: 1px solid color-mix(in srgb, var(--ap-fg) 10%, transparent); overflow-x: auto; scrollbar-width: none; white-space: nowrap; }

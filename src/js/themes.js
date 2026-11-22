@@ -43,7 +43,7 @@ export function current() {
   return { ...b, ...state.over };
 }
 
-export async function loadThemes({ light = "t3-light", dark = "t3-dark" } = {}) {
+export async function loadThemes({ light = "t3-light", dark = "t3-dark", brandModes = ["accent", "full", "mono"] } = {}) {
   const d = await (await fetch("data/themes.json")).json();
   state.themes = d.themes;
   state.sources = d.sources;
@@ -53,7 +53,7 @@ export async function loadThemes({ light = "t3-light", dark = "t3-dark" } = {}) 
   const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
   state.base = state.themes.find((t) => t.id === (hashTheme || saved.id)) || state.themes.find((t) => t.id === (prefersDark ? dark : light));
   state.over = saved.over || {};
-  state.brand = saved.brand || "accent";
+  state.brand = brandModes.includes(saved.brand) ? saved.brand : brandModes[0];
   state.logos = !!saved.logos;
   motion.speed = saved.speed || 1;
   apply(false);
