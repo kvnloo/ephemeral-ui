@@ -17,9 +17,13 @@ import { buildCombos, COMBOS } from "./combos.js";
 import { KINDS_OPS } from "./kinds-ops.js";
 import { KINDS_FLEET } from "./kinds-fleet.js";
 import { KINDS_INTEL } from "./kinds-intel.js";
+import { translate, themeFor, profileOf } from "./host-bridge.js";
 
 export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_T, ...KINDS_I, ...KINDS_OPS, ...KINDS_FLEET, ...KINDS_INTEL };
 const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P), ...Object.keys(KINDS_F)]);
+/** Agent host profiles (data/hosts.json): skins, declared tiers and bridges. Every preview is a simulation. */
+export const HOSTS = { list: [], fixture: null, tiers: {} };
+const prof = (t = current()) => profileOf(HOSTS.list, t) || HOSTS.list[0];
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -66,7 +70,7 @@ function hostShell() {
   const composer = h("div", { class: "composer" }, input, h("div", { class: "crow" }, h("span", { class: "eu-chip" }, "Opus"), h("span", { class: "eu-chip ghost napps-chip" }, "Apps"), h("span", { class: "grow" }), orb, h("button", { class: "send", type: "button", "aria-label": "Send" }, "↑")));
   const chat = h("main", { class: "chat" }, h("div", { class: "chat-top" }, h("b", { class: "thread-title" }, threads[0]), h("span", { class: "grow" }), h("span", { class: "eu-chip ghost" }, "ephemeral cards: on")), scroll, composer);
   el.append(h("div", { class: "titlebar" }, h("i"), h("i"), h("i"), h("span", { class: "wt" }, "")), h("div", { class: "cols" }, side, chat));
-  const updateNames = () => { const t = current(); $(".host-name", el).textContent = t.host === "hermes" ? "Hermes" : "T3 Code"; $(".wt", el).textContent = `${t.label} · ${t.sub} — tokens from source`; };
+  const updateNames = () => { const t = current(), p = prof(t); $(".host-name", el).textContent = p ? p.short : t.label; $(".wt", el).textContent = `${t.label} · ${t.sub} — ${t.approx ? "approximate skin" : "tokens from source"} · simulation`; el.dataset.tier = p?.tier.level ?? ""; };
   updateNames();
   window.addEventListener("theme", updateNames);
   el.addEventListener("pointerdown", (e) => { if (e.isTrusted && e.target.closest(".eu-card") && host.run && !host.paused) pauseHost(); });
@@ -256,9 +260,9 @@ function buildKinds() {
 /* ---------------- theme engine ---------------- */
 function buildThemes() {
   const list = $("#presets");
-  const groups = [["t3", "T3 Code"], ["hermes", "Hermes desktop"]];
-  list.replaceChildren(...groups.map(([hid, name]) => h("div", { class: "pgroup" }, h("span", { class: "eu-hint" }, name), h("div", { class: "prow" }, T.themes.filter((t) => t.host === hid).map((t) => h("button", { type: "button", class: "preset", "data-id": t.id, onclick: (e) => setTheme(t.id, { x: e.clientX, y: e.clientY }), style: { "--pb": t.bg, "--pc": t.card, "--pp": t.primary, "--pf": t.fg, "--ps": t.sidebar, "--pr": `${Math.min(t.radius, 8)}px` } }, h("span", { class: "mini" }, h("i", { class: "s" }), h("i", { class: "c" }), h("i", { class: "p" })), h("span", { class: "pn" }, t.sub)))))));
-  const mark = () => { $$(".preset").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === T.base.id ? "true" : "false")); $$(".hostpick button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.host === T.base.host ? "true" : "false")); };
+  const groups = HOSTS.list.map((p) => [p.id, `${p.label}${p.skin === "approx" ? " · approximate skin" : ""}`]);
+  list.replaceChildren(...groups.map(([hid, name]) => h("div", { class: "pgroup", "data-host": hid }, h("span", { class: "eu-hint" }, name), h("div", { class: "prow" }, T.themes.filter((t) => t.host === hid).map((t) => h("button", { type: "button", class: "preset", "data-id": t.id, onclick: (e) => setTheme(t.id, { x: e.clientX, y: e.clientY }), style: { "--pb": t.bg, "--pc": t.card, "--pp": t.primary, "--pf": t.fg, "--ps": t.sidebar, "--pr": `${Math.min(t.radius, 8)}px` } }, h("span", { class: "mini" }, h("i", { class: "s" }), h("i", { class: "c" }), h("i", { class: "p" })), h("span", { class: "pn" }, t.sub)))))));
+  const mark = () => { $$(".preset").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === T.base.id ? "true" : "false")); $$(".hostpick button").forEach((b) => { b.setAttribute("aria-pressed", b.dataset.host === T.base.host ? "true" : "false"); if (b.dataset.host === T.base.host) b.scrollIntoView?.({ block: "nearest", inline: "nearest" }); }); };
   window.addEventListener("theme", () => { mark(); syncControls(); $("#tokcode").textContent = $("#exp-json").getAttribute("aria-pressed") === "true" ? exportJSON() : exportCSS(); });
   mark();
 
@@ -281,8 +285,53 @@ function buildThemes() {
   const show = () => { const run = new Run(); pv.replaceChildren(); for (const [id, k] of [["uber", "ride"], ["github", "merge"], ["stripe", "receipt"]]) { const c = makeCard(id, k); pv.append(c.el); quiet(c.play(run)); } };
   show();
   $("#pvreplay").onclick = show;
-  $$(".hostpick button").forEach((b) => b.addEventListener("click", (e) => { const t = current(); const scheme = t.scheme; const target = b.dataset.host === "t3" ? (scheme === "dark" ? "t3-dark" : "t3-light") : scheme === "dark" ? "hermes-nous-dark" : "hermes-nous"; setTheme(target, { x: e.clientX, y: e.clientY }); }));
-  $("#scheme").addEventListener("click", (e) => { const t = current(); const pairs = { "t3-light": "t3-dark", "t3-dark": "t3-light", "hermes-nous": "hermes-nous-dark", "hermes-nous-dark": "hermes-nous" }; setTheme(pairs[t.id] || (t.host === "hermes" ? "hermes-nous" : "t3-light"), { x: e.clientX, y: e.clientY }); });
+  $$(".hostpick button").forEach((b) => b.addEventListener("click", (e) => { const p = HOSTS.list.find((x) => x.id === b.dataset.host); if (p) setTheme(themeFor(p, current().scheme), { x: e.clientX, y: e.clientY }); }));
+  $("#scheme").addEventListener("click", (e) => { const t = current(), p = prof(t); setTheme(themeFor(p, t.scheme === "dark" ? "light" : "dark"), { x: e.clientX, y: e.clientY }); });
+}
+
+/* ---------------- host matrix: one pinned card in every agent host (simulated) ---------------- */
+function buildHostMatrix() {
+  const grid = $("#hostgrid"); if (!grid) return;
+  const fx = HOSTS.fixture;
+  let scheme = current().scheme;
+  const frames = new Map();
+  let rpc = 0;
+  const cell = (p) => {
+    const tier = HOSTS.tiers[p.tier.level] || "";
+    const frame = h("iframe", { class: "hm-frame", title: `${p.label} (simulated host)`, loading: "lazy", "data-host": p.id });
+    const log = h("pre", { class: "hm-log", "aria-live": "polite" }, p.bridge.id === "none" ? "No channel back: a pick stays in the card." : `Pin the card to see what ${p.short} receives.`);
+    const fig = h("figure", { class: "hm-cell", "data-host": p.id, "data-tier": p.tier.level, "data-skin": p.skin, "data-sim": p.preview },
+      h("figcaption", { class: "hm-cap" },
+        h("div", { class: "row" }, h("b", {}, p.label), h("span", { class: "grow" }), h("span", { class: "hm-chip sim", title: "Drawn by this page, not by the host" }, "Simulation")),
+        h("div", { class: "hm-chips" },
+          h("span", { class: "hm-chip tier", title: tier }, `Tier ${p.tier.level} · ${["artifact", "context back", "native"][p.tier.level]}`),
+          h("span", { class: "hm-chip skin" }, p.skin === "approx" ? "approximate skin" : "tokens from source"),
+          h("span", { class: "hm-chip rc" + (p.receipt ? " ok" : "") , title: p.receipt ? `${p.receipt.ref}: ${p.receipt.note}` : (p.receiptNote || "Nobody has run the kit inside this host yet") }, p.receipt ? "native receipt on file" : "no native receipt")),
+        h("p", { class: "hm-surf eu-hint" }, p.surface)),
+      frame,
+      h("div", { class: "hm-bridge" }, h("span", { class: "eu-hint" }, `Bridge: ${p.bridge.label}`), log),
+      p.textOnly ? h("p", { class: "hm-text eu-hint" }, p.textOnly) : null);
+    frames.set(p.id, { p, frame, log, fig });
+    return fig;
+  };
+  grid.replaceChildren(...HOSTS.list.map(cell));
+  const load = () => { for (const { p, frame } of frames.values()) frame.src = `host-frame.html?host=${p.id}&scheme=${scheme}&app=${fx.app}&kind=${fx.kind}`; };
+  const sw = seg(["Light", "Dark"], (i) => { scheme = i ? "dark" : "light"; load(); }, scheme === "dark" ? 1 : 0);
+  $("#hostscheme")?.replaceChildren(sw);
+  $("#hostfixture") && ($("#hostfixture").textContent = `${catalog.byId[fx.app]?.name || fx.app} · ${KINDS[fx.kind]?.label || fx.kind} (seed ${fx.seed})`);
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || typeof e.data.type !== "string") return;
+    const f = frames.get(e.data.host); if (!f || e.source !== f.frame.contentWindow) return;
+    if (e.data.type === "eui:frame-size") f.frame.style.height = `${Math.min(640, Math.max(160, e.data.height))}px`;
+    if (e.data.type === "eui:frame-ready") { f.fig.dataset.ready = e.data.theme; f.frame.style.height = `${Math.min(640, Math.max(160, e.data.height))}px`; }
+    if (e.data.type === "eui:frame-intent") {
+      const out = translate(f.p, e.data.detail, { id: ++rpc });
+      f.fig.dataset.last = out ? f.p.bridge.id : "none";
+      f.log.textContent = out ? `${out.channel}\n${JSON.stringify(out.message, null, 1)}` : `No channel back (tier 0): "${e.data.detail.label}" stays in the card.`;
+      anim(f.log, [{ background: "color-mix(in srgb, var(--h-primary) 18%, transparent)" }, { background: "transparent" }], { duration: 900 });
+    }
+  });
+  new IntersectionObserver(([en], io) => { if (en.isIntersecting) { io.disconnect(); load(); } }, { rootMargin: "300px" }).observe(grid);
 }
 
 /* ---------------- flows: cards wired together ---------------- */
@@ -375,7 +424,7 @@ function buildPalette() {
     ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.intent ? "intent" : v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); if (v.intent) window.__intent?.pick(INTENT_KITS.find(kit => kit.kinds.includes(k)).id); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
     ...T.themes.map((t) => ({ type: "Theme", label: `${t.label} · ${t.sub}`, sub: t.host, go: () => setTheme(t.id) })),
     ...COMBOS.map((c, i) => ({ type: "Combo", label: c.label, sub: c.tag, go: () => { document.getElementById("combos").scrollIntoView({ behavior: "smooth" }); document.querySelectorAll(".cb-tab")[i]?.click(); } })),
-    ...[["Kit", "kit"], ["Combos", "combos"], ["Intent kits", "intent"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
+    ...[["Kit", "kit"], ["Hosts", "hosts"], ["Combos", "combos"], ["Intent kits", "intent"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
   ];
   const render = () => {
     const q = inp.value.trim().toLowerCase();
@@ -428,12 +477,16 @@ function buildOSS() {
 
 /* ---------------- boot ---------------- */
 async function boot() {
-  await Promise.all([loadThemes(), loadApps()]);
+  const [hosts] = await Promise.all([fetch("data/hosts.json").then((r) => r.json()), loadThemes(), loadApps()]);
+  HOSTS.list = hosts.hosts; HOSTS.fixture = hosts.fixture; HOSTS.tiers = hosts.tiers;
+  $(".hostpick")?.replaceChildren(...HOSTS.list.map((p) => h("button", { type: "button", "data-host": p.id, title: `${p.label}${p.skin === "approx" ? " (approximate skin)" : ""} · simulation` }, p.short)));
+  $$("[data-count=\"9\"]").forEach((e) => (e.dataset.count = T.themes.length));
+  $$("[data-count=\"2\"]").forEach((e) => (e.dataset.count = HOSTS.list.length));
   $("#napps").textContent = catalog.apps.length;
   $("#srcicons").textContent = catalog.source;
   $("#srct3").textContent = T.sources.t3;
   $("#srchermes").textContent = T.sources.hermes;
-  buildStore(); buildKinds(); buildThemes(); buildFlows(); buildPalette(); buildOSS();
+  buildStore(); buildKinds(); buildThemes(); buildHostMatrix(); buildFlows(); buildPalette(); buildOSS();
   buildCombos({ catalog, icon, openDrawer });
   buildAsk({ catalog, setSpec });
   buildIntent({ catalog, setSpec });
@@ -456,6 +509,6 @@ async function boot() {
   // hero spotlight
   const hero = $("#top");
   hero.addEventListener("pointermove", (e) => { const b = hero.getBoundingClientRect(); hero.style.setProperty("--sx", `${e.clientX - b.left}px`); hero.style.setProperty("--sy", `${e.clientY - b.top}px`); });
-  window.__eui = { KINDS, catalog, makeCard, runInHost, setTheme, T };
+  window.__eui = { KINDS, catalog, makeCard, runInHost, setTheme, T, HOSTS };
 }
 boot();

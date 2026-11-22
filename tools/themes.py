@@ -5,10 +5,14 @@ Sources (read, not guessed):
   Tailwind 4.3.3 theme.css for the zinc/neutral/status ramps.
 - Hermes desktop: apps/desktop/src/themes/presets.ts and styles.css (radius-scalar 0.2),
   kvnloo/hermes-agent 1afe076d. Dumped to JSON with node (see README).
+- Tern with Glide: theme/glide.json, both schemes as they are.
+- o8: kvnloo/o8 src/lib/theme/registry.ts @ 3a3edb35 (solid chat surface).
+- ChatGPT, Codex, Claude: closed source, so approximations flagged approx (the site labels them).
 Usage: python3 tools/themes.py <hermes-themes.json> > src/data/themes.json
 """
 import json
 import math
+from pathlib import Path
 import re
 import sys
 
@@ -45,6 +49,9 @@ def parse(c):
         return rgb, (int(c[6:8], 16) / 255 if len(c) == 8 else 1.0)
     if c == "transparent":
         return (0, 0, 0), 0.0
+    m = re.fullmatch(r"rgba\((\d+), (\d+), (\d+), ([\d.]+)\)", c)
+    if m:
+        return tuple(int(m.group(i)) for i in (1, 2, 3)), float(m.group(4))
     m = re.fullmatch(r"color-mix\(in srgb, (.+?) (\d+)%, (.+)\)", c)
     if m:
         (a, aa), p, (b, ba) = parse(m.group(1)), int(m.group(2)) / 100, parse(m.group(3))
@@ -124,9 +131,103 @@ def hermes(themes):
     return out
 
 
+GLIDE = Path(__file__).resolve().parent.parent / "theme" / "glide.json"
+SYS_SANS = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
+SYS_MONO = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace'
+SOFT_SHADOW = "0 1px 2px rgb(0 0 0 / 5%)"
+DARK_SHADOW = "0 14px 32px -18px rgb(0 0 0 / 75%)"
+
+
+def tern():
+    """Tern running the Glide plugin: the shared theme file, both schemes, unchanged."""
+    g = json.load(open(GLIDE))
+    keys = ("bg", "fg", "card", "muted", "mutedFg", "accent", "border", "input", "primary", "primaryFg", "sidebar",
+            "sidebarBorder", "message", "messageBorder", "success", "successFg", "warning", "danger", "dangerFg")
+    out = []
+    for scheme in ("light", "dark"):
+        c = g["color"][scheme]
+        out.append(dict(host="tern", id=f"tern-glide-{scheme}", label="Tern · Glide", sub=scheme.title(), scheme=scheme,
+                        **{k: c[k] for k in keys}, radius=g["radius"]["base"], font=g["type"]["family"]["sans"],
+                        mono=g["type"]["family"]["mono"], glass=False,
+                        shadow=SOFT_SHADOW if scheme == "light" else DARK_SHADOW))
+    return out
+
+
+def o8():
+    """o8 (kvnloo/o8 @ 3a3edb35) src/lib/theme/registry.ts solid surfaces: the chat transcript where
+    o8_html_render visualizations sit, its panel, user fill, dividers and accent. Radius from the
+    canvas HtmlPreview controls (10px); fonts from src/app/globals.css."""
+    common = dict(host="o8", label="o8", radius=10, glass=False,
+                  font='-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif',
+                  mono='"SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace')
+    light = dict(common, id="o8-light", sub="Light", scheme="light", bg="#f4f2ed", fg="#0f172a", card="#faf9f4",
+                 muted="#ece9e2", mutedFg="#64748b", accent=res("rgba(15, 23, 42, 0.04)"), border=res("rgba(15, 23, 42, 0.08)"),
+                 input=res("rgba(15, 23, 42, 0.12)"), primary="#2563eb", primaryFg="#ffffff", sidebar="#faf9f4",
+                 sidebarBorder=res("rgba(15, 23, 42, 0.08)"), message="#ece9e2", messageBorder="#00000000",
+                 success="#16a34a", successFg="#16a34a", warning="#f97316", danger="#ef4444", dangerFg="#ef4444",
+                 shadow=SOFT_SHADOW)
+    dark = dict(common, id="o8-dark", sub="Dark", scheme="dark", bg="#0c0e11", fg="#e8ecf2", card="#1b1e23",
+                muted="#252930", mutedFg="#8b95a3", accent=res("rgba(255, 255, 255, 0.05)"), border=res("rgba(255, 255, 255, 0.08)"),
+                input=res("rgba(255, 255, 255, 0.1)"), primary="#8fb4ff", primaryFg="#141414", sidebar="#0c0e11",
+                sidebarBorder=res("rgba(255, 255, 255, 0.06)"), message="#252930", messageBorder="#00000000",
+                success="#86efac", successFg="#86efac", warning="#fbbf24", danger="#f87171", dangerFg="#f87171",
+                shadow=DARK_SHADOW)
+    return [light, dark]
+
+
+def approx(host, label, light, dark, radius, note):
+    """Closed-source hosts: no token source to read. Hand-picked approximations from looking at the
+    running product (behaviour notes only, no copied CSS), flagged approx so the site labels them.
+    A real MCP Apps host injects its own style variables into the view at runtime."""
+    base = dict(host=host, label=label, radius=radius, font=SYS_SANS, mono=SYS_MONO, glass=False, approx=True, note=note,
+                messageBorder="#00000000", success=TW["emerald-500"], warning=TW["amber-500"], danger=TW["red-500"])
+    return [dict(base, id=f"{host}-light", sub="Light", scheme="light", successFg=TW["emerald-700"], dangerFg=TW["red-700"],
+                 shadow=SOFT_SHADOW, **light),
+            dict(base, id=f"{host}-dark", sub="Dark", scheme="dark", successFg=TW["emerald-400"], dangerFg=TW["red-400"],
+                 shadow=DARK_SHADOW, **dark)]
+
+
+def chatgpt():
+    return approx("chatgpt", "ChatGPT",
+                  dict(bg="#ffffff", fg="#0d0d0d", card="#ffffff", muted="#f9f9f9", mutedFg="#5d5d5d", accent="#0000000d",
+                       border="#0000001a", input="#00000026", primary="#0d0d0d", primaryFg="#ffffff", sidebar="#f9f9f9",
+                       sidebarBorder="#0000000d", message="#f4f4f4"),
+                  dict(bg="#212121", fg="#ececec", card="#2a2a2a", muted="#2f2f2f", mutedFg="#afafaf", accent="#ffffff0d",
+                       border="#ffffff1a", input="#ffffff26", primary="#ffffff", primaryFg="#0d0d0d", sidebar="#181818",
+                       sidebarBorder="#ffffff0d", message="#303030"),
+                  16, "Approximation of ChatGPT's neutral chat surface; an MCP Apps view receives ChatGPT's real tokens at runtime.")
+
+
+def codex():
+    return approx("codex", "Codex",
+                  dict(bg="#fcfcfc", fg="#1a1a1a", card="#ffffff", muted="#f3f3f3", mutedFg="#5e5e5e", accent="#0000000a",
+                       border="#00000014", input="#00000024", primary="#1a1a1a", primaryFg="#ffffff", sidebar="#f3f3f3",
+                       sidebarBorder="#00000014", message="#efefef"),
+                  dict(bg="#181818", fg="#e8e8e8", card="#1f1f1f", muted="#262626", mutedFg="#a3a3a3", accent="#ffffff0a",
+                       border="#ffffff14", input="#ffffff24", primary="#e8e8e8", primaryFg="#181818", sidebar="#141414",
+                       sidebarBorder="#ffffff14", message="#262626"),
+                  12, "Approximation of the Codex desktop app's thread; the Codex CLI and IDE extension show tool results as text only.")
+
+
+def claude():
+    return approx("claude", "Claude",
+                  dict(bg="#faf9f5", fg="#141413", card="#ffffff", muted="#f0eee6", mutedFg="#6b6a63", accent="#1f1e1d0d",
+                       border="#1f1e1d26", input="#1f1e1d33", primary="#c6613f", primaryFg="#ffffff", sidebar="#f5f4ed",
+                       sidebarBorder="#1f1e1d1a", message="#f0eee6"),
+                  dict(bg="#262624", fg="#faf9f5", card="#30302e", muted="#1f1e1d", mutedFg="#a6a39a", accent="#faf9f50d",
+                       border="#faf9f526", input="#faf9f533", primary="#d97757", primaryFg="#141413", sidebar="#1f1e1d",
+                       sidebarBorder="#faf9f51a", message="#141413"),
+                  12, "Approximation of Claude's warm chat surface (web and desktop); Claude Code shows MCP tool results as text only.")
+
+
 if __name__ == "__main__":
     hermes_json = json.load(open(sys.argv[1]))
     json.dump({"sources": {
         "t3": "kvnloo/t3code apps/web/src/index.css @ 54e9bb96 + tailwindcss 4.3.3",
         "hermes": "kvnloo/hermes-agent apps/desktop/src/themes/presets.ts @ 1afe076d",
-    }, "themes": t3() + hermes(hermes_json)}, sys.stdout, indent=1)
+        "tern": "theme/glide.json (Glide on Tern: light = kit default light, dark = glide/themes/dash.json)",
+        "o8": "kvnloo/o8 src/lib/theme/registry.ts @ 3a3edb35 (solid chat surface)",
+        "chatgpt": "approximation (closed source; no tokens read)",
+        "codex": "approximation (closed source; no tokens read)",
+        "claude": "approximation (closed source; no tokens read)",
+    }, "themes": t3() + hermes(hermes_json) + tern() + o8() + chatgpt() + codex() + claude()}, sys.stdout, indent=1)

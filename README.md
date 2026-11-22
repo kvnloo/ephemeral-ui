@@ -17,7 +17,8 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
 
 ## What's on the page
 
-- **Host preview**: a live agent turn in a T3 Code or Hermes desktop window. Tool rows turn into
+- **Host preview**: a live agent turn in a T3 Code, Hermes desktop, Tern · Glide, ChatGPT, Codex, Claude or
+  o8 window (header picker; every one is a simulation drawn by this page). Tool rows turn into
   cards (container transform), the card plays, a hold confirms, the card dissolves. Grab a card
   to take over; five scenes loop.
 - **Kit**: 310 apps in 25 categories (`tools/catalog.py`). Brand colours and marks come from
@@ -31,6 +32,17 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   `apps/desktop/src/themes/presets.ts` @ 1afe076d (dumped with `tools/vendor/dump-hermes.sh`,
   radius-scalar 0.2 from styles.css). Overrides: accent, radius, density, type, motion speed,
   brand mode (accent / full / host only), logos. Exports CSS or JSON tokens.
+- **Host matrix** (`#hosts`): the same pinned card (`github/merge`, seed `githubmerge`) in every agent host
+  at once, light or dark. Profiles live in `src/data/hosts.json`: skin, surface, declared interaction tier
+  (0 artifact, 1 context back, 2 native, as in `integration/surfaces.json`) and bridge. Each frame
+  (`src/host-frame.html`) wears its host's tokens; pin the card and the frame shows what that host's bridge
+  would carry (`src/js/host-bridge.js`): nothing for Hermes desktop (tier 0), an MCP Apps
+  `ui/update-model-context` request for ChatGPT, Codex and Claude, `o8-visualization:question` for o8, a host
+  intent for Tern · Glide and T3. Skins come from source for T3, Hermes, Tern (`theme/glide.json`) and o8
+  (`src/lib/theme/registry.ts` @ 3a3edb35); ChatGPT, Codex and Claude are closed, so theirs are labelled
+  approximations. Every frame is labelled a simulation; "native receipt on file" only links receipts already
+  recorded in `integration/surfaces.json` (T3 nightly, Tern). Checks: `node --test tools/hosts.test.mjs`;
+  browser proof `node tools/host-matrix.browser.mjs http://localhost:8765/` with `src/` served.
 - **Shared theme**: `theme/glide.json` (schema `theme/tokens.schema.json`) is the one theme file every
   app reads: the default Glide theme's colors, radii, spacing, type, motion and glass levels. See
   [theme/README.md](theme/README.md).
