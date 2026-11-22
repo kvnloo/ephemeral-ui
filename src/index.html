@@ -29,14 +29,11 @@
   <div class="bar">
     <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
     <nav class="nav">
-      <a href="#kit">Kit</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#stats">Stats</a><a href="#intent">Intent</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+      <a href="#kit">Kit</a><a href="#hosts">Hosts</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#stats">Stats</a><a href="#intent">Intent</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
     </nav>
     <span class="grow"></span>
     <button class="search open-palette" type="button"><span>Search <b id="napps">490</b> apps</span><kbd>⌘K</kbd></button>
-    <div class="hostpick" role="group" aria-label="Host">
-      <button type="button" data-host="t3">T3 Code</button>
-      <button type="button" data-host="hermes">Hermes</button>
-    </div>
+    <div class="hostpick" role="group" aria-label="Host (simulated)"></div>
     <button id="scheme" class="icon-btn" type="button" aria-label="Toggle light and dark" title="Light / dark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </div>
 </header>
@@ -72,7 +69,7 @@
   <div><b id="nkinds">50</b><span>card kinds</span></div>
   <div><b id="ninter" data-count="1600">0</b><span>app × card interactions</span></div>
   <div><b data-count="9">0</b><span>host themes</span></div>
-  <div><b data-count="2">0</b><span>hosts with source tokens</span></div>
+  <div><b data-count="2">0</b><span>agent hosts</span></div>
   <div><b>1</b><span>spec</span></div>
 </section>
 
@@ -138,7 +135,7 @@
 </section>
 
 <section id="theme" class="sec">
-  <div class="sechead"><div><span class="kicker">Theme engine</span><h2>Preview any host. Bend it to yours.</h2><p class="dim">Presets are read from the hosts' own source: T3 Code's <code>index.css</code> and Hermes desktop's <code>presets.ts</code>, resolved to sRGB. Hermes keeps its near-square corners; T3 keeps its 8px radius and true-black dark mode.</p></div></div>
+  <div class="sechead"><div><span class="kicker">Theme engine</span><h2>Preview any host. Bend it to yours.</h2><p class="dim">Presets are read from the hosts' own source where it is open: T3 Code's <code>index.css</code>, Hermes desktop's <code>presets.ts</code>, Glide's shared <code>theme/glide.json</code> for Tern and o8's theme registry, resolved to sRGB. ChatGPT, Codex and Claude are closed, so their presets are labelled approximations. Hermes keeps its near-square corners; T3 keeps its 8px radius and true-black dark mode.</p></div></div>
   <div class="engine">
     <div class="ctl">
       <div id="presets"></div>
@@ -161,6 +158,12 @@
     </div>
     <div class="pvwrap"><div class="row between"><span class="eu-hint">Live preview</span><button id="pvreplay" class="eu-btn ghost sm" type="button">↻ Replay</button></div><div id="themepv" class="themepv"></div></div>
   </div>
+</section>
+
+<section id="hosts" class="sec" aria-label="Host matrix">
+  <div class="sechead"><div><span class="kicker">Host matrix · simulations</span><h2>One card, every harness.</h2><p class="dim">The same pinned card in each agent host's skin, side by side. Each frame wears the host's tokens (read from its source where it is open, approximated where it is not) and plays the host's declared interaction tier: pin the card and see what that host's bridge would carry back. These are previews drawn by this page, not the hosts themselves; a host only counts as native with a receipt from a real run (<a href="data/hosts.json">hosts.json</a>).</p></div>
+    <div class="hm-bar"><span class="eu-hint">Fixture: <b id="hostfixture"></b></span><div id="hostscheme"></div></div></div>
+  <div id="hostgrid" class="hm-grid"></div>
 </section>
 
 <section id="flows" class="sec">
