@@ -536,7 +536,7 @@ export const Table = {
       const kids = [];
       for (const r of vis) {
         const k = key(r), clickable = o.selectable !== false && (o.selectable || o.expanded || o.ids);
-        const tr = h("tr", { "data-key": String(k), "data-selected": st.sel === k ? "true" : "false", "data-clickable": clickable ? "true" : "false", tabindex: clickable ? "0" : null, onclick: clickable ? () => pick(r) : null, onkeydown: clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(r); } } : null },
+        const tr = h("tr", { "data-key": String(k), "data-selected": st.sel === k ? "true" : "false", "data-clickable": clickable ? "true" : "false", tabindex: clickable ? "0" : null, onclick: clickable ? () => pick(r) : null, onkeydown: clickable ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pick(r); } } : null },
           ...cols.map((col) => { const v = col.render(r); return h("td", { "data-align": col.align ?? "left", "data-wrap": col.wrap ? "true" : "false" }, v); }),
           o.pinnable ? h("td", { "data-align": "right" }, h("button", { type: "button", class: "sl-pin", title: "Pin this row: it goes back to the agent as context", "aria-label": "Pin row", onclick: (e) => { e.stopPropagation(); st.sel = k; c.emit("pin", { ids: o.ids?.(r) ?? { key: String(k) }, label: o.label?.(r) ?? String(k) }); render(); } }, "Pin")) : null);
         kids.push(tr);

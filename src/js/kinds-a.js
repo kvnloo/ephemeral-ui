@@ -257,7 +257,7 @@ export const KINDS_A = {
       const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "graph" }, lg, ng);
       const lines = links.map(([p, q]) => { const l = svg("line", { pathLength: 1 }); lg.append(l); return l; });
       const dots = nodes.map((nd, i) => { const g = svg("g", { class: "nd" + (i === 0 ? " root" : "") }, svg("circle", { r: i === 0 ? 7 : 4.5 }), svg("text", { y: -9 }, document.createTextNode(nd.n))); ng.append(g); return g; });
-      let drag = null, raf, calm = 0;
+      let drag = null, downAt = null, raf, calm = 0;
       const tick = () => {
         for (const nd of nodes) { nd.vx += (W / 2 - nd.x) * 0.004; nd.vy += (H / 2 - nd.y) * 0.012; }
         for (const [p, q] of links) { const A = nodes[p], B = nodes[q]; const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1, f = (d - 58) * 0.01; A.vx += (dx / d) * f; A.vy += (dy / d) * f; B.vx -= (dx / d) * f; B.vy -= (dy / d) * f; }
@@ -270,14 +270,16 @@ export const KINDS_A = {
       };
       const toLocal = (e) => { const b = s.getBoundingClientRect(); return [((e.clientX - b.left) / b.width) * W, ((e.clientY - b.top) / b.height) * H]; };
       dots.forEach((d, i) => {
-        let downAt = null;
         d.addEventListener("pointerdown", (e) => { drag = i; downAt = [e.clientX, e.clientY]; s.setPointerCapture(e.pointerId); start(); });
-        d.addEventListener("pointerup", (e) => { if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) < 4) pickNote(i); downAt = null; });
         d.addEventListener("pointerenter", () => { s.classList.add("hl"); links.forEach(([p, q], k) => lines[k].classList.toggle("on", p === i || q === i)); dots.forEach((x, j) => x.classList.toggle("on", j === i || links.some(([p, q]) => (p === i && q === j) || (q === i && p === j)))); });
         d.addEventListener("pointerleave", () => s.classList.remove("hl"));
       });
       s.addEventListener("pointermove", (e) => { if (drag == null) return; const [x, y] = toLocal(e); nodes[drag].x = x; nodes[drag].y = y; nodes[drag].vx = nodes[drag].vy = 0; });
-      s.addEventListener("pointerup", () => (drag = null));
+      s.addEventListener("pointerup", e => {
+        if (drag !== null && downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) < 4) pickNote(drag);
+        drag = downAt = null;
+      });
+      s.addEventListener("pointercancel", () => { drag = downAt = null; });
       let focus = 0;
       const openBtn = h("button", { class: "eu-btn", type: "button", onclick: () => tell(el, { action: "open", label: `Open ${names[focus]}`, entities: { note: names[focus] }, ack: `Opened “${names[focus]}” in ${a.name}.` }) }, "Open Roadmap");
       function pickNote(i) { focus = i; dots.forEach((x, j) => x.classList.toggle("pick", j === i)); openBtn.textContent = `Open ${names[i]}`; const nb = links.filter(([p, q]) => p === i || q === i).map(([p, q]) => names[p === i ? q : p]); tell(el, { action: "select", label: `Focus on ${names[i]}`, entities: { note: names[i] }, ack: nb.length ? `${names[i]} links to ${nb.join(", ")}. ${nb.length < 2 ? "It's thinly connected — want me to suggest links?" : ""}` : `${names[i]} has no links yet.` }); }
@@ -292,6 +294,7 @@ export const KINDS_A = {
       const el = shell(a, "graph", { verb: this.verb(a), body: h("div", {}, s, h("p", { class: "eu-hint" }, "Click a note to focus the agent on it · drag to untangle")), foot: [openBtn, orphans], summary: "Mapped 9 notes around Roadmap" });
       const start = () => { if (!raf) raf = requestAnimationFrame(tick); };
       s.addEventListener("pointerenter", start);
+      tick(); // Position the nodes before the gallery runs or a pointer enters.
       return { el, async play(run) { start(); lines.forEach((l, k) => anim(l, [{ strokeDashoffset: 1, strokeDasharray: 1 }, { strokeDashoffset: 0, strokeDasharray: 1 }], { duration: 700, delay: 200 + k * 60, easing: "cubic-bezier(.65,0,.35,1)" })); dots.forEach((d, i) => anim(d.querySelector("circle"), [{ r: 0 }, { r: i === 0 ? 7 : 4.5 }], { spring: "bouncy", delay: i * 60 })); }, spec: { kind: "graph", app: a.id, root: "Roadmap", nodes: names.length } };
     },
   },
