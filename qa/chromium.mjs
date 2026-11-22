@@ -31,7 +31,12 @@ try {
   for (const [url, entries] of [[base, catalog], [pages, infra]]) {
     if (!url) continue;
     const html = await fetch(url).then(r => r.text());
-    const css = [...html.matchAll(/<link rel="stylesheet" href="([^":]+\.css)"[^>]*>/g)].map(([tag]) => tag).join("");
+    const css = [...html.matchAll(/<link rel="stylesheet" href="([^":]+\.css)"[^>]*>/g)].map(([tag]) => tag);
+    // The public gallery does not mount these native-host kinds, but the kit ships their CSS.
+    if (url === base) for (const sheet of ["cua.css", "dock.css", "gev.css"]) {
+      const tag = `<link rel="stylesheet" href="${sheet}">`;
+      if (!css.includes(tag)) css.push(tag);
+    }
     for (const width of widths.map(Number)) {
       const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
       await context.route("**/*", route => route.request().url().startsWith(url + "/") ? route.continue() : route.abort());
@@ -43,7 +48,7 @@ try {
         if (msg.type() === "error" && !msg.text().startsWith("Failed to load resource")) errors.push(msg.text());
       });
       await page.route(url + "/__qa", r => r.fulfill({ contentType: "text/html", body:
-        '<!doctype html><meta charset="utf-8">' + css + '<main id="fixture" style="margin:12px;max-width:720px"></main><div id="pinslot"></div>' }));
+        '<!doctype html><meta charset="utf-8">' + css.join("") + '<main id="fixture" style="margin:12px;max-width:720px"></main><div id="pinslot"></div>' }));
       await page.goto(url + "/__qa");
       assert.ok(await page.evaluate(() => document.createElement("canvas").getContext("webgl2") !== null), "WebGL2 required");
       if (url === pages) assert.deepEqual(

@@ -1209,7 +1209,7 @@
       "receipts": {
         "390": {
           "fixture": "cua-action/cua",
-          "control": "buttonAdde:41:plus",
+          "control": "Select Add (button)",
           "keyboard": "event:select_element",
           "pointer": "event:select_element",
           "overflow": false,
@@ -1217,7 +1217,7 @@
         },
         "1280": {
           "fixture": "cua-action/cua",
-          "control": "buttonAdde:41:plus",
+          "control": "Select Add (button)",
           "keyboard": "event:select_element",
           "pointer": "event:select_element",
           "overflow": false,
