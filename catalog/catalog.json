@@ -843,7 +843,7 @@
        },
        {
         "id": "m4432",
-        "subject": "Weekly metrics are in"
+        "subject": "Re: Q4 roadmap"
        }
       ]
      }
@@ -863,19 +863,19 @@
       "results": [
        {
         "id": "m4471",
-        "subject": "Invoice #4471 is due Nov 14"
-       },
-       {
-        "id": "m4458",
         "subject": "Offer letter: please sign by Friday"
        },
        {
-        "id": "m4445",
+        "id": "m4458",
         "subject": "Weekly metrics are in"
        },
        {
+        "id": "m4445",
+        "subject": "Design review moved to 3pm"
+       },
+       {
         "id": "m4432",
-        "subject": "Re: Q4 roadmap"
+        "subject": "Your flight to SFO is confirmed"
        }
       ]
      }
@@ -899,15 +899,15 @@
        },
        {
         "id": "m4458",
-        "subject": "Weekly metrics are in"
-       },
-       {
-        "id": "m4445",
         "subject": "Design review moved to 3pm"
        },
        {
+        "id": "m4445",
+        "subject": "Re: Q4 roadmap"
+       },
+       {
         "id": "m4432",
-        "subject": "Your flight to SFO is confirmed"
+        "subject": "Offer letter: please sign by Friday"
        }
       ]
      }
@@ -1243,12 +1243,12 @@
         "5 things you missed"
        ],
        [
-        "Deploy succeeded",
-        "main · 2m ago"
+        "New comment from Jules",
+        "\"Looks great, one nit\""
        ],
        [
-        "Reminder: standup",
-        "in 10 minutes"
+        "Deploy succeeded",
+        "main · 2m ago"
        ]
       ],
       "kind": "notify"
@@ -1274,8 +1274,8 @@
         "main · 2m ago"
        ],
        [
-        "GitHub Actions digest",
-        "5 things you missed"
+        "New comment from Harold",
+        "\"Looks great, one nit\""
        ]
       ],
       "kind": "notify"
@@ -1293,12 +1293,12 @@
       "app": "stack-overflow",
       "items": [
        [
-        "Reminder: standup",
-        "in 10 minutes"
+        "New comment from Mina",
+        "\"Looks great, one nit\""
        ],
        [
-        "Stack Overflow digest",
-        "5 things you missed"
+        "Reminder: standup",
+        "in 10 minutes"
        ],
        [
         "Deploy succeeded",
@@ -1439,7 +1439,7 @@
      "props": {
       "app": "linear",
       "kind": "kanban",
-      "moved": "Polish empty states",
+      "moved": "Ship onboarding v2",
       "to": "Done"
      }
     },
@@ -1454,7 +1454,7 @@
      "props": {
       "app": "jira",
       "kind": "kanban",
-      "moved": "Polish empty states",
+      "moved": "Fix login loop on Safari",
       "to": "Done"
      }
     }
