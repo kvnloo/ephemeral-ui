@@ -1,6 +1,6 @@
 // App chrome: the inner surface of a studio card copies the app's own editor colours, so a Blender card
 // reads as Blender and an AutoCAD card as AutoCAD, while the card frame stays in the host theme.
-// Values are the apps' default (dark) editor themes; the brand accent still comes from simple-icons.
+// The studio stylesheet swaps to the host palette in bare mode.
 import { h } from "./motion.js";
 
 export const UI = {
@@ -77,7 +77,7 @@ export const UI = {
 export function appSurface(a, kids, { ui = a.ui, cls = "" } = {}) {
   const t = UI[ui] || null;
   const el = h("div", { class: `ap ${cls}` + (t?.light ? " ap-light" : "") + (t ? "" : " ap-host"), "data-ui": ui || "host" }, kids);
-  if (t) { el.style.setProperty("--ap-bg", t.bg); el.style.setProperty("--ap-panel", t.panel); el.style.setProperty("--ap-view", t.view); el.style.setProperty("--ap-fg", t.fg); el.style.setProperty("--ap-acc", t.acc); el.style.setProperty("--ap-hot", t.hot); if (t.font) el.style.setProperty("--ap-font", t.font); }
+  if (t) { el.style.setProperty("--editor-bg", t.bg); el.style.setProperty("--editor-panel", t.panel); el.style.setProperty("--editor-view", t.view); el.style.setProperty("--editor-fg", t.fg); el.style.setProperty("--editor-acc", t.acc); el.style.setProperty("--editor-hot", t.hot); if (t.font) el.style.setProperty("--editor-font", t.font); }
   return el;
 }
 export const uiOf = (a) => UI[a.ui] || null;

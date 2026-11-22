@@ -50,6 +50,17 @@ the site. Every catalog kind has a shareable URL: `/demos.html?kind=<kind>`, for
 use sample or sanitized data; controls do not run real app actions. **Replay demo**
 resets the card to its initial state. The catalog generator also updates the public demo index.
 
+Use **Bare (host only)** for host-colored controls, neutral monograms and host editor chrome.
+**Full brand** restores the app accent, tinted heading and top rule, brand tile (where verified),
+and the app’s editor palette where present. The switch does not remount the card. Apps with
+no verified brand color keep a neutral tile and use a muted accent in Full brand.
+
+Fixed skins: the eight `trace*` cards keep the omp-stats dark surface and chart palette;
+`cua-action` keeps its dark driver/evidence HUD, and `gev-contacts` keeps its dark radar HUD.
+Their shared header switches modes too, but their dedicated surfaces and status colors do not.
+Semantic chart lanes, status colors, and preview media (such as a 3D viewport or radar plot)
+are content, not app branding.
+
 Browser check (run the server in a separate terminal):
 
     npm ci
