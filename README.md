@@ -31,6 +31,9 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   `apps/desktop/src/themes/presets.ts` @ 1afe076d (dumped with `tools/vendor/dump-hermes.sh`,
   radius-scalar 0.2 from styles.css). Overrides: accent, radius, density, type, motion speed,
   brand mode (accent / full / host only), logos. Exports CSS or JSON tokens.
+- **Shared theme**: `theme/glide.json` (schema `theme/tokens.schema.json`) is the one theme file every
+  app reads: the default Glide theme's colors, radii, spacing, type, motion and glass levels. See
+  [theme/README.md](theme/README.md).
 - **Flows**: three cards wired with draggable cables; Run sends a packet down the line.
 - **Spec**: the card JSON of whatever you last clicked; draft schema at `src/schema/card.v0.json`.
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
