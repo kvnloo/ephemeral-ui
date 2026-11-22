@@ -1369,6 +1369,78 @@
         }
       }
     },
+    "health-activity": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Source-specific synthetic payloads (Apple Health and Google Fit) with their own units and provenance; metrics and days are pressable readouts and 'Explain this number' emits a typed intent naming the source field.",
+      "receipts": {
+        "390": {
+          "fixture": "health-activity/apple-health",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "health-activity/apple-health",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "health-recovery": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Source-specific synthetic payloads (Oura, WHOOP and NOOP) with their own units and provenance; metrics and days are pressable readouts and 'Explain this number' emits a typed intent naming the source field.",
+      "receipts": {
+        "390": {
+          "fixture": "health-recovery/oura",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "health-recovery/oura",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "health-nutrition": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Source-specific synthetic payloads (MyFitnessPal and Lifesum) with their own units and provenance; metrics and days are pressable readouts and 'Explain this number' emits a typed intent naming the source field.",
+      "receipts": {
+        "390": {
+          "fixture": "health-nutrition/myfitnesspal",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "health-nutrition/myfitnesspal",
+          "control": "Explain this number",
+          "keyboard": "event:explain_this_number",
+          "pointer": "event:explain_this_number",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
     "fleet-hosts": {
       "surface": "catalog",
       "grade": "A",

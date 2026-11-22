@@ -5,6 +5,7 @@ import { shell, burst, holdButton, svg } from "./shell.js";
 import { act, tell, why, undoable, settle } from "./loop.js";
 import { appSurface, appBar } from "./chrome.js";
 import { stage3d, sunRig, rand } from "./stage3d.js";
+import { HEALTH_SOURCES, HEALTH_MERGE, fmtValue } from "./health-data.js";
 
 /* ---------------- twin: warehouse fleet under Bend policies ---------------- */
 const LAWS = [
@@ -85,37 +86,50 @@ function twinMake(a, r) {
 const SRC = {
   "apple-health": ["Apple Health", "rings"], "google-fit": ["Google Fit", "hearts"], oura: ["Oura", "readiness"], whoop: ["WHOOP", "recovery"], noop: ["NOOP", "recovery"], myfitnesspal: ["MyFitnessPal", "food"], lifesum: ["Lifesum", "food"], strava: ["Strava", "load"], garmin: ["Garmin", "load"], gadgetbridge: ["Gadgetbridge", "recovery"],
 };
+const DEMO_MERGE = ["oura", "whoop", "apple-health", "myfitnesspal"];
+/** The brief's sentence from the merged sources' own synthetic payloads (health-data.js). */
+function healthWhy(ids) {
+  const by = (f) => ids.map((id) => HEALTH_SOURCES[id]).find((s) => s.family === f);
+  const rec = by("recovery"), food = by("nutrition"), move = by("activity");
+  const hrv = rec.metrics.find((m) => /HRV/.test(m.label)), prot = food.goals.find((g) => g.label === "Protein");
+  return `${rec.name} ${rec.headline.label.toLowerCase()} is ${fmtValue(rec.headline.value)}${rec.headline.unit.startsWith("/") ? rec.headline.unit : " " + rec.headline.unit} with HRV at ${fmtValue(hrv.value)} ms, ${food.name} has you ${fmtValue(prot.goal - prot.value)} g under on protein, and ${move.name} logged ${fmtValue(move.headline.value)} ${move.headline.unit} of ${move.headline.label.toLowerCase()}.`;
+}
 function healthMake(a, r) {
   const mode = (SRC[a.id] || [a.name, "recovery"])[1];
+  const merged = HEALTH_MERGE[a.id] || DEMO_MERGE, own = HEALTH_SOURCES[a.id];
+  // the source's own headline when it has one (WHOOP recovery 62%, Lifesum 1,540 kcal …); demo numbers otherwise
+  const score = own && own.family === "recovery" ? own.headline.value / 100 : 0.68;
+  const food = own && own.family === "nutrition" ? own.headline : { value: 1420, goal: 2000 };
+  const ringsV = own?.id === "apple-health" ? own.goals.map((g) => g.value / g.goal) : [0.82, 0.64, 0.9];
   const R = 46, C = 2 * Math.PI * R;
   const ring = (cls, val, col, rr) => svg("circle", { cx: 60, cy: 60, r: rr, class: "hl-arc " + cls, stroke: col, "stroke-dasharray": `${2 * Math.PI * rr}`, "stroke-dashoffset": `${2 * Math.PI * rr}`, "data-v": val });
   const rings = svg("svg", { viewBox: "0 0 120 120", class: "hl-rings" },
-    ...(mode === "rings" ? [[46, 0.82, "#fa114f"], [36, 0.64, "#a6ff00"], [26, 0.9, "#00f0ff"]] : mode === "food" ? [[46, 0.71, "#22c55e"]] : [[46, 0.68, mode === "readiness" ? "#b9a6ff" : "#16ec06"]]).flatMap(([rr, v, c]) => [svg("circle", { cx: 60, cy: 60, r: rr, class: "hl-trk" }), ring("", v, c, rr)]));
+    ...(mode === "rings" ? [[46, ringsV[0], "#fa114f"], [36, ringsV[1], "#a6ff00"], [26, ringsV[2], "#00f0ff"]] : mode === "food" ? [[46, Math.round((food.value / food.goal) * 100) / 100, "#22c55e"]] : [[46, score, mode === "readiness" ? "#b9a6ff" : "#16ec06"]]).flatMap(([rr, v, c]) => [svg("circle", { cx: 60, cy: 60, r: rr, class: "hl-trk" }), ring("", v, c, rr)]));
   const big = h("b", { class: "hl-big" }, "0");
-  const label = { rings: "Move · Exercise · Stand", food: "1,420 / 2,000 kcal", readiness: "Readiness", recovery: "Recovery", hearts: "Heart Points", load: "Training load" }[mode];
+  const label = { rings: "Move · Exercise · Stand", food: `${fmtValue(food.value)} / ${fmtValue(food.goal)} kcal`, readiness: "Readiness", recovery: "Recovery", hearts: "Heart Points", load: "Training load" }[mode];
   const days = ["M", "T", "W", "T", "F", "S", "S"], hrv = [52, 61, 47, 44, 58, 66, 63], slp = [[1.1, 1.6, 3.9, 0.6], [1.3, 1.8, 4.1, 0.4], [0.8, 1.2, 3.6, 0.9], [0.7, 1.1, 3.2, 1.1], [1.2, 1.7, 4.0, 0.5], [1.4, 2.0, 4.3, 0.3], [1.3, 1.9, 4.2, 0.4]];
   const spark = svg("svg", { viewBox: "0 0 140 40", class: "hl-spark" }, svg("polyline", { points: hrv.map((v, i) => `${i * 23},${40 - (v - 40) * 1.4}`).join(" "), pathLength: 1 }), ...hrv.map((v, i) => svg("circle", { cx: i * 23, cy: 40 - (v - 40) * 1.4, r: i === 6 ? 3 : 1.6 })));
   const sleep = h("div", { class: "hl-sleep" }, slp.map((d, i) => h("div", { class: "hl-day" }, h("div", { class: "hl-bar" }, d.map((x, k) => h("i", { class: ["deep", "rem", "light", "awake"][k], style: { flex: x } }))), h("span", {}, days[i]))));
-  const macros = h("div", { class: "hl-mac" }, [["Protein", 92, 140, "#ef4444"], ["Carbs", 160, 220, "#f59e0b"], ["Fat", 48, 65, "#3b82f6"]].map(([n, v, g, c]) => h("div", {}, h("span", {}, n, h("em", {}, `${v}/${g} g`)), h("i", { style: { "--p": v / g, "--c": c } }))));
-  const sources = h("div", { class: "hl-src" }, ["oura", "whoop", "apple-health", "myfitnesspal"].map((s) => h("span", { class: s === a.id ? "on" : "" }, SRC[s][0])));
+  const macros = h("div", { class: "hl-mac" }, (own?.goals && own.family === "nutrition" ? own.goals.map((g, i) => [g.label, g.value, g.goal, ["#ef4444", "#f59e0b", "#3b82f6"][i]]) : [["Protein", 92, 140, "#ef4444"], ["Carbs", 160, 220, "#f59e0b"], ["Fat", 48, 65, "#3b82f6"]]).map(([n, v, g, c]) => h("div", {}, h("span", {}, n, h("em", {}, `${v}/${g} g`)), h("i", { style: { "--p": v / g, "--c": c } }))));
+  const sources = h("div", { class: "hl-src" }, merged.map((s) => h("span", { class: s === a.id ? "on" : "" }, SRC[s][0])));
   // the AI-native part: one decision built from all sources, with the reason
   const verdict = h("div", { class: "hl-verdict" }, h("span", { class: "kicker" }, "Today"), h("b", {}, ""), h("p", {}, ""));
   const plan = h("div", { class: "row wrap hl-acts" }, ["Move run to 6 pm", "Zone 2, 40 min", "+45 g protein at lunch"].map((t) => h("button", { type: "button", class: "ap-chip" }, t)));
   plan.addEventListener("click", (e) => { const b = e.target.closest(".ap-chip"); if (b) { b.classList.toggle("on"); if (b.classList.contains("on")) burst(b, "#22c55e", 8); } });
   const top = h("div", { class: "hl-top" }, h("div", { class: "hl-ringwrap" }, rings, h("div", { class: "hl-center" }, big, h("span", {}, label))), h("div", { class: "hl-side" }, h("span", { class: "ap-lbl" }, "HRV · 7 days (ms)"), spark, h("span", { class: "ap-lbl" }, "Sleep stages"), sleep));
   const surface = appSurface(a, [appBar([a.name, "Trends", "Journal"], [sources]), top, mode === "food" ? macros : null, verdict, plan], { cls: "health" });
-  const el = shell(a, "health", { verb: "Merged 4 sources", status: "Synced", body: surface, foot: [act("Add plan to calendar", { cls: "primary", ack: "Added three blocks this week: two zone-2 runs and a rest day. They move if a meeting lands on them.", done: "Added ✓" }), act("Why?", { cls: "ghost", ack: "Your HRV is 12% under your baseline and sleep was short two nights running — the plan trades intensity for recovery until it rebounds." })], summary: "Recovery 68%: moved the hard run to tomorrow" });
+  const el = shell(a, "health", { verb: `Merged ${merged.length} sources`, status: "Synced", body: surface, foot: [act("Add plan to calendar", { cls: "primary", ack: "Added three blocks this week: two zone-2 runs and a rest day. They move if a meeting lands on them.", done: "Added ✓" }), act("Why?", { cls: "ghost", ack: "Your HRV is 12% under your baseline and sleep was short two nights running — the plan trades intensity for recovery until it rebounds." })], summary: "Recovery 68%: moved the hard run to tomorrow" });
   return { el, async play(run) {
     rings.querySelectorAll(".hl-arc").forEach((c, i) => { const L = +c.getAttribute("stroke-dasharray"); anim(c, [{ strokeDashoffset: L }, { strokeDashoffset: L * (1 - +c.dataset.v) }], { duration: 1200, delay: i * 140, easing: "cubic-bezier(.16,1,.3,1)" }); });
     const v = +rings.querySelector(".hl-arc").dataset.v;
-    countUp(big, mode === "food" ? 1420 : mode === "hearts" ? 34 : Math.round(v * 100), { dur: 1200, fmt: (x) => (mode === "food" ? Math.round(x).toLocaleString() : Math.round(x) + (mode === "hearts" ? "" : "%")) });
+    countUp(big, mode === "food" ? food.value : mode === "hearts" ? 34 : Math.round(v * 100), { dur: 1200, fmt: (x) => (mode === "food" ? Math.round(x).toLocaleString() : Math.round(x) + (mode === "hearts" ? "" : "%")) });
     const pl = spark.querySelector("polyline"); anim(pl, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 1000, delay: 300 });
     stagger(sleep.children, { gap: 50, delay: 200 });
     await run.wait(1300);
     await typeText(verdict.querySelector("b"), "Go easy until 6 pm.", run, 30);
-    await typeText(verdict.querySelector("p"), "HRV is 63 ms (above your 56 ms baseline) but deep sleep was short two nights running, and you're 48 g under on protein. Oura and WHOOP agree; the scale didn't sync.", run, 90);
+    await typeText(verdict.querySelector("p"), merged === DEMO_MERGE ? "HRV is 63 ms (above your 56 ms baseline) but deep sleep was short two nights running, and you're 48 g under on protein. Oura and WHOOP agree; the scale didn't sync." : healthWhy(merged), run, 90);
     stagger(plan.children, { gap: 80, sp: "bouncy" });
-  }, spec: { kind: "health", app: a.id, sources: ["oura", "whoop", "apple-health", "myfitnesspal"], metric: mode, decision: "easy until 6 pm", data: "demo" } };
+  }, spec: { kind: "health", app: a.id, sources: merged, metric: mode, decision: "easy until 6 pm", data: "demo" } };
 }
 
 export const KINDS_F = {
