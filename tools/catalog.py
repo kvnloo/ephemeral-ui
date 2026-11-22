@@ -187,7 +187,9 @@ APPS = [
 
 def main():
     from catalog_studio import STUDIO_APPS, STUDIO_CATEGORIES
-    cats = {**CATEGORIES, **STUDIO_CATEGORIES}
+    from catalog_infra import INFRA_APPS, INFRA_CATEGORIES, INFRA_EXTEND
+    cats = {**CATEGORIES, **INFRA_CATEGORIES, **STUDIO_CATEGORIES}
+    shelf = {**INFRA_CATEGORIES, **STUDIO_CATEGORIES}  # categories shown on the studio shelf
     seen = {}
     rows = []
     for row in APPS:
@@ -197,8 +199,13 @@ def main():
         kinds = row[3] if len(row) > 3 else cats[cat][1]
         seen[name] = {"name": name, "slug": slug, "cat": cat, "kinds": list(kinds)}
         rows.append(seen[name])
-    # Studio rows: new apps, or richer kinds/metadata for an app the base list already has.
-    for name, slug, cat, kinds, extra in STUDIO_APPS:
+    # Infra kinds: base apps that also open them, then the cloud / Kubernetes / local-ML apps.
+    for name, (kinds, docs) in INFRA_EXTEND.items():
+        assert name in seen, name
+        seen[name]["kinds"] = list(kinds) + [k for k in seen[name]["kinds"] if k not in kinds]
+        seen[name]["docs"] = docs
+    # Studio and infra rows: new apps, or richer kinds/metadata for an app the base list already has.
+    for name, slug, cat, kinds, extra in INFRA_APPS + STUDIO_APPS:
         assert cat in cats, (name, cat)
         if name in seen:
             r = seen[name]
@@ -207,7 +214,7 @@ def main():
             continue
         seen[name] = {"name": name, "slug": slug, "cat": cat, "kinds": list(kinds), **extra}
         rows.append(seen[name])
-    out = {"categories": [{"id": k, "label": v[0], "studio": k in STUDIO_CATEGORIES} for k, v in cats.items()], "apps": rows}
+    out = {"categories": [{"id": k, "label": v[0], "studio": k in shelf} for k, v in cats.items()], "apps": rows}
     json.dump(out, sys.stdout, indent=1)
 
 

@@ -44,7 +44,9 @@ function check(v, s, at) { // the JSON Schema subset appInput uses; first proble
   }
   return null;
 }
-const RULES = { merge: (p) => p.state === "conflict" && p.conflicts < 1 ? "conflict state needs conflicts >= 1" : !["open", "conflict"].includes(p.state) && p.conflicts ? "only open/conflict PRs have conflicts" : p.state === "ready" && p.checks.some((c) => c.status === "fail" || c.status === "running") ? "ready needs every check passed" : p.url && !p.url.endsWith(`/pull/${p.number}`) ? "url does not match number" : null };
+// infra-architecture: the kind's own validator (unique node ids, known services, edges between existing nodes).
+const { validateGraph } = await import(new URL("../src/js/infra-data.js", import.meta.url).href);
+const RULES = { "infra-architecture": (g) => { try { validateGraph(g); return null; } catch (e) { return e.message; } }, merge: (p) => p.state === "conflict" && p.conflicts < 1 ? "conflict state needs conflicts >= 1" : !["open", "conflict"].includes(p.state) && p.conflicts ? "only open/conflict PRs have conflicts" : p.state === "ready" && p.checks.some((c) => c.status === "fail" || c.status === "running") ? "ready needs every check passed" : p.url && !p.url.endsWith(`/pull/${p.number}`) ? "url does not match number" : null };
 async function fromProgram(text) {
   // Glide's contract (glide ephemeral_cards.py): one ```ephemeral-ui fence per card, holding a card.v0 object.
   // The agent writes the same fence in every host; HTML-only hosts (Hermex) get it through this export.

@@ -2162,13 +2162,13 @@
       }
     },
     "infra-architecture": {
-      "surface": "pages",
+      "surface": "catalog",
       "grade": "B",
       "status": "below-bar",
-      "reason": "An inspector changes locally but node selections do not return context; reconciliation belongs to U07.",
+      "reason": "Ported to main (catalog fixture); the graph edits and inspector change locally, but node selections still return no typed context.",
       "receipts": {
         "390": {
-          "fixture": "infra-architecture",
+          "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2176,7 +2176,7 @@
           "webgl": false
         },
         "1280": {
-          "fixture": "infra-architecture",
+          "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2186,13 +2186,13 @@
       }
     },
     "infra-cluster": {
-      "surface": "pages",
+      "surface": "catalog",
       "grade": "B",
       "status": "below-bar",
-      "reason": "The workload inspector is local only and the card has no typed workload handoff; U07 owns the port.",
+      "reason": "Ported to main (catalog fixture); the workload inspector is local only and the card has no typed workload handoff.",
       "receipts": {
         "390": {
-          "fixture": "infra-cluster",
+          "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2200,7 +2200,7 @@
           "webgl": false
         },
         "1280": {
-          "fixture": "infra-cluster",
+          "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2210,13 +2210,13 @@
       }
     },
     "infra-iac": {
-      "surface": "pages",
+      "surface": "catalog",
       "grade": "B",
       "status": "below-bar",
-      "reason": "The review filter works but the selection is not emitted as typed change context; U07 owns the port.",
+      "reason": "Ported to main (catalog fixture); the review filter works but the selection is not emitted as typed change context.",
       "receipts": {
         "390": {
-          "fixture": "infra-iac",
+          "fixture": "infra-iac/terraform",
           "control": "Destructive only",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2224,7 +2224,7 @@
           "webgl": false
         },
         "1280": {
-          "fixture": "infra-iac",
+          "fixture": "infra-iac/terraform",
           "control": "Destructive only",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2234,13 +2234,13 @@
       }
     },
     "infra-models": {
-      "surface": "pages",
+      "surface": "catalog",
       "grade": "B",
       "status": "below-bar",
-      "reason": "Artifact inspection is local only; no typed stage handoff and no runtime verification, pending U07.",
+      "reason": "Ported to main (catalog fixture); artifact inspection is local only, with no typed stage handoff and no runtime verification.",
       "receipts": {
         "390": {
-          "fixture": "infra-models",
+          "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
           "keyboard": "control state changed",
           "pointer": "control state changed",
@@ -2248,7 +2248,7 @@
           "webgl": false
         },
         "1280": {
-          "fixture": "infra-models",
+          "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
           "keyboard": "control state changed",
           "pointer": "control state changed",

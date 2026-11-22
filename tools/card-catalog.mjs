@@ -25,10 +25,13 @@ const FIXED_MS = Date.parse(FIXED_AT);
 const OWN_APP = { "cua-action": "cua", "work-dock": "z0", "gev-contacts": "god-s-eye-view", "intel-suite": "glide" /* INTEL_APPS, intel-suite.js */ };
 // Card modules by role, for grouping in galleries. A new kinds-*.js lands in "app" until it is named here.
 const GROUP = { "kinds-a": "app", "kinds-b": "app", "kinds-3d": "studio", "kinds-c": "studio", "kinds-e": "studio", "kinds-f": "studio", "kinds-p": "studio",
-  "kinds-t": "trace", "kinds-i": "intent", "kinds-ops": "ops", "kinds-fleet": "fleet", "kinds-intel": "intel", "kinds-cua": "agent", "kinds-dock": "agent", "kinds-gev": "agent" };
+  "kinds-t": "trace", "kinds-i": "intent", "kinds-ops": "ops", "kinds-fleet": "fleet", "kinds-intel": "intel", "kinds-cua": "agent", "kinds-dock": "agent", "kinds-gev": "agent", "kinds-infra": "infra" };
 // Fixture files a module's reference renderer reads (fetches) besides apps.json and themes.json.
 const DATA = { "kinds-i": ["src/data/intent-snapshot.json"], "kinds-ops": ["src/data/ops-fixture.json"], "kinds-t": ["src/data/trace-fixture.json"] };
 const MAX_FIXTURES = 3;
+// Kinds whose first three listing apps (apps.json order) would repeat one view: the apps whose sample cards
+// cover it instead. Each must list the kind. Infra: GCP + AWS diagrams, K3s/kind/EKS, Terraform/OpenTofu/Pulumi.
+const FIXTURE_APPS = { "infra-architecture": ["google-cloud", "aws"], "infra-cluster": ["k3s", "kind", "amazon-eks"], "infra-iac": ["terraform", "opentofu", "pulumi"], "infra-models": ["unsloth", "lambda-gpu-cloud", "nvidia-brev"] };
 // card.v0 $defs.appInput kinds draw real data from card.input. The catalog adds one input fixture each, built
 // from the sample card's own content, so a gallery exercises the data path too (catalog.test.mjs validates it).
 const APP_INPUT = {
@@ -50,6 +53,8 @@ export async function setup() {
   El.getBoundingClientRect ??= () => ({ x: 0, y: 0, left: 0, top: 0, right: 320, bottom: 200, width: 320, height: 200 });
   const ctx = new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : /^(create|get)/.test(k) ? () => ctx : k in t ? t[k] : () => {}), set: (t, k, v) => ((t[k] = v), true) });
   if (window.HTMLCanvasElement) window.HTMLCanvasElement.prototype.getContext = () => ctx;
+  // linkedom's select.value has no setter and is undefined with no selected option; kinds-infra sets it.
+  if (window.HTMLSelectElement) Object.defineProperty(window.HTMLSelectElement.prototype, "value", { configurable: true, get() { const o = [...this.querySelectorAll("option")]; return (o.find((x) => x.selected || x.hasAttribute("selected")) ?? o[0])?.getAttribute("value") ?? ""; }, set(v) { for (const x of this.querySelectorAll("option")) { const on = x.getAttribute("value") === String(v); x.selected = on; on ? x.setAttribute("selected", "") : x.removeAttribute("selected"); } } });
   const noop = () => {};
   const observer = class { observe() {} unobserve() {} disconnect() {} };
   Object.assign(globalThis, {
@@ -133,17 +138,21 @@ export async function build() {
   const programmable = new Set(card.properties.kind.enum), appInput = card.$defs.appInput;
   const { list, owners } = await kinds(), site = siteKinds(list), data = await examples();
   const apps = JSON.parse(fs.readFileSync(path.join(src, "data/apps.json"), "utf8")).apps;
+  // The hybrid AWS + GCP + K3s graph from the kind's own authored examples is its input fixture.
+  const { ARCHITECTURES } = await (await setup()).imp("infra-data.js");
+  const appInputs = { ...APP_INPUT, "infra-architecture": structuredClone(ARCHITECTURES.find((g) => g.id === "hybrid")) };
   const entries = [];
   for (const [kind, { module, exportName, def }] of list) {
-    const listed = apps.filter((a) => a.kinds?.includes(kind)).slice(0, MAX_FIXTURES).map((a) => a.id);
+    for (const id of FIXTURE_APPS[kind] ?? []) if (!apps.find((a) => a.id === id)?.kinds?.includes(kind)) throw Error(`${kind}: FIXTURE_APPS ${id} does not list it in apps.json`);
+    const listed = (FIXTURE_APPS[kind] ?? apps.filter((a) => a.kinds?.includes(kind)).map((a) => a.id)).slice(0, MAX_FIXTURES);
     const ids = listed.length ? listed : [owners[kind] ?? OWN_APP[kind]];
     if (!ids[0]) throw Error(`${kind}: no app lists it; name its app in OWN_APP`);
     const input = data[kind] ? "data" : appInput[kind] ? "appInput" : "none";
-    if (input === "appInput" && !APP_INPUT[kind]) throw Error(`${kind}: card.v0 lists an appInput for it; add an APP_INPUT fixture`);
+    if (input === "appInput" && !appInputs[kind]) throw Error(`${kind}: card.v0 lists an appInput for it; add an APP_INPUT fixture`);
     const plan = input === "data"
       ? [{ id: `${kind}/${ids[0]}`, app: ids[0], state: "example", input: data[kind] }, { id: `${kind}/${ids[0]}/unavailable`, app: ids[0], state: "unavailable" }]
       : ids.map((app) => ({ id: `${kind}/${app}`, app, state: "sample" }));
-    if (input === "appInput") plan.splice(MAX_FIXTURES - 1, Infinity, { id: `${kind}/${ids[0]}/input`, app: ids[0], state: "input", input: APP_INPUT[kind] });
+    if (input === "appInput") plan.splice(MAX_FIXTURES - 1, Infinity, { id: `${kind}/${ids[0]}/input`, app: ids[0], state: "input", input: appInputs[kind] });
     const fixtures = [];
     for (const p of plan) {
       const fx = { id: p.id, state: p.state, seed: p.app + kind, card: { kind, app: p.app } };

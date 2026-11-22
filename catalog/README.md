@@ -25,7 +25,7 @@ machine. Fixtures per kind:
 Other fields: `group` (gallery section), `site` (on the site's gallery), `programmable` (in
 `card.v0.json`'s kind enum, so a model may emit it in an `ephemeral-ui` fence), `data` (fixture files the
 reference renderer reads, e.g. `src/data/trace-fixture.json`), `apps[].inCatalog` (false for host apps
-such as `k3s` or `glide`, which draw a neutral monogram).
+such as `glide`, which draw a neutral monogram).
 
 Check it is current (CI and `tools/catalog.test.mjs` both run this):
 
