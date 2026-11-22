@@ -11,7 +11,7 @@ export const widths = ["390", "1280"];
 export function checkInventory(data, catalogKinds = catalog.kinds, deployed = pages.fixtures) {
   assert.equal(data.version, 1);
   const shipped = new Map(catalogKinds.map(entry => [entry.kind, {
-    surface: "catalog", fixtures: entry.fixtures.map(f => f.id), webgl: entry.module.endsWith("/kinds-3d.js"),
+    surface: "catalog", fixtures: entry.fixtures.map(f => f.id), webgl: entry.module.endsWith("/kinds-3d.js") || entry.kind === "twin",
   }]));
   for (const kind of Object.keys(deployed)) if (!shipped.has(kind)) {
     shipped.set(kind, { surface: "pages", fixtures: [kind], webgl: false });
