@@ -1,0 +1,4 @@
+```openui-v2
+root = Board("Auth middleware PR", "PR #128 has 3 conflicts with main; tests pass, preview is still building.", [prs])
+prs = EphemeralCards("Pull requests", [{kind: "merge", app: "github", input: {number: 128, title: "Refresh sessions in the auth middleware", state: "conflict", head: "feat/session", base: "main", conflicts: 3, checks: [{name: "Tests", status: "pass", detail: "42 passed"}, {name: "Lint", status: "pass", detail: "passed"}, {name: "Preview", status: "running", detail: "building"}], commits: [{title: "Rotate session keys", sha: "8b04d2e", author: "Sam", age: "2h", lane: "head", conflict: true}, {title: "Bump deps", sha: "c71e5f0", author: "Theo", age: "3h", lane: "base"}], url: "https://github.com/acme/web/pull/128"}}, {kind: "ci", app: "github"}])
+```
