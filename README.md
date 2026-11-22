@@ -148,7 +148,7 @@ run the leak check. DOM suite: `EUI_DOM_MODULE=<linkedom>/worker.js node --test 
     node tools/shot.mjs http://127.0.0.1:<port>/ out/shots --theme hermes-nous  # screenshots + page errors
     tools/deploy.sh                                                            # dist/ -> production
 
-No bundler: plain ES modules, one stylesheet. `tools/node_modules` holds simple-icons only.
+The site serves plain ES modules; the separate export tool bundles cards with esbuild.
 
 ## Motion and taste sources
 
@@ -158,11 +158,34 @@ Motion references come from a private reference collection and
 
 ## Credits
 
-- [OpenUI](https://github.com/thesysdev/openui) by Thesys (MIT): the generative-UI language and renderer the card spec builds on.
-- [simple-icons](https://simpleicons.org) 16.36.0 (CC0 data) for brand marks and colours; marks are trademarks of their owners.
-- [three.js](https://threejs.org) r187 (MIT) for the 3D studio cards.
-- [omp-stats](https://github.com/can1357/oh-my-pi) (`@oh-my-pi/omp-stats`, MIT) for the trace card shapes and API.
-- Host tokens from [T3 Code](https://github.com/pingdotgg/t3code) (MIT) and [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT); Tailwind 4 colour ramps (MIT).
+The [library manifest](docs/library-credits.json) covers direct kit, vendored and tool dependencies
+(not the transitive npm tree). After dependency or vendor changes, run
+`node tools/library-credits.mjs` to update the manifest and both credit lists. The
+[credits browser check](tools/credits-browser.mjs) documents how to verify the served site.
+
+<!-- BEGIN LIBRARY CREDITS -->
+### Kit libraries and data
+
+- [OpenUI](https://github.com/thesysdev/openui) (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT): Host theme tokens.
+- [meshoptimizer](https://github.com/zeux/meshoptimizer) (1.1; MIT): Decodes compressed 3D meshes.
+- [omp-stats](https://github.com/can1357/oh-my-pi) (MIT): Trace card shapes and API from @oh-my-pi/omp-stats.
+- [simple-icons](https://simpleicons.org) (16.36.0; CC0-1.0): Brand marks and colours shipped as kit data; marks are trademarks of their owners.
+- [T3 Code](https://github.com/pingdotgg/t3code) (MIT): Host theme tokens.
+- [Tailwind CSS](https://tailwindcss.com) (MIT): Colour ramps shipped in the host theme data.
+- [three.js](https://threejs.org) (0.187.0; MIT): 3D studio cards and their loaders.
+
+### Tool-only libraries
+
+- [Ajv](https://ajv.js.org) (8.17.1; MIT): Schema validation in tests.
+- [esbuild](https://esbuild.github.io) (0.25.10; MIT): Bundles exported cards.
+- [linkedom](https://github.com/WebReflection/linkedom) (0.18.13; ISC): DOM implementation for tests.
+- [Playwright](https://playwright.dev) (Apache-2.0): Optional browser checks and screenshot tooling; not shipped with the site.
+- [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency for card export.
+<!-- END LIBRARY CREDITS -->
+
+### Media and design
+
 - Anatomy figure loops from [wheresryan22/anatomy](https://github.com/wheresryan22/anatomy) (MIT).
 - Merge motion after [@pitus_'s Generative UI #2](https://x.com/pitus_/status/2111519352503873866).
 - Type: Inter, Instrument Serif, IBM Plex Mono, Courier Prime, Caveat, and Archivo Black in the reel (SIL OFL 1.1).
