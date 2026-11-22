@@ -127,6 +127,7 @@ test("headless Chromium: each app's drawer mounts its source card with its own v
         assert.deepEqual(got.recs, s.provenance.records);
         assert.deepEqual(got.rows, s.metrics.map((m) => [m.field, fmtValue(m.value), unitText(m.unit)]));
         assert.equal(got.overflow, false, `${id}@${width}: card overflows`);
+        assert.doesNotMatch(await card.textContent(), /null|undefined|NaN/, `${id}@${width}: null/undefined/NaN in the card`);
         await card.locator(".hs-m").last().click();
         assert.ok((await card.locator(".hs-why").textContent()).includes(s.metrics.at(-1).field));
         const brief = await page.locator('#drawer .eu-card[data-kind="health"] .hl-src span').allTextContents();
