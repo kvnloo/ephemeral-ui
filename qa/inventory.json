@@ -1,0 +1,2237 @@
+{
+  "version": 1,
+  "kinds": {
+    "sculpt": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The export handoff works, but brush strokes on the mesh require a pointer and remesh only changes its label.",
+      "receipts": {
+        "390": {
+          "fixture": "sculpt/blender",
+          "control": "Export .glb",
+          "keyboard": "event:export_glb",
+          "pointer": "event:export_glb",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "sculpt/blender",
+          "control": "Export .glb",
+          "keyboard": "event:export_glb",
+          "pointer": "event:export_glb",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "city": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A native density slider changes generation and the viewport supports keyboard orbit and zoom.",
+      "receipts": {
+        "390": {
+          "fixture": "city/blender",
+          "control": "Density",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "city/blender",
+          "control": "Density",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "fly": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The native timeline seeks the rendered scene by keyboard or pointer and explicitly resumes playback.",
+      "receipts": {
+        "390": {
+          "fixture": "fly/spline",
+          "control": "Flythrough position",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "fly/spline",
+          "control": "Flythrough position",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "fpv": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The mode switch relabels the rendered flight HUD; the camera path is a non-interactive preview.",
+      "receipts": {
+        "390": {
+          "fixture": "fpv/unreal-engine",
+          "control": "Angle",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "fpv/unreal-engine",
+          "control": "Angle",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "light": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A named temperature slider works independently of keyboard orbit and zoom; presets can be compared without a pointer.",
+      "receipts": {
+        "390": {
+          "fixture": "light/spline",
+          "control": "Key colour temperature",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "light/spline",
+          "control": "Key colour temperature",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "trigger": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The handoff and camera keyboard controls work, but placing the character on the floor to fire the trigger still has no keyboard equivalent.",
+      "receipts": {
+        "390": {
+          "fixture": "trigger/babylon-js",
+          "control": "Add to level",
+          "keyboard": "event:add_to_level",
+          "pointer": "event:add_to_level",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "trigger/babylon-js",
+          "control": "Add to level",
+          "keyboard": "event:add_to_level",
+          "pointer": "event:add_to_level",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "globe": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Cockpit cycles demo flights, but direct flight-path picking is still pointer-only, and live labels represent demo traffic.",
+      "receipts": {
+        "390": {
+          "fixture": "globe/god-s-eye-view",
+          "control": "Cockpit ▶",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "globe/god-s-eye-view",
+          "control": "Cockpit ▶",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "gen3d": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Orbit has keyboard input, but the download copy implies an artifact was delivered when it emits an intent only.",
+      "receipts": {
+        "390": {
+          "fixture": "gen3d/open3d",
+          "control": "Send to Blender",
+          "keyboard": "event:send_to_blender",
+          "pointer": "event:send_to_blender",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "gen3d/open3d",
+          "control": "Send to Blender",
+          "keyboard": "event:send_to_blender",
+          "pointer": "event:send_to_blender",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "sim": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Orbit has keyboard input, but the export intent does not retrieve a policy and training status is scripted.",
+      "receipts": {
+        "390": {
+          "fixture": "sim/isaac-sim",
+          "control": "Export policy (.pt)",
+          "keyboard": "event:export_policy_pt",
+          "pointer": "event:export_policy_pt",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "sim/isaac-sim",
+          "control": "Export policy (.pt)",
+          "keyboard": "event:export_policy_pt",
+          "pointer": "event:export_policy_pt",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "inbox": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Message selection and archive have separate keyboard actions; local dismissal offers Undo.",
+      "receipts": {
+        "390": {
+          "fixture": "inbox/gmail",
+          "control": "Open in Gmail",
+          "keyboard": "event:open",
+          "pointer": "event:open",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "inbox/gmail",
+          "control": "Open in Gmail",
+          "keyboard": "event:open",
+          "pointer": "event:open",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "thread": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The fact chip identifies a specific entity; the draft can be edited and Send offers Undo.",
+      "receipts": {
+        "390": {
+          "fixture": "thread/gmail",
+          "control": "Due Nov 14",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "thread/gmail",
+          "control": "Due Nov 14",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "approve": {
+      "surface": "catalog",
+      "grade": "S",
+      "status": "qualified",
+      "reason": "Explicit scope, duration, denial and revoke make the commit and its consequences legible.",
+      "receipts": {
+        "390": {
+          "fixture": "approve/snyk",
+          "control": "Hold to allow",
+          "keyboard": "event:approve",
+          "pointer": "event:approve",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "approve/snyk",
+          "control": "Hold to allow",
+          "keyboard": "event:approve",
+          "pointer": "event:approve",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "chat": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A quick reply emits a send intent; custom text and unsend are available.",
+      "receipts": {
+        "390": {
+          "fixture": "chat/replit",
+          "control": "On it 👍",
+          "keyboard": "event:send",
+          "pointer": "event:send",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "chat/replit",
+          "control": "On it 👍",
+          "keyboard": "event:send",
+          "pointer": "event:send",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "notify": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Batch dismissal has a deliberate button and Undo alongside the swipe affordance.",
+      "receipts": {
+        "390": {
+          "fixture": "notify/snyk",
+          "control": "Clear all",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "notify/snyk",
+          "control": "Clear all",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "slots": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Suggest emits a separate intent; the grid can be moved and resized without a pointer.",
+      "receipts": {
+        "390": {
+          "fixture": "slots/google-calendar",
+          "control": "Suggest another",
+          "keyboard": "event:suggest",
+          "pointer": "event:suggest",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "slots/google-calendar",
+          "control": "Suggest another",
+          "keyboard": "event:suggest",
+          "pointer": "event:suggest",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "kanban": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Selection now works by Enter and Space; arrow moves emit the affected issue and offer Undo.",
+      "receipts": {
+        "390": {
+          "fixture": "kanban/miro",
+          "control": "MIR-327 Fix login loop on Safari. Arrow left or right to move.",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "kanban/miro",
+          "control": "MIR-327 Fix login loop on Safari. Arrow left or right to move.",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "triage": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The Apply intent scopes the issue and priority, and triage can be reversed.",
+      "receipts": {
+        "390": {
+          "fixture": "triage/github",
+          "control": "Apply",
+          "keyboard": "event:apply",
+          "pointer": "event:apply",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "triage/github",
+          "control": "Apply",
+          "keyboard": "event:apply",
+          "pointer": "event:apply",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "file": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The open intent points to a specific page rather than an opaque document link.",
+      "receipts": {
+        "390": {
+          "fixture": "file/replit",
+          "control": "Open at p. 3",
+          "keyboard": "event:open",
+          "pointer": "event:open",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "file/replit",
+          "control": "Open at p. 3",
+          "keyboard": "event:open",
+          "pointer": "event:open",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "graph": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The selected note passes typed context and replies with its neighbors.",
+      "receipts": {
+        "390": {
+          "fixture": "graph/notion",
+          "control": "Roadmap",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "graph/notion",
+          "control": "Roadmap",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "search": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Refine exposes a real filter; a chosen result hands its locator back to the agent.",
+      "receipts": {
+        "390": {
+          "fixture": "search/npm",
+          "control": "Refine",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "search/npm",
+          "control": "Refine",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "feed": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The draft is editable before posting and local Undo allows unposting.",
+      "receipts": {
+        "390": {
+          "fixture": "feed/stack-overflow",
+          "control": "Edit",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "feed/stack-overflow",
+          "control": "Edit",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "frames": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The inline note separates a change request from the held approval.",
+      "receipts": {
+        "390": {
+          "fixture": "frames/figma",
+          "control": "Request changes",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "frames/figma",
+          "control": "Request changes",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "sign": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Decline is a separate route with reasons; the step indicator tracks progress.",
+      "receipts": {
+        "390": {
+          "fixture": "sign/docusign",
+          "control": "Decline",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "sign/docusign",
+          "control": "Decline",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "context": {
+      "surface": "catalog",
+      "grade": "S",
+      "status": "qualified",
+      "reason": "The card distinguishes retained files from reclaimed context, emits typed intent and offers Undo.",
+      "receipts": {
+        "390": {
+          "fixture": "context/claude",
+          "control": "Compact",
+          "keyboard": "event:compact",
+          "pointer": "event:compact",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "context/claude",
+          "control": "Compact",
+          "keyboard": "event:compact",
+          "pointer": "event:compact",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "receipt": {
+      "surface": "catalog",
+      "grade": "S",
+      "status": "qualified",
+      "reason": "Payment is held, costs are visible before commit, and scheduling is a reversible alternative.",
+      "receipts": {
+        "390": {
+          "fixture": "receipt/stripe",
+          "control": "Hold to pay $1,240.00",
+          "keyboard": "event:pay",
+          "pointer": "event:pay",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "receipt/stripe",
+          "control": "Hold to pay $1,240.00",
+          "keyboard": "event:pay",
+          "pointer": "event:pay",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "metric": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The same bucket intent is reachable via a named slider and Ask button or by clicking the chart. Threshold alerts are reversible.",
+      "receipts": {
+        "390": {
+          "fixture": "metric/npm",
+          "control": "Ask about point",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "metric/npm",
+          "control": "Ask about point",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "track": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Watching and stopping updates are in-place; the help path describes constraints.",
+      "receipts": {
+        "390": {
+          "fixture": "track/shopify",
+          "control": "Live updates",
+          "keyboard": "event:watch",
+          "pointer": "event:watch",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "track/shopify",
+          "control": "Live updates",
+          "keyboard": "event:watch",
+          "pointer": "event:watch",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "crm": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Stage movement is visible and reversible; call notes are editable inline.",
+      "receipts": {
+        "390": {
+          "fixture": "crm/salesforce",
+          "control": "Advance stage",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "crm/salesforce",
+          "control": "Advance stage",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ride": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The request is held, the chosen tier is reflected in the result, and a timed cancellation is offered.",
+      "receipts": {
+        "390": {
+          "fixture": "ride/uber",
+          "control": "Request Standard",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ride/uber",
+          "control": "Request Standard",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "route": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Navigation acknowledges the specific first step and phone handoff is separate.",
+      "receipts": {
+        "390": {
+          "fixture": "route/fedex",
+          "control": "Start",
+          "keyboard": "event:start",
+          "pointer": "event:start",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "route/fedex",
+          "control": "Start",
+          "keyboard": "event:start",
+          "pointer": "event:start",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "boarding": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Seat options disclose price and allow correction with Undo.",
+      "receipts": {
+        "390": {
+          "fixture": "boarding/expedia",
+          "control": "Change seat",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "boarding/expedia",
+          "control": "Change seat",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "player": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A labelled seek slider provides keyboard and pointer scrubbing alongside playback.",
+      "receipts": {
+        "390": {
+          "fixture": "player/spotify",
+          "control": "Seek",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "player/spotify",
+          "control": "Seek",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "workout": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Splits disclose useful detail before sharing; sharing notes route privacy.",
+      "receipts": {
+        "390": {
+          "fixture": "workout/strava",
+          "control": "Splits",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "workout/strava",
+          "control": "Splits",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "home": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Presets and the labelled knob report the actual level.",
+      "receipts": {
+        "390": {
+          "fixture": "home/tailscale",
+          "control": "Movie",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "home/tailscale",
+          "control": "Movie",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "merge": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The diff provides review context before the user resolves and advances checks.",
+      "receipts": {
+        "390": {
+          "fixture": "merge/github",
+          "control": "View diff",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "merge/github",
+          "control": "View diff",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ci": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A named job exposes its own evidence and rerunning is separate.",
+      "receipts": {
+        "390": {
+          "fixture": "ci/github",
+          "control": "typecheck 31s",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ci/github",
+          "control": "typecheck 31s",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "deploy": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Cancel is available during the build, with separate held promotion and rollback once ready.",
+      "receipts": {
+        "390": {
+          "fixture": "deploy/npm",
+          "control": "Cancel",
+          "keyboard": "event:cancel",
+          "pointer": "event:cancel",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "deploy/npm",
+          "control": "Cancel",
+          "keyboard": "event:cancel",
+          "pointer": "event:cancel",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "incident": {
+      "surface": "catalog",
+      "grade": "S",
+      "status": "qualified",
+      "reason": "Rollback is a separate held decision with explicit target, timeline and next exit criterion.",
+      "receipts": {
+        "390": {
+          "fixture": "incident/snyk",
+          "control": "Hold to roll back 3f2c1a9",
+          "keyboard": "event:rollback",
+          "pointer": "event:rollback",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "incident/snyk",
+          "control": "Hold to roll back 3f2c1a9",
+          "keyboard": "event:rollback",
+          "pointer": "event:rollback",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "migrate": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Pause is scoped between batches; SQL inspection states locking and reversibility.",
+      "receipts": {
+        "390": {
+          "fixture": "migrate/supabase",
+          "control": "Pause",
+          "keyboard": "event:pause",
+          "pointer": "event:pause",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "migrate/supabase",
+          "control": "Pause",
+          "keyboard": "event:pause",
+          "pointer": "event:pause",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "nodes": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The node passes named context to the agent; the canvas scrolls inside the card at narrow widths.",
+      "receipts": {
+        "390": {
+          "fixture": "nodes/spline",
+          "control": "Transform node",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "nodes/spline",
+          "control": "Transform node",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "timeline": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The export works as an intent, but vision/timeline marking relies on pointer geometry.",
+      "receipts": {
+        "390": {
+          "fixture": "timeline/blender",
+          "control": "Export",
+          "keyboard": "event:export",
+          "pointer": "event:export",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "timeline/blender",
+          "control": "Export",
+          "keyboard": "event:export",
+          "pointer": "event:export",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "review": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The link handoff works, but annotating a frame by drawing lacks an equivalent keyboard workflow.",
+      "receipts": {
+        "390": {
+          "fixture": "review/miro",
+          "control": "Copy link",
+          "keyboard": "event:copy_link",
+          "pointer": "event:copy_link",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "review/miro",
+          "control": "Copy link",
+          "keyboard": "event:copy_link",
+          "pointer": "event:copy_link",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "layers": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The user can choose a labelled variant before emitting the Keep handoff.",
+      "receipts": {
+        "390": {
+          "fixture": "layers/mudbox",
+          "control": "Keep variation",
+          "keyboard": "event:keep_variation",
+          "pointer": "event:keep_variation",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "layers/mudbox",
+          "control": "Keep variation",
+          "keyboard": "event:keep_variation",
+          "pointer": "event:keep_variation",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "gallery": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Open and Select are separate paths, and the preview supports keyboard navigation and dismissal.",
+      "receipts": {
+        "390": {
+          "fixture": "gallery/dribbble",
+          "control": "Turntable. Open; S to select.",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "gallery/dribbble",
+          "control": "Turntable. Open; S to select.",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "cad": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The footer is a handoff, but the command/viewport is largely a scripted display rather than an editable draft.",
+      "receipts": {
+        "390": {
+          "fixture": "cad/plasticity",
+          "control": "Plot to PDF",
+          "keyboard": "event:plot_to_pdf",
+          "pointer": "event:plot_to_pdf",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "cad/plasticity",
+          "control": "Plot to PDF",
+          "keyboard": "event:plot_to_pdf",
+          "pointer": "event:plot_to_pdf",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "board": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Tool choice works, but marks still require coordinate input without a keyboard alternative.",
+      "receipts": {
+        "390": {
+          "fixture": "board/miro",
+          "control": "Rectangle",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "board/miro",
+          "control": "Rectangle",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "daw": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Empty slots hand a specific slot to the agent, but existing regions and transport do not expose equivalent editing.",
+      "receipts": {
+        "390": {
+          "fixture": "daw/ableton-live",
+          "control": "Empty Drums slot 3",
+          "keyboard": "event:fill",
+          "pointer": "event:fill",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "daw/ableton-live",
+          "control": "Empty Drums slot 3",
+          "keyboard": "event:fill",
+          "pointer": "event:fill",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "flash": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Reveal and self-rating are separate and the card shows scheduler context.",
+      "receipts": {
+        "390": {
+          "fixture": "flash/readwise",
+          "control": "Show Answer",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "flash/readwise",
+          "control": "Show Answer",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "stage": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Keyboard or pointer can mute a named layer and reveal the next strongest opinion; variants remain selectable.",
+      "receipts": {
+        "390": {
+          "fixture": "stage/openusd",
+          "control": "Mute layer: shot_042.usda",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "stage/openusd",
+          "control": "Mute layer: shot_042.usda",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "anatomy": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Accessible figure buttons select recorded loops and immediately update the numbered caption.",
+      "receipts": {
+        "390": {
+          "fixture": "anatomy/anatomy",
+          "control": "turning dial",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "anatomy/anatomy",
+          "control": "turning dial",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "cua-action": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Window and element selection are typed fixture intents; a request never claims a driver has dispatched it.",
+      "receipts": {
+        "390": {
+          "fixture": "cua-action/cua",
+          "control": "buttonAdde:41:plus",
+          "keyboard": "event:select_element",
+          "pointer": "event:select_element",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "cua-action/cua",
+          "control": "buttonAdde:41:plus",
+          "keyboard": "event:select_element",
+          "pointer": "event:select_element",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "work-dock": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The hold details disclose choices and boundaries without silently carrying them out.",
+      "receipts": {
+        "390": {
+          "fixture": "work-dock/z0",
+          "control": "Hold: Scrub, then land",
+          "keyboard": "event:toggle",
+          "pointer": "event:toggle",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "work-dock/z0",
+          "control": "Hold: Scrub, then land",
+          "keyboard": "event:toggle",
+          "pointer": "event:toggle",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "screen": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Takeover emits an intent rather than claiming to control the display; saving the trajectory is separate.",
+      "receipts": {
+        "390": {
+          "fixture": "screen/cua",
+          "control": "Take over",
+          "keyboard": "event:takeover",
+          "pointer": "event:takeover",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "screen/cua",
+          "control": "Take over",
+          "keyboard": "event:takeover",
+          "pointer": "event:takeover",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "sandbox": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The fixture changes its label without a structured result for the branch decision.",
+      "receipts": {
+        "390": {
+          "fixture": "sandbox/cua",
+          "control": "Hold to keep winner",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "sandbox/cua",
+          "control": "Hold to keep winner",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "twin": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Policy deployment changes demo text without a verifiable typed decision or rollback; a real simulator contract is separate.",
+      "receipts": {
+        "390": {
+          "fixture": "twin/warehouse-twin",
+          "control": "Hold to deploy policy v4",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": true
+        },
+        "1280": {
+          "fixture": "twin/warehouse-twin",
+          "control": "Hold to deploy policy v4",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": true
+        }
+      }
+    },
+    "health": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The rationale is callable; adding the plan is a distinct handoff. Source-specific coverage belongs to EU-017.",
+      "receipts": {
+        "390": {
+          "fixture": "health/apple-health",
+          "control": "Why?",
+          "keyboard": "event:why",
+          "pointer": "event:why",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "health/apple-health",
+          "control": "Why?",
+          "keyboard": "event:why",
+          "pointer": "event:why",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "fleet-hosts": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The host snapshot opens an individual work item and keeps operator status visible.",
+      "receipts": {
+        "390": {
+          "fixture": "fleet-hosts/k3s",
+          "control": "clean rendering fleet cards · shot 3/6 1m",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "fleet-hosts/k3s",
+          "control": "clean rendering fleet cards · shot 3/6 1m",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "fleet-portfolio": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The task intent is scoped to the chosen portfolio; selecting next is separate.",
+      "receipts": {
+        "390": {
+          "fixture": "fleet-portfolio/dash",
+          "control": "Open task",
+          "keyboard": "event:open-task",
+          "pointer": "event:open-task",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "fleet-portfolio/dash",
+          "control": "Open task",
+          "keyboard": "event:open-task",
+          "pointer": "event:open-task",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "fleet-factory": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The factory opens the chosen node by keyboard or pointer with an explicit scope.",
+      "receipts": {
+        "390": {
+          "fixture": "fleet-factory/aodl",
+          "control": "card picker, Live: TEK → PRIO → fresh bugs → salvage",
+          "keyboard": "event:open-node",
+          "pointer": "event:open-node",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "fleet-factory/aodl",
+          "control": "card picker, Live: TEK → PRIO → fresh bugs → salvage",
+          "keyboard": "event:open-node",
+          "pointer": "event:open-node",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "gev-contacts": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Filtering is reversible and each contact discloses available or unavailable data.",
+      "receipts": {
+        "390": {
+          "fixture": "gev-contacts/god-s-eye-view",
+          "control": "Airborne only",
+          "keyboard": "event:filter_aircraft",
+          "pointer": "event:filter_aircraft",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "gev-contacts/god-s-eye-view",
+          "control": "Airborne only",
+          "keyboard": "event:filter_aircraft",
+          "pointer": "event:filter_aircraft",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intent-declare": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The review request is explicit and does not grant authority or execute a contract.",
+      "receipts": {
+        "390": {
+          "fixture": "intent-declare/ripple",
+          "control": "Prepare review ↗",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intent-declare/ripple",
+          "control": "Prepare review ↗",
+          "keyboard": "visible text changed",
+          "pointer": "visible text changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intent-contract": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Boundaries are inspectable and the card distinguishes review scope from approval.",
+      "receipts": {
+        "390": {
+          "fixture": "intent-contract/aodl",
+          "control": "Boundaries",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intent-contract/aodl",
+          "control": "Boundaries",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intent-work": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The dependency view explicitly separates deferred work from the active slice.",
+      "receipts": {
+        "390": {
+          "fixture": "intent-work/aodl",
+          "control": "Deferred + explicitly outside this plan",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intent-work/aodl",
+          "control": "Deferred + explicitly outside this plan",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intent-proof": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Opening a proof source preserves the difference between evidence and execution.",
+      "receipts": {
+        "390": {
+          "fixture": "intent-proof/aodl",
+          "control": "✓ fleet-build",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intent-proof/aodl",
+          "control": "✓ fleet-build",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intel-decisions": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The local view can group decisions by provider without claiming it changes routing.",
+      "receipts": {
+        "390": {
+          "fixture": "intel-decisions/z0intelligence",
+          "control": "Providers",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intel-decisions/z0intelligence",
+          "control": "Providers",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intel-value": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Coverage and denominator caveats are discoverable on the same card as the metric.",
+      "receipts": {
+        "390": {
+          "fixture": "intel-value/z0intelligence",
+          "control": "Coverage + population",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intel-value/z0intelligence",
+          "control": "Coverage + population",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intel-context": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Source coverage can be expanded separately from the reported context numbers.",
+      "receipts": {
+        "390": {
+          "fixture": "intel-context/z0intelligence",
+          "control": "Source coverage",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intel-context/z0intelligence",
+          "control": "Source coverage",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intel-health": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The operator can drill into gaps without implying a health check or a repair ran.",
+      "receipts": {
+        "390": {
+          "fixture": "intel-health/z0intelligence",
+          "control": "Interpreter gaps",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intel-health/z0intelligence",
+          "control": "Interpreter gaps",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "intel-suite": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The tab intent identifies the selected view while provenance remains part of the snapshot.",
+      "receipts": {
+        "390": {
+          "fixture": "intel-suite/glide",
+          "control": "Skill router",
+          "keyboard": "event:tab",
+          "pointer": "event:tab",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "intel-suite/glide",
+          "control": "Skill router",
+          "keyboard": "event:tab",
+          "pointer": "event:tab",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-burn": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The harness filter changes scope without overstating projected burn.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-burn/z0intelligence",
+          "control": "claude",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-burn/z0intelligence",
+          "control": "claude",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-alive": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The row filter distinguishes observed working sessions from inferred or idle states.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-alive/hermes-agent",
+          "control": "Working 7",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-alive/hermes-agent",
+          "control": "Working 7",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-incidents": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The filter separates observed kills from likely causes and keeps provenance visible.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-incidents/prometheus",
+          "control": "OOM kills",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-incidents/prometheus",
+          "control": "OOM kills",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-fleet": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The selected lane is handed back as an entity, without implying control over pods.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-fleet/k3s",
+          "control": "factory 0 0",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-fleet/k3s",
+          "control": "factory 0 0",
+          "keyboard": "event:select",
+          "pointer": "event:select",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-slow": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "An individual slow row can be retained with source context rather than pinning the whole card.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-slow/omp-stats",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-slow/omp-stats",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-models": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The harness filter narrows the model view within the snapshot.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-models/omp-stats",
+          "control": "omp",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-models/omp-stats",
+          "control": "omp",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-tokens": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The unit toggle distinguishes token counts from API-equivalent estimates.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-tokens/omp-stats",
+          "control": "tokens",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-tokens/omp-stats",
+          "control": "tokens",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-context": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The row-level context selection is separate from host state and keeps the source visible.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-context/hermes-agent",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-context/hermes-agent",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-tools": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The errors slice carries its filter context and is reversible.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-tools/hermes-agent",
+          "control": "All harnesses · errors",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-tools/hermes-agent",
+          "control": "All harnesses · errors",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-routing": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The row selection retains evidence rather than executing routing changes.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-routing/z0intelligence",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-routing/z0intelligence",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "ops-sources": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "An explicit source-gap row can be retained without inventing the missing telemetry.",
+      "receipts": {
+        "390": {
+          "fixture": "ops-sources/grafana",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ops-sources/grafana",
+          "control": "Pin row",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "plugin": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Inspection is separate from the held run action and exposes the specific call chain.",
+      "receipts": {
+        "390": {
+          "fixture": "plugin/google-meet",
+          "control": "Show calls",
+          "keyboard": "event:show_calls",
+          "pointer": "event:show_calls",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "plugin/google-meet",
+          "control": "Show calls",
+          "keyboard": "event:show_calls",
+          "pointer": "event:show_calls",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The compression control works; selecting a span from the inline canvas still lacks a focusable equivalent.",
+      "receipts": {
+        "390": {
+          "fixture": "trace/omp-stats",
+          "control": "Compress idle",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace/omp-stats",
+          "control": "Compress idle",
+          "keyboard": "event:change",
+          "pointer": "event:change",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-span": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The user can switch evidence kinds without interpreting an empty or stale detail pane.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-span/omp-stats",
+          "control": "Tool call",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-span/omp-stats",
+          "control": "Tool call",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-summary": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Read-only aggregate by design; the only action retains this summary as context.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-summary/omp-stats",
+          "control": "Pin card",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-summary/omp-stats",
+          "control": "Pin card",
+          "keyboard": "event:pin",
+          "pointer": "event:pin",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-usage": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The provider grouping makes billing scope inspectable without side effects.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-usage/omp-stats",
+          "control": "Providers",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-usage/omp-stats",
+          "control": "Providers",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-tools": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The sort is available but opening a tool row still relies on pointer input.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-tools/omp-stats",
+          "control": "Errors",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-tools/omp-stats",
+          "control": "Errors",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-errors": {
+      "surface": "catalog",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The request/span mode switches, but expanding rows and jumping to a span are pointer-only.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-errors/omp-stats",
+          "control": "Spans",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-errors/omp-stats",
+          "control": "Spans",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-compare": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Both session pickers are named; Swap reverses sides and recalculates the displayed deltas.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-compare/omp-stats",
+          "control": "Swap sessions",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-compare/omp-stats",
+          "control": "Swap sessions",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "trace-frustration": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The range picker scopes a clearly labelled feedback sample.",
+      "receipts": {
+        "390": {
+          "fixture": "trace-frustration/omp-stats",
+          "control": "7d",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "trace-frustration/omp-stats",
+          "control": "7d",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "infra-architecture": {
+      "surface": "pages",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "An inspector changes locally but node selections do not return context; reconciliation belongs to U07.",
+      "receipts": {
+        "390": {
+          "fixture": "infra-architecture",
+          "control": "Cloud Run",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "infra-architecture",
+          "control": "Cloud Run",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "infra-cluster": {
+      "surface": "pages",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The workload inspector is local only and the card has no typed workload handoff; U07 owns the port.",
+      "receipts": {
+        "390": {
+          "fixture": "infra-cluster",
+          "control": "inference / llama-server · 1/1",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "infra-cluster",
+          "control": "inference / llama-server · 1/1",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "infra-iac": {
+      "surface": "pages",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "The review filter works but the selection is not emitted as typed change context; U07 owns the port.",
+      "receipts": {
+        "390": {
+          "fixture": "infra-iac",
+          "control": "Destructive only",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "infra-iac",
+          "control": "Destructive only",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "infra-models": {
+      "surface": "pages",
+      "grade": "B",
+      "status": "below-bar",
+      "reason": "Artifact inspection is local only; no typed stage handoff and no runtime verification, pending U07.",
+      "receipts": {
+        "390": {
+          "fixture": "infra-models",
+          "control": "4 / GGUF",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "infra-models",
+          "control": "4 / GGUF",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    }
+  }
+}
