@@ -37,3 +37,12 @@ A receipt says whether the test observed an intent, a native change, selected/ex
 state, or rendered text changing. 3D receipts require non-flat pixels rendered by the
 actual WebGL pipeline (Chromium ANGLE/SwiftShader is sufficient). Where the canvas has
 keyboard orbit, the test verifies that it handles the focused arrow key.
+
+## Keyboard journeys
+
+`node qa/keyboard-journeys.mjs` (same `QA_URL`, optional `QA_KIND`) covers the 19 kinds that were
+lifted from B to A. Each receipt above samples one control; a journey drives the rest of the
+workflow the B grade said was missing (pointer-only marking, drawing, span picking, typed
+decisions) with keyboard input only, and asserts the typed `eui:intent` the agent receives, at
+390 and 1280 px.
+

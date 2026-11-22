@@ -3,23 +3,23 @@
   "kinds": {
     "sculpt": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The export handoff works, but brush strokes on the mesh require a pointer and remesh only changes its label.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Named stroke regions apply the picked brush from the keyboard or pointer (typed brush + region, undoable), and Remesh really snaps the surface to 0.02 m voxels with an acknowledgement and Undo.",
       "receipts": {
         "390": {
           "fixture": "sculpt/blender",
-          "control": "Export .glb",
-          "keyboard": "event:export_glb",
-          "pointer": "event:export_glb",
+          "control": "Stroke brow ridge",
+          "keyboard": "event:stroke",
+          "pointer": "event:stroke",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "sculpt/blender",
-          "control": "Export .glb",
-          "keyboard": "event:export_glb",
-          "pointer": "event:export_glb",
+          "control": "Stroke brow ridge",
+          "keyboard": "event:stroke",
+          "pointer": "event:stroke",
           "overflow": false,
           "webgl": true
         }
@@ -123,23 +123,23 @@
     },
     "trigger": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The handoff and camera keyboard controls work, but placing the character on the floor to fire the trigger still has no keyboard equivalent.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Walk buttons move the player without a pointer; when you walk into the volume the trigger fires and emits trigger_fired with its count, and the status line reports it.",
       "receipts": {
         "390": {
           "fixture": "trigger/babylon-js",
-          "control": "Add to level",
-          "keyboard": "event:add_to_level",
-          "pointer": "event:add_to_level",
+          "control": "Walk into trigger",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "trigger/babylon-js",
-          "control": "Add to level",
-          "keyboard": "event:add_to_level",
-          "pointer": "event:add_to_level",
+          "control": "Walk into trigger",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
           "overflow": false,
           "webgl": true
         }
@@ -147,23 +147,23 @@
     },
     "globe": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Cockpit cycles demo flights, but direct flight-path picking is still pointer-only, and live labels represent demo traffic.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A roving flight list is the keyboard equivalent of picking a path (typed flight, from, to); traffic is labelled demo/synthetic and the footer handoffs name the selected flight.",
       "receipts": {
         "390": {
           "fixture": "globe/god-s-eye-view",
-          "control": "Cockpit ▶",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "UAL837 SFO→HND",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "globe/god-s-eye-view",
-          "control": "Cockpit ▶",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "UAL837 SFO→HND",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": true
         }
@@ -171,23 +171,23 @@
     },
     "gen3d": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Orbit has keyboard input, but the download copy implies an artifact was delivered when it emits an intent only.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Variants are labelled toggles that emit a typed select; the footer requests an export or Blender import of the chosen variant and the acknowledgement says no file has been delivered yet.",
       "receipts": {
         "390": {
           "fixture": "gen3d/open3d",
-          "control": "Send to Blender",
-          "keyboard": "event:send_to_blender",
-          "pointer": "event:send_to_blender",
+          "control": "Request .glb",
+          "keyboard": "event:request_glb",
+          "pointer": "event:request_glb",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "gen3d/open3d",
-          "control": "Send to Blender",
-          "keyboard": "event:send_to_blender",
-          "pointer": "event:send_to_blender",
+          "control": "Request .glb",
+          "keyboard": "event:request_glb",
+          "pointer": "event:request_glb",
           "overflow": false,
           "webgl": true
         }
@@ -195,23 +195,23 @@
     },
     "sim": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Orbit has keyboard input, but the export intent does not retrieve a policy and training status is scripted.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The run is labelled a scripted demo and can be paused; checkpoints capture step and reward, and Export requests that checkpoint as a typed export_policy without claiming a file exists.",
       "receipts": {
         "390": {
           "fixture": "sim/isaac-sim",
-          "control": "Export policy (.pt)",
-          "keyboard": "event:export_policy_pt",
-          "pointer": "event:export_policy_pt",
+          "control": "Save checkpoint",
+          "keyboard": "event:checkpoint",
+          "pointer": "event:checkpoint",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "sim/isaac-sim",
-          "control": "Export policy (.pt)",
-          "keyboard": "event:export_policy_pt",
-          "pointer": "event:export_policy_pt",
+          "control": "Save checkpoint",
+          "keyboard": "event:checkpoint",
+          "pointer": "event:checkpoint",
           "overflow": false,
           "webgl": true
         }

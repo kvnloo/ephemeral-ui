@@ -117,7 +117,7 @@ export function timeline(trace, entries, o = {}) {
   const stepper = h("div", { class: "os-zoom", role: "group", "aria-label": "Step through spans" }, h("button", { type: "button", "aria-label": "Previous span", onclick: () => step(-1) }, "‹ Span"), h("button", { type: "button", "aria-label": "Next span", onclick: () => step(1) }, "Span ›"));
   const tools = h("div", { class: "os-tlbar" }, h("div", { class: "os-zoom" }, h("button", { type: "button", "aria-label": "Zoom out", onclick: () => zoom(1.6) }, "−"), h("button", { type: "button", "aria-label": "Zoom in", onclick: () => zoom(1 / 1.6) }, "+"), h("button", { type: "button", onclick: () => { st.view = [...sc.domain]; draw(); } }, "Fit")), stepper, compress, search, h("span", { class: "grow" }), legend);
   const mini = h("canvas", { class: "os-mini", "aria-label": "Trace minimap: drag to scrub" });
-  const cv = h("canvas", { class: "os-cv", tabindex: "0", role: "application", "aria-roledescription": "trace timeline", "aria-label": "Trace timeline: drag to pan, click a span to inspect. Keyboard: arrow keys step through spans, + and - zoom, 0 fits, Escape closes the span." });
+  const cv = h("canvas", { class: "os-cv", tabindex: "0", role: "application", "aria-roledescription": "trace timeline", "aria-label": "Trace timeline", "aria-description": "Drag to pan, click a span to inspect. Keyboard: arrow keys step through spans, + and - zoom, 0 fits, Escape closes the span." });
   cv.addEventListener("keydown", (e) => {
     const k = e.key;
     if (k === "ArrowRight" || k === "ArrowDown") step(1);
