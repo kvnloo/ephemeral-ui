@@ -144,6 +144,7 @@ run the leak check. DOM suite: `EUI_DOM_MODULE=<linkedom>/worker.js node --test 
     python3 tools/themes.py tools/vendor/hermes-themes.json > src/data/themes.json
     node tools/card-catalog.mjs                                                # catalog/catalog.json (--check in CI)
     node --test tools/*.test.mjs                                               # all suites
+    EUI_BROWSER_URL=http://127.0.0.1:<port> PLAYWRIGHT_FROM=<dir>/package.json node --test tools/infra.test.mjs  # + Chromium infra pass
     python3 -m http.server 0 --bind 127.0.0.1 --directory src                  # any free port
     node tools/shot.mjs http://127.0.0.1:<port>/ out/shots --theme hermes-nous  # screenshots + page errors
     tools/deploy.sh                                                            # dist/ -> production
