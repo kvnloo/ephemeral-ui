@@ -270,5 +270,6 @@ STUDIO_APPS = [
     ("Gadgetbridge", None, "health", ["health", "metric"], D(oss=True, alt=["Fitbit app", "Mi Fitness", "Zepp"], ui="code", docs="https://gadgetbridge.org/")),
     ("Open mHealth", None, "health", ["health", "graph"], D(oss=True, alt=["Apple HealthKit export"], ui="code")),
     # ---- digital twins
+    ("ACE", None, "ours", ["ace-facility", "form-check", "swing"], D(oss=True, docs="https://github.com/kvnloo/ace")),
     ("Warehouse twin", None, "sim", ["twin", "sim", "city"], D(oss=True, alt=["NVIDIA Omniverse twins", "Siemens Process Simulate"], ui="omni")),
 ]

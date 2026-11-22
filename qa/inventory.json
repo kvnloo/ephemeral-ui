@@ -1345,6 +1345,78 @@
         }
       }
     },
+    "ace-facility": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Floors and zones are selectable; a zone pick emits a typed select_zone intent and spec-vs-observed labels keep the twin honest about what is modelled.",
+      "receipts": {
+        "390": {
+          "fixture": "ace-facility/ace",
+          "control": "Tennis courtsSPEC",
+          "keyboard": "event:select_zone",
+          "pointer": "event:select_zone",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "ace-facility/ace",
+          "control": "Tennis courtsSPEC",
+          "keyboard": "event:select_zone",
+          "pointer": "event:select_zone",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "form-check": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Timed corrections seek the set to their landmark frame and name the fault and cue; sending cues to a coach is a separate typed intent.",
+      "receipts": {
+        "390": {
+          "fixture": "form-check/ace",
+          "control": "knee_valgus at 2.47 s",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "form-check/ace",
+          "control": "knee_valgus at 2.47 s",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
+    "swing": {
+      "surface": "catalog",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Phase buttons scrub the swing to each phase and update its readout; comparison is a separate typed intent.",
+      "receipts": {
+        "390": {
+          "fixture": "swing/ace",
+          "control": "Backswing",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        },
+        "1280": {
+          "fixture": "swing/ace",
+          "control": "Backswing",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
+          "overflow": false,
+          "webgl": false
+        }
+      }
+    },
     "health": {
       "surface": "catalog",
       "grade": "A",
