@@ -1,4 +1,5 @@
 import { h } from "./motion.js";
+import { tell, undoable } from "./loop.js";
 import { shell, svg } from "./shell.js";
 import { SERVICES, ARCHITECTURES, CLUSTERS, IAC, cloneGraph, validateGraph, toMermaid, planSummary } from "./infra-data.js";
 
@@ -9,6 +10,8 @@ const select = (label, entries, onChange) => {
   el.addEventListener("change", () => onChange(el.value));
   return el;
 };
+/** Typed handoff. quiet: tell the host what was pointed at; otherwise show the exchange inline. */
+const handoff = (c, action, label, entities, ack) => tell(c.el, { action, label, entities, ack, quiet: !ack });
 function card(a, kind, verb, body, input) {
   const spec = { kind, app: a.id, actions: "read-only", input, provenance: "authored-example" };
   const el = shell(a, kind, { verb, status: "Example · offline", body, summary: `${a.name} · ${verb} (example)` });
@@ -56,11 +59,21 @@ function architecture(a, r, input, options = {}) {
   const updateSpec = () => { c.spec.input = { architecture: cloneGraph(graph) }; options.onChange?.(cloneGraph(graph)); };
   function render() {
     visual.replaceChildren(diagramSVG(graph, selected));
-    nodes.replaceChildren(...graph.nodes.map(n => h("button", { type: "button", "aria-pressed": String(n.id === selected), onclick: () => { selected = n.id; render(); } }, SERVICES[n.service].label)));
+    nodes.replaceChildren(...graph.nodes.map(n => h("button", { type: "button", "aria-pressed": String(n.id === selected), onclick: e => {
+      selected = n.id;
+      handoff(c, "select", `Inspect ${SERVICES[n.service].label}`, { node: n.id, service: n.service, architecture: graph.id || "custom" });
+      render(); nodes.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+    } }, SERVICES[n.service].label)));
     const n = graph.nodes.find(n => n.id === selected), s = SERVICES[n.service];
-    inspector.replaceChildren(h("b", {}, `${s.provider} / ${s.label}`), hint(s.detail), hint(`${graph.edges.filter(e => e.to === n.id).length} inbound · ${graph.edges.filter(e => e.from === n.id).length} outbound`), btn("Remove selected service", () => {
+    const inbound = graph.edges.filter(e => e.to === n.id), outbound = graph.edges.filter(e => e.from === n.id);
+    const nameOf = id => SERVICES[graph.nodes.find(x => x.id === id).service].label;
+    inspector.replaceChildren(h("b", {}, `${s.provider} / ${s.label}`), hint(s.detail), hint(`${inbound.length} inbound${inbound.length ? ` (${inbound.map(e => nameOf(e.from)).join(", ")})` : ""} · ${outbound.length} outbound${outbound.length ? ` (${outbound.map(e => nameOf(e.to)).join(", ")})` : ""}`), btn(`Ask agent about ${s.label}`, () => handoff(c, "ask_service", `What does ${s.label} need to be safe in this design?`, { node: n.id, service: n.service, edge: [...inbound, ...outbound].map(e => `${e.from}>${e.to}`) },
+      `Reviewing ${s.label} with its ${inbound.length + outbound.length} connection${inbound.length + outbound.length === 1 ? "" : "s"}; I'll check identity and network paths before suggesting changes. Nothing is deployed.`)), btn("Remove selected service", () => {
       if (graph.nodes.length === 1) { message.textContent = "Keep at least one service."; return; }
+      const before = cloneGraph(graph), removed = selected;
       graph.nodes = graph.nodes.filter(x => x.id !== selected); graph.edges = graph.edges.filter(e => e.from !== selected && e.to !== selected); selected = graph.nodes[0].id; render();
+      handoff(c, "remove_service", `Removed ${s.label} from the draft`, { node: removed, service: n.service });
+      undoable(c.el, `Removed ${s.label}`, () => { graph = before; selected = removed; render(); }, { entities: { node: removed } });
     }));
     edges.replaceChildren(...graph.edges.map((e, i) => h("li", {}, h("span", {}, `${SERVICES[graph.nodes.find(n => n.id === e.from).service].label} → ${SERVICES[graph.nodes.find(n => n.id === e.to).service].label} · ${e.label}`), btn("Remove connection", () => { graph.edges.splice(i, 1); render(); }))));
     for (const el of [source, dest]) el.replaceChildren(...graph.nodes.map(n => h("option", { value: n.id }, `${n.id} / ${SERVICES[n.service].label}`)));
@@ -99,7 +112,14 @@ function cluster(a) {
   const c = card(a, "infra-cluster", "Inspect a cluster context", view, {});
   function render(id) {
     const d = CLUSTERS[id]; c.spec.input = { context: id, snapshot: d, source: "authored-example" };
-    body.replaceChildren(hint("Example snapshot · not connected · switching context never touches kubeconfig."), h("h4", {}, "Nodes"), ...d.nodes.map(([name, role, state]) => h("div", { class: "if-record" }, h("b", {}, name), h("span", {}, role), h("code", {}, state))), h("h4", {}, "Namespace / workload / replicas"), ...d.workloads.map(([ns, name, replicas, reason]) => h("details", { class: "if-record" }, h("summary", {}, `${ns} / ${name} · ${replicas}`), hint(reason))), hint(d.note));
+    const workload = ([ns, name, replicas, reason]) => {
+      const ids = { cluster: id, namespace: ns, workload: `${ns}/${name}` };
+      const details = h("details", { class: "if-record" }, h("summary", { onclick: () => { if (!details.open) handoff(c, "select", `Inspect ${ns}/${name}`, ids); } }, `${ns} / ${name} · ${replicas}`), hint(reason),
+        h("div", { class: "if-controls" }, btn(`Ask agent about ${name}`, () => handoff(c, "ask_workload", `Why is ${ns}/${name} at ${replicas}?`, { ...ids, replicas },
+          `Looking at ${ns}/${name} in the ${CLUSTERS[id].label} example (${replicas}). This is an authored snapshot; I'd need read access to a live context to confirm.`))));
+      return details;
+    };
+    body.replaceChildren(hint("Example snapshot · not connected · switching context never touches kubeconfig."), h("h4", {}, "Nodes"), ...d.nodes.map(([name, role, state]) => h("div", { class: "if-record" }, h("b", {}, name), h("span", {}, role), h("code", {}, state))), h("h4", {}, "Namespace / workload / replicas"), ...d.workloads.map(workload), hint(d.note));
   }
   const id = ({ kind: "kind", "amazon-eks": "eks", "google-kubernetes-engine": "gke" })[a.id] || "k3s";
   picker.value = id; view.append(picker, body); render(id); return c;
@@ -108,16 +128,25 @@ function iac(a) {
   const body = h("div", { class: "if-body" }), rows = h("div", { class: "if-stack" }), status = hint("");
   let tool = IAC[a.id] ? a.id : "terraform", destructiveOnly = false;
   const picker = select("IaC tool", Object.entries(IAC).map(([id, p]) => [id, p.label]), id => { tool = id; render(); }); picker.value = tool;
-  const filter = btn("Destructive only", () => { destructiveOnly = !destructiveOnly; filter.setAttribute("aria-pressed", String(destructiveOnly)); render(); }); filter.setAttribute("aria-pressed", "false");
+  const destructive = ([action]) => ["delete", "replace"].includes(action);
+  const filter = btn("Destructive only", () => {
+    destructiveOnly = !destructiveOnly; filter.setAttribute("aria-pressed", String(destructiveOnly)); render();
+    handoff(c, "filter", destructiveOnly ? "Show destructive changes only" : "Show all changes", { tool, change: IAC[tool].rows.filter(r => !destructiveOnly || destructive(r)).map(([, address]) => address) });
+  }); filter.setAttribute("aria-pressed", "false");
+  const review = btn("Ask agent to review shown", () => {
+    const shown = IAC[tool].rows.filter(r => !destructiveOnly || destructive(r)), risky = shown.filter(destructive);
+    handoff(c, "review_changes", `Review these ${shown.length} change${shown.length === 1 ? "" : "s"}`, { tool, change: shown.map(([, address]) => address) },
+      `Reviewing ${shown.length} example change${shown.length === 1 ? "" : "s"}${risky.length ? `, starting with ${risky.length} destructive (${risky.map(([, a]) => a).join(", ")})` : ""}. Nothing is applied; a real plan needs the host adapter.`);
+  });
   const command = h("code", { class: "if-command" });
   const c = card(a, "infra-iac", "Review infrastructure changes", body, {});
   function render() {
     const d = IAC[tool], summary = planSummary(d.rows); c.spec.input = { tool, example: d, summary };
     command.textContent = d.command; status.textContent = `${summary.total} example changes · ${summary.destructive} destructive · ${d.scope}`;
     const visible = d.rows.filter(([action]) => !destructiveOnly || ["delete", "replace"].includes(action));
-    rows.replaceChildren(...(visible.length ? visible.map(([action, address, detail]) => h("details", { class: "if-record" }, h("summary", {}, `${action.toUpperCase()} / ${address}`), hint(detail))) : [hint("No destructive changes in this example.")]));
+    rows.replaceChildren(...(visible.length ? visible.map(([action, address, detail]) => { const d = h("details", { class: "if-record" }, h("summary", { onclick: () => { if (!d.open) handoff(c, "select", `Inspect ${action} ${address}`, { tool, change: address, action }); } }, `${action.toUpperCase()} / ${address}`), hint(detail)); return d; }) : [hint("No destructive changes in this example.")]));
   }
-  body.append(hint("Authored plan, not command output. No apply, destroy, sync or credentials. Commands below are reference text, never executed."), picker, command, status, filter, rows, hint("A diagram is not deployable IaC. A host adapter must ingest real plans, redact sensitive values and request authoritative approval before any mutation.")); render(); return c;
+  body.append(hint("Authored plan, not command output. No apply, destroy, sync or credentials. Commands below are reference text, never executed."), picker, command, status, h("div", { class: "if-controls" }, filter, review), rows, hint("A diagram is not deployable IaC. A host adapter must ingest real plans, redact sensitive values and request authoritative approval before any mutation.")); render(); return c;
 }
 function models(a) {
   let runtime = "llamacpp";
@@ -127,11 +156,13 @@ function models(a) {
   function render() {
     const path = ["dataset", "unsloth", "adapter", ...(runtime === "vllm" ? [] : ["gguf"]), runtime];
     c.spec.input = { stages: path, runtime, evidence: "authored-example", deployment: "not-run" };
-    stages.replaceChildren(...path.map((id, i) => btn(`${i + 1} / ${SERVICES[id].label}`, () => show(id)))); show(runtime);
+    stages.replaceChildren(...path.map((id, i) => btn(`${i + 1} / ${SERVICES[id].label}`, () => { show(id); handoff(c, "select", `Inspect the ${SERVICES[id].label} stage`, { stage: id, runtime, step: i + 1 }); }))); show(runtime);
   }
   function show(id) {
     const checks = { dataset: "Verify consent, train/eval split, schema and a versioned dataset receipt.", unsloth: "Check architecture support, CUDA/driver compatibility and memory before training. No job has run.", adapter: "Preserve base-model revision, adapter config and license. Merge/export only with compatible tooling.", gguf: "GGUF is a format, not a deployment. Validate tokenizer, quantization, checksum and quality after conversion.", llamacpp: "Load a compatible GGUF; benchmark latency, quality and memory on the target device. No measurements collected.", ollama: "Import a compatible GGUF through a reviewed Modelfile. No model has been imported.", vllm: "Use a supported checkpoint/export path. Do not assume an arbitrary GGUF or LoRA works; support is model- and version-dependent." };
-    detail.replaceChildren(h("b", {}, SERVICES[id].label), hint(checks[id]));
+    detail.replaceChildren(h("b", {}, SERVICES[id].label), hint(checks[id]), h("p", { class: "if-hint" }, h("b", {}, "Verified: "), "nothing yet · authored example"),
+      btn(`Ask agent to plan ${SERVICES[id].label} checks`, () => handoff(c, "plan_stage", `Plan the ${SERVICES[id].label} checks for ${runtime}`, { stage: id, runtime },
+        `I'll draft the ${SERVICES[id].label} checks as a to-do for the ${runtime} path; each one stays unverified until it runs on your hardware.`)));
     [...stages.children].forEach(b => b.setAttribute("aria-pressed", String(b.textContent.endsWith(`/ ${SERVICES[id].label}`))));
   }
   body.append(hint("Local ML example · no training, conversion or inference has run. z0intelligence owns eligibility; Kerdoios owns placement; these cards grant neither authority."), picker, stages, detail, hint("Related local tools: ComfyUI for image/asset graphs, vLLM Semantic Router for routing, Ollama and llama.cpp for inference. They are distinct components, not interchangeable model formats.")); render(); return c;

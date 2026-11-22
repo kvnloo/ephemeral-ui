@@ -8,6 +8,7 @@
 //                                           range, sort, focusTool, onSpan(span, track, trace) }
 import { h, anim, stagger } from "./motion.js";
 import { shell, seg, svg } from "./shell.js";
+import { tell } from "./loop.js";
 import { ready, api, fInt, fCompact, fCost, fPct, fRate, fDur, fElapsed, fClock, fDay, fDayUTC, SERIES, OTHER, colorMap, allSpans, toolLatency, trackCost, groupErrors, spanErrors, timeScale } from "./trace-data.js";
 
 export const ALL_LAYERS = ["spans", "tokens", "cost", "errors", "subagents", "transcript"];
@@ -16,6 +17,14 @@ const lay = (o) => o?.layers ?? DEFAULT_LAYERS;
 const LANE = { turn: "Input", model: "Model", tool: "Tools", subagent: "Agents", background: "Bg" };
 
 /* ---------------- shared bits ---------------- */
+/** Quiet typed handoff: the host/agent learns what the user pointed at (no inline chatter). */
+function say(node, action, label, entities) { const card = node?.closest?.(".eu-card"); if (card) tell(card, { action, label, entities, quiet: true }); }
+const spanIds = (s, t, trace) => ({ span: s.id, track: t.id, session: trace.file });
+/** A real button inside a clickable row: Enter/Space click it, the click bubbles to the row's handler. */
+const rowBtn = (key, label, expanded, ...kids) => h("button", { type: "button", class: "os-rowbtn", "data-key": key, "aria-label": label, ...(expanded == null ? {} : { "aria-expanded": String(expanded) }) }, ...kids);
+/** After a re-render, put focus back on the row button the user was on. */
+function refocus(root, key) { if (key == null) return; const b = [...root.querySelectorAll(".os-rowbtn")].find((x) => x.dataset.key === key); b?.focus({ preventScroll: true }); }
+const focusedKey = (root) => (root.contains(document.activeElement) ? document.activeElement.closest?.("[data-key]")?.dataset.key ?? null : null);
 function stat(label, value, foot, cls = "") { return h("div", { class: "os-stat " + cls }, h("div", { class: "os-sl" }, label), h("div", { class: "os-sv" }, value), foot != null ? h("div", { class: "os-sf" }, foot) : null); }
 const statGrid = (cells, min) => h("div", { class: "os-grid", style: min ? { "--min": `${min}px` } : null }, cells.filter(Boolean));
 const panel = (title, desc, body, actions) => h("section", { class: "os-panel" }, h("div", { class: "os-ph" }, h("div", {}, h("div", { class: "os-pt" }, title), desc ? h("div", { class: "os-pd" }, desc) : null), actions ? h("div", { class: "os-pa" }, actions) : null), body);
@@ -102,9 +111,25 @@ export function timeline(trace, entries, o = {}) {
   const search = h("input", { class: "os-search", type: "search", placeholder: "Filter spans…", value: st.filter, oninput: (e) => { st.filter = e.target.value.trim().toLowerCase(); draw(); } });
   const compress = h("label", { class: "os-check" }, h("input", { type: "checkbox", "aria-label": "Compress idle", checked: st.compress, onchange: (e) => { st.compress = e.target.checked; sc = timeScale(trace, st.compress); st.view = [...sc.domain]; draw(); } }), "Compress idle");
   const zoom = (f, cx = 0.5) => { const [a, b] = st.view, w = b - a, nw = Math.min(sc.domain[1] - sc.domain[0], Math.max(400, w * f)); const c = a + w * cx; let na = c - nw * cx; na = Math.max(sc.domain[0], Math.min(sc.domain[1] - nw, na)); st.view = [na, na + nw]; draw(); };
-  const tools = h("div", { class: "os-tlbar" }, h("div", { class: "os-zoom" }, h("button", { type: "button", "aria-label": "Zoom out", onclick: () => zoom(1.6) }, "−"), h("button", { type: "button", "aria-label": "Zoom in", onclick: () => zoom(1 / 1.6) }, "+"), h("button", { type: "button", onclick: () => { st.view = [...sc.domain]; draw(); } }, "Fit")), compress, search, h("span", { class: "grow" }), legend);
+  // Keyboard equivalent of clicking a span: step through the visible, filtered spans in time order.
+  const stepList = () => allSpans({ tracks }).filter(({ s, t }) => !st.collapsed.has(t.id) && (!st.filter || `${s.label} ${s.kind} ${s.errorKind ?? ""}`.toLowerCase().includes(st.filter))).sort((p, q) => p.s.start - q.s.start || p.s.end - q.s.end);
+  const step = (dir) => { const list = stepList(); if (!list.length) return; const i = list.findIndex(({ s }) => s === st.sel); const j = i < 0 ? (dir > 0 ? 0 : list.length - 1) : (i + dir + list.length) % list.length; select(list[j].s, list[j].t, { reveal: true }); };
+  const stepper = h("div", { class: "os-zoom", role: "group", "aria-label": "Step through spans" }, h("button", { type: "button", "aria-label": "Previous span", onclick: () => step(-1) }, "‹ Span"), h("button", { type: "button", "aria-label": "Next span", onclick: () => step(1) }, "Span ›"));
+  const tools = h("div", { class: "os-tlbar" }, h("div", { class: "os-zoom" }, h("button", { type: "button", "aria-label": "Zoom out", onclick: () => zoom(1.6) }, "−"), h("button", { type: "button", "aria-label": "Zoom in", onclick: () => zoom(1 / 1.6) }, "+"), h("button", { type: "button", onclick: () => { st.view = [...sc.domain]; draw(); } }, "Fit")), stepper, compress, search, h("span", { class: "grow" }), legend);
   const mini = h("canvas", { class: "os-mini", "aria-label": "Trace minimap: drag to scrub" });
-  const cv = h("canvas", { class: "os-cv", "aria-label": "Trace timeline: drag to pan, click a span to inspect" });
+  const cv = h("canvas", { class: "os-cv", tabindex: "0", role: "application", "aria-roledescription": "trace timeline", "aria-label": "Trace timeline", "aria-description": "Drag to pan, click a span to inspect. Keyboard: arrow keys step through spans, + and - zoom, 0 fits, Escape closes the span." });
+  cv.addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (k === "ArrowRight" || k === "ArrowDown") step(1);
+    else if (k === "ArrowLeft" || k === "ArrowUp") step(-1);
+    else if (k === "+" || k === "=") zoom(1 / 1.6);
+    else if (k === "-") zoom(1.6);
+    else if (k === "0") { st.view = [...sc.domain]; draw(); }
+    else if ((k === "Enter" || k === " ") && !st.sel) step(1);
+    else if (k === "Escape" && st.sel) { st.sel = null; drawerSlot.replaceChildren(); draw(); }
+    else return;
+    e.preventDefault();
+  });
   const tip = h("div", { class: "os-tip", hidden: true });
   const drawerSlot = h("div", { class: "os-dslot" });
   const transcript = L.has("transcript") ? h("div", { class: "os-tx" }) : null;
@@ -260,6 +285,8 @@ export function timeline(trace, entries, o = {}) {
     const d = spanDrawer(s, t, trace, entries, { onClose: () => { st.sel = null; drawerSlot.replaceChildren(); draw(); }, onTrack: (id) => { const ct = trace.tracks.find((x) => x.id === id); if (ct) { if (!tracks.includes(ct)) tracks.push(ct); st.collapsed.delete(id); const ss = ct.spans; st.view = [sc.toU(Math.min(...ss.map((q) => q.start))), sc.toU(Math.max(...ss.map((q) => q.end)))]; draw(); } } });
     drawerSlot.replaceChildren(d);
     anim(d, [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], { spring: "snappy" });
+    cv.setAttribute("aria-description", `Selected ${s.kind} span ${s.label}, ${fDur(s.end - s.start)}${s.isError ? ", error" : ""}`);
+    say(root, "select", `Inspect ${s.kind} span ${s.label}`, spanIds(s, t, trace));
     o.onSelect?.(s, t);
   }
   if (transcript) {
@@ -267,7 +294,7 @@ export function timeline(trace, entries, o = {}) {
     const ol = h("ol", { class: "os-txl" });
     const more = h("button", { class: "os-btn", type: "button" }, "");
     let n = 0;
-    const add = (k) => { for (const { s, t } of list.slice(n, n + k)) ol.append(h("li", { onclick: () => select(s, t, { reveal: true }) }, h("span", { class: `os-kchip k-${s.kind}` }, s.kind), h("b", {}, s.label), h("span", { class: "os-txd" }, s.kind === "tool" ? s.detail ?? "" : s.kind === "model" ? (s.tokens == null ? "usage not recorded" : `${fCompact(s.tokens)} tok · ${fCost(s.cost ?? 0)}`) : s.kind === "turn" ? "‹user message withheld›" : s.detail ?? ""), h("span", { class: "os-mono dim" }, t.id === "main" ? "" : t.label + " "), h("span", { class: "os-mono dim r" }, fDur(s.end - s.start)))); n += k; more.textContent = n < list.length ? `Show ${Math.min(40, list.length - n)} more of ${list.length - n}` : "End of transcript"; more.disabled = n >= list.length; };
+    const add = (k) => { for (const { s, t } of list.slice(n, n + k)) ol.append(h("li", { onclick: () => select(s, t, { reveal: true }) }, h("span", { class: `os-kchip k-${s.kind}` }, s.kind), rowBtn(s.id, `Inspect ${s.kind} span ${s.label}`, null, h("b", {}, s.label)), h("span", { class: "os-txd" }, s.kind === "tool" ? s.detail ?? "" : s.kind === "model" ? (s.tokens == null ? "usage not recorded" : `${fCompact(s.tokens)} tok · ${fCost(s.cost ?? 0)}`) : s.kind === "turn" ? "‹user message withheld›" : s.detail ?? ""), h("span", { class: "os-mono dim" }, t.id === "main" ? "" : t.label + " "), h("span", { class: "os-mono dim r" }, fDur(s.end - s.start)))); n += k; more.textContent = n < list.length ? `Show ${Math.min(40, list.length - n)} more of ${list.length - n}` : "End of transcript"; more.disabled = n >= list.length; };
     more.onclick = () => add(40);
     add(24);
     transcript.append(h("div", { class: "os-ph" }, h("div", {}, h("div", { class: "os-pt" }, "Transcript"), h("div", { class: "os-pd" }, "Every span in order; click to inspect. Message text is withheld in the public fixture."))), ol, more);
@@ -369,7 +396,7 @@ function toolsNode(d, o, card) {
   const lat = new Map(toolLatency(traces).map((r) => [r.tool, r]));
   const root = h("div", {});
   const body = h("div", { class: "os-stack" });
-  const render = async () => {
+  const render = async (keep) => {
     const L = lay(o);
     const scoped = o.scope === "trace";
     const data = scoped ? { byTool: [...lat.values()].map((r) => ({ tool: r.tool, calls: r.calls, errors: r.errors, costShare: 0, totalTokensShare: 0 })), series: [] } : o.input && st.range === (o.range ?? "7d") ? o.input : await api(`/api/stats/tools?range=${st.range}`);
@@ -390,8 +417,8 @@ function toolsNode(d, o, card) {
     const mxCalls = Math.max(...rows.map((r) => r.calls), 1);
     const tbody = h("tbody", {});
     for (const r of rows.slice(0, 14)) {
-      const tr = h("tr", { class: "click" + (st.open === r.tool ? " sel" : ""), onclick: () => { st.open = st.open === r.tool ? null : r.tool; render(); } },
-        h("td", {}, sw(cm.get(r.tool)), h("span", { class: "os-mono" }, r.tool), r.traceOnly && !scoped ? h("span", { class: "os-sub" }, " traced only") : null),
+      const tr = h("tr", { class: "click" + (st.open === r.tool ? " sel" : ""), onclick: () => { st.open = st.open === r.tool ? null : r.tool; if (st.open) say(root, "focus_tool", `Focus on ${r.tool}`, { tool: r.tool }); render(focusedKey(root)); } },
+        h("td", {}, sw(cm.get(r.tool)), rowBtn("tool:" + r.tool, `${r.tool} spans`, st.open === r.tool, h("span", { class: "os-mono" }, r.tool)), r.traceOnly && !scoped ? h("span", { class: "os-sub" }, " traced only") : null),
         h("td", { class: "r os-mono" }, fInt(r.calls), h("i", { class: "os-mbar", style: { width: `${(r.calls / mxCalls) * 100}%` } })),
         L.has("errors") ? h("td", { class: "r os-mono" + (r.errors ? " bad" : "") }, fInt(r.errors)) : null,
         L.has("errors") ? h("td", { class: "os-barc" }, h("i", { class: "os-bar badbar", style: { width: `${Math.min(100, r.rate * 400)}%` } }), h("span", { class: "os-mono dim" }, fRate(r.rate))) : null,
@@ -401,7 +428,7 @@ function toolsNode(d, o, card) {
       tbody.append(tr);
       if (st.open === r.tool) {
         const spans = (r.lat?.spans ?? []).sort((a, b) => (b.s.isError - a.s.isError) || (b.s.end - b.s.start) - (a.s.end - a.s.start)).slice(0, 8);
-        tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 7 }, spans.length ? h("ul", { class: "os-spans" }, spans.map(({ s, t, trace }) => h("li", { onclick: (e) => { e.stopPropagation(); openSpan(s, t, trace); } }, h("span", { class: `os-kchip k-tool${s.isError ? " err" : ""}` }, s.isError ? s.errorKind ?? "error" : "ok"), h("span", { class: "os-mono" }, fDur(s.end - s.start)), h("span", { class: "os-txd" }, s.detail ?? ""), h("span", { class: "os-mono dim" }, `${trace.title.split(" · ")[0]} · ${t.label}`), h("span", { class: "os-go" }, "Open span →")))) : h("div", { class: "os-sub" }, "No spans for this tool in the traced sessions; counts come from /api/stats/tools."))));
+        tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 7 }, spans.length ? h("ul", { class: "os-spans" }, spans.map(({ s, t, trace }) => h("li", { onclick: (e) => { e.stopPropagation(); openSpan(s, t, trace); } }, h("span", { class: `os-kchip k-tool${s.isError ? " err" : ""}` }, s.isError ? s.errorKind ?? "error" : "ok"), h("span", { class: "os-mono" }, fDur(s.end - s.start)), h("span", { class: "os-txd" }, s.detail ?? ""), h("span", { class: "os-mono dim" }, `${trace.title.split(" · ")[0]} · ${t.label}`), rowBtn(s.id, `Open ${s.label} span, ${fDur(s.end - s.start)}`, null, h("span", { class: "os-go" }, "Open span →"))))) : h("div", { class: "os-sub" }, "No spans for this tool in the traced sessions; counts come from /api/stats/tools."))));
       }
     }
     const tbl = h("div", { class: "os-tw" }, h("table", { class: "os-table" }, h("thead", {}, h("tr", {}, h("th", {}, "Tool"), th("calls", "Calls"), L.has("errors") ? th("errors", "Errors") : null, L.has("errors") ? th("rate", "Failure rate", "") : null, h("th", { class: "r" }, "p50"), th("p95", "p95"), L.has("cost") && !scoped ? th("cost", "Attr. cost") : null)), tbody));
@@ -416,10 +443,11 @@ function toolsNode(d, o, card) {
     }
     body.replaceChildren(head, ...(chart ? [chart] : []), panel("By tool", scoped ? `Calls, failures and latency from the spans of ${traces[0].title.split(" · ")[0]}. Select a tool for its spans.` : `Counts for the last ${st.range} from /api/stats/tools; p50/p95 from spans of ${traces.length} traced session${traces.length === 1 ? "" : "s"}. Select a tool for its spans.`, tbl), slot);
     toolbar.hidden = scoped;
+    refocus(body, keep);
     card.spec.range = st.range; card.spec.sort = st.sort; card.spec.focusTool = st.open;
   };
   const slot = h("div", { class: "os-dslot" });
-  function openSpan(s, t, trace) { if (o.onSpan) return o.onSpan(s, t, trace); slot.replaceChildren(spanDrawer(s, t, trace, d.entries, { onClose: () => slot.replaceChildren() })); slot.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  function openSpan(s, t, trace) { say(root, "select", `Inspect ${s.kind} span ${s.label}`, spanIds(s, t, trace)); if (o.onSpan) return o.onSpan(s, t, trace); slot.replaceChildren(spanDrawer(s, t, trace, d.entries, { onClose: () => slot.replaceChildren() })); slot.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   const toolbar = h("div", { class: "os-toolbar" }, seg(["7d", "30d"], (i) => { st.range = ["7d", "30d"][i]; render(); }, st.range === "30d" ? 1 : 0));
   root.append(toolbar, body);
   render();
@@ -433,9 +461,10 @@ function errorsNode(d, o, card) {
   const root = h("div", {});
   const body = h("div", { class: "os-stack" });
   const slot = h("div", { class: "os-dslot" });
-  function openSpan(s, t, trace) { if (o.onSpan) return o.onSpan(s, t, trace); slot.replaceChildren(spanDrawer(s, t, trace, d.entries, { onClose: () => slot.replaceChildren() })); slot.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  function openSpan(s, t, trace) { say(root, "select", `Inspect ${s.kind} span ${s.label}`, spanIds(s, t, trace)); if (o.onSpan) return o.onSpan(s, t, trace); slot.replaceChildren(spanDrawer(s, t, trace, d.entries, { onClose: () => slot.replaceChildren() })); slot.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   const findSpan = (e) => { for (const tr of traces) for (const t of tr.tracks) if (t.file === e.sessionFile || (t.id === "main" && tr.file === e.sessionFile)) { const s = t.spans.find((x) => x.entryId === e.entryId); if (s) return { s, t, trace: tr }; } return null; };
-  const render = async () => {
+  const toggle = (sig, keep) => { st.open = st.open === sig ? null : sig; if (st.open) say(root, "focus_error", `Focus on ${sig}`, { error: sig.slice(0, 120) }); render(keep); };
+  const render = async (keep) => {
     if (st.tab === 0) {
       const list = await api(`/api/stats/errors?range=${st.range}`);
       const groups = groupErrors(list);
@@ -445,8 +474,8 @@ function errorsNode(d, o, card) {
       const tbody = h("tbody", {});
       for (const g of groups) {
         const ms = [...g.models.keys()];
-        tbody.append(h("tr", { class: "click" + (st.open === g.sig ? " sel" : ""), onclick: () => { st.open = st.open === g.sig ? null : g.sig; render(); } }, h("td", { class: "os-mono os-sig" }, g.sig), h("td", {}, h("span", { class: "os-mono" }, ms[0]), ms.length > 1 ? h("div", { class: "os-sub" }, `+${ms.length - 1} more`) : null), h("td", { class: "os-sub nowrap" }, fDay(g.last)), h("td", { class: "r os-mono" }, fInt(g.n)), h("td", { class: "os-barc w80" }, h("i", { class: "os-bar badbar", style: { width: `${(g.n / mx) * 100}%` } }))));
-        if (st.open === g.sig) tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 5 }, h("ul", { class: "os-spans" }, g.items.slice(0, 8).map((e) => { const f = findSpan(e); return h("li", { onclick: f ? () => openSpan(f.s, f.t, f.trace) : null, class: f ? "" : "nolink" }, h("span", { class: "os-mono dim" }, `${fDay(e.timestamp)} ${fClock(e.timestamp)}`), h("span", { class: "os-mono" }, e.model), h("span", { class: "os-sub" }, e.provider), h("span", { class: "os-mono dim" }, `${fInt(e.usage.totalTokens)} tok`), f ? h("span", { class: "os-go" }, "Jump to span →") : h("span", { class: "os-sub" }, e.folder)); })))));
+        tbody.append(h("tr", { class: "click" + (st.open === g.sig ? " sel" : ""), onclick: () => toggle(g.sig, focusedKey(root)) }, h("td", { class: "os-mono os-sig" }, rowBtn("sig:" + g.sig, `${g.sig}, ${g.n} failure${g.n === 1 ? "" : "s"}`, st.open === g.sig, g.sig)), h("td", {}, h("span", { class: "os-mono" }, ms[0]), ms.length > 1 ? h("div", { class: "os-sub" }, `+${ms.length - 1} more`) : null), h("td", { class: "os-sub nowrap" }, fDay(g.last)), h("td", { class: "r os-mono" }, fInt(g.n)), h("td", { class: "os-barc w80" }, h("i", { class: "os-bar badbar", style: { width: `${(g.n / mx) * 100}%` } }))));
+        if (st.open === g.sig) tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 5 }, h("ul", { class: "os-spans" }, g.items.slice(0, 8).map((e) => { const f = findSpan(e); return h("li", { onclick: f ? () => openSpan(f.s, f.t, f.trace) : null, class: f ? "" : "nolink" }, h("span", { class: "os-mono dim" }, `${fDay(e.timestamp)} ${fClock(e.timestamp)}`), h("span", { class: "os-mono" }, e.model), h("span", { class: "os-sub" }, e.provider), h("span", { class: "os-mono dim" }, `${fInt(e.usage.totalTokens)} tok`), f ? rowBtn(f.s.id, `Jump to span ${f.s.label} at ${fClock(e.timestamp)}`, null, h("span", { class: "os-go" }, "Jump to span →")) : h("span", { class: "os-sub" }, e.folder)); })))));
       }
       body.replaceChildren(head, panel("Error signatures", "Same message with ids and counters normalized. Messages are reduced to their error kind in the public fixture.", h("div", { class: "os-tw" }, h("table", { class: "os-table" }, h("thead", {}, h("tr", {}, h("th", {}, "Signature"), h("th", {}, "Models"), h("th", {}, "Last seen"), h("th", { class: "r" }, "Failures"), h("th", {}, ""))), tbody))), slot);
     } else {
@@ -458,12 +487,13 @@ function errorsNode(d, o, card) {
       const head = statGrid([stat("Failed spans", fInt(total), `${traces.length} traced sessions`, total ? "bad" : ""), stat("Kinds", fInt(rows.length), rows[0]?.sig ?? "-"), stat("Worst session", (() => { const c = traces.map((t) => [t.title, allSpans(t).filter(({ s }) => s.isError).length]).sort((a, b) => b[1] - a[1])[0]; return c ? c[0].split(" · ")[0] : "-"; })(), null)], 120);
       const tbody = h("tbody", {});
       for (const g of st.all ? rows : rows.slice(0, 10)) {
-        tbody.append(h("tr", { class: "click" + (st.open === g.sig ? " sel" : ""), onclick: () => { st.open = st.open === g.sig ? null : g.sig; render(); } }, h("td", { class: "os-mono os-sig" }, g.sig), h("td", { class: "r os-mono" }, fInt(g.n)), h("td", { class: "os-barc w80" }, h("i", { class: "os-bar badbar", style: { width: `${(g.n / mx) * 100}%` } }))));
-        if (st.open === g.sig) tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 3 }, h("ul", { class: "os-spans" }, g.items.slice(0, 8).map(({ s, t, trace }) => h("li", { onclick: () => openSpan(s, t, trace) }, h("span", { class: "os-mono dim" }, fClock(s.start)), h("span", { class: "os-mono" }, fDur(s.end - s.start)), h("span", { class: "os-txd" }, s.detail ?? ""), h("span", { class: "os-mono dim" }, `${trace.title.split(" · ")[0]} · ${t.label}`), h("span", { class: "os-go" }, "Jump to span →")))))));
+        tbody.append(h("tr", { class: "click" + (st.open === g.sig ? " sel" : ""), onclick: () => toggle(g.sig, focusedKey(root)) }, h("td", { class: "os-mono os-sig" }, rowBtn("sig:" + g.sig, `${g.sig}, ${g.n} failed span${g.n === 1 ? "" : "s"}`, st.open === g.sig, g.sig)), h("td", { class: "r os-mono" }, fInt(g.n)), h("td", { class: "os-barc w80" }, h("i", { class: "os-bar badbar", style: { width: `${(g.n / mx) * 100}%` } }))));
+        if (st.open === g.sig) tbody.append(h("tr", { class: "os-exp" }, h("td", { colspan: 3 }, h("ul", { class: "os-spans" }, g.items.slice(0, 8).map(({ s, t, trace }) => h("li", { onclick: () => openSpan(s, t, trace) }, h("span", { class: "os-mono dim" }, fClock(s.start)), h("span", { class: "os-mono" }, fDur(s.end - s.start)), h("span", { class: "os-txd" }, s.detail ?? ""), h("span", { class: "os-mono dim" }, `${trace.title.split(" · ")[0]} · ${t.label}`), rowBtn(s.id, `Jump to span ${s.label} at ${fClock(s.start)}`, null, h("span", { class: "os-go" }, "Jump to span →"))))))));
       }
       const more = rows.length > 10 ? h("button", { class: "os-btn", type: "button", style: { margin: "8px 12px 12px" }, onclick: () => { st.all = !st.all; render(); } }, st.all ? "Show top 10" : `Show all ${rows.length} kinds`) : null;
       body.replaceChildren(head, panel("Span failures", "Tool calls and requests that failed inside the traced sessions, grouped by tool and error kind.", h("div", { class: "os-tw" }, h("table", { class: "os-table" }, h("thead", {}, h("tr", {}, h("th", {}, "Tool · kind"), h("th", { class: "r" }, "Spans"), h("th", {}, ""))), tbody)), more), slot);
     }
+    refocus(body, keep);
     card.spec.tab = ["requests", "spans"][st.tab]; card.spec.range = st.range;
   };
   root.append(h("div", { class: "os-toolbar" }, seg(["Requests", "Spans"], (i) => { st.tab = i; st.open = null; render(); }, st.tab), h("span", { class: "grow" }), seg(["7d", "30d"], (i) => { st.range = ["7d", "30d"][i]; render(); }, st.range === "7d" ? 0 : 1)), body);

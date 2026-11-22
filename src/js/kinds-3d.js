@@ -2,10 +2,12 @@
 // lighting rigs, game triggers, a live globe, image-to-3D, robot sim. All draw through stage3d.js.
 import { h, anim, stagger, typeText, pick, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg } from "./shell.js";
-import { act, tell, why, undoable, settle } from "./loop.js";
+import { act, tell, why, undoable, settle, roving, setDisabled } from "./loop.js";
 import { stage3d, makeCity, sunRig, clayMatcap, fbm, rand, loadGLB, roomEnv } from "./stage3d.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
+/** A footer handoff whose label, entities and acknowledgement are read at click time (current selection). */
+const ask = (text, cls, action, now) => { const b = h("button", { class: `eu-btn ${cls}`, type: "button" }, text); b.onclick = () => { const card = b.closest(".eu-card"); if (card) tell(card, { action, ...now() }); }; return b; };
 const isGame = (a) => ["unreal", "unity", "godot", "roblox", "playcanvas", "gamemaker"].includes(a.ui);
 const engineWord = (a) => ({ unreal: "Lumen", unity: "HDRP", godot: "SDFGI", blender: "Cycles", c4d: "Redshift", maya: "Arnold", houdini: "Karma", omni: "RTX", usd: "Storm" })[a.ui] || "Path tracer";
 
@@ -16,15 +18,27 @@ const AGENTS = [{ n: "Agent A", c: "#ff8f40", brush: 1, plan: "brow ridge" }, { 
 function sculptMake(a, r) {
   const ui = uiOf(a) || {};
   const vp = h("div", { class: "vp" });
-  const brushes = h("div", { class: "ap-tools" }, BRUSHES.map(([n, k], i) => h("button", { type: "button", class: "ap-tool" + (i === 1 ? " on" : ""), title: `${n} (${k})`, "data-i": i }, h("b", {}, n.split(" ").map((w) => w[0]).join("")), h("kbd", {}, k))));
+  const brushes = h("div", { class: "ap-tools", role: "group", "aria-label": "Brush" }, BRUSHES.map(([n, k], i) => h("button", { type: "button", class: "ap-tool" + (i === 1 ? " on" : ""), title: `${n} (${k})`, "aria-label": n, "aria-pressed": String(i === 1), "data-i": i }, h("b", {}, n.split(" ").map((w) => w[0]).join("")), h("kbd", {}, k))));
+  // Keyboard/pointer equivalent of dragging on the mesh: stroke a named region with the picked brush.
+  const REGIONS = [["brow ridge", 0, 0.45, 1], ["left eye", -0.35, 0.2, 0.92], ["right eye", 0.35, 0.2, 0.92], ["cheeks", 0, -0.15, 1], ["chin", 0, -0.7, 0.75], ["crown", 0, 1, 0.1]];
+  const regions = h("div", { class: "ap-regions", role: "group", "aria-label": "Stroke a region" }, h("span", { class: "eu-hint" }, "Stroke:"), REGIONS.map(([n]) => h("button", { type: "button", class: "ap-chip", "data-region": n, "aria-label": `Stroke ${n}` }, n)));
   const code = h("pre", { class: "ap-code" });
   const tags = AGENTS.map((g) => h("div", { class: "v3-tag", style: { "--c": g.c } }, h("i"), h("span", {}, `${g.n} · ${BRUSHES[g.brush][0]}`)));
   const you = h("div", { class: "v3-tag you", hidden: true, style: { "--c": ui.acc || "#4772b3" } }, h("i"), h("span", {}, "You"));
   const stats = h("span", { class: "ap-stat" }, "Verts 0");
   const mode = a.ui === "zbrush" ? ["Edit", "Draw", "Move", "Scale", "Rotate"] : a.ui === "nomad" ? ["Sculpt", "Paint", "Mask"] : ["Sculpt Mode", "View", "Sculpt", "Mask", "Face Sets"];
-  const surface = appSurface(a, [appBar(mode, [stats]), h("div", { class: "ap-split" }, h("div", { class: "ap-vpwrap" }, brushes, vp), code)], { cls: "sculpt" });
+  const surface = appSurface(a, [appBar(mode, [stats]), h("div", { class: "ap-split" }, h("div", { class: "ap-vpwrap" }, brushes, vp), code), regions], { cls: "sculpt" });
   let picked = 1;
-  brushes.addEventListener("click", (e) => { const b = e.target.closest(".ap-tool"); if (!b) return; picked = +b.dataset.i; brushes.querySelectorAll(".ap-tool").forEach((x) => x.classList.toggle("on", x === b)); });
+  brushes.addEventListener("click", (e) => { const b = e.target.closest(".ap-tool"); if (!b) return; picked = +b.dataset.i; brushes.querySelectorAll(".ap-tool").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); }); });
+  const S = {};
+  regions.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-region]"); if (!b) return;
+    const [name, x, y, z] = REGIONS.find((q) => q[0] === b.dataset.region), brush = BRUSHES[picked][0];
+    tell(el, { action: "stroke", label: `${brush} on the ${name}`, entities: { brush, region: name }, quiet: true });
+    stats.dataset.last = `${brush} · ${name}`; stats.textContent = `${stats.textContent.split(" · You:")[0]} · You: ${brush} on ${name}`;
+    await V.ready; const before = S.snapshot?.(); S.strokeAt?.([x, y, z], picked, 14);
+    if (before) undoable(el, `${brush} on the ${name}`, () => S.restore(before), { entities: { region: name } });
+  });
   const V = stage3d(vp, (T, v) => {
     v.orbit = { yaw: 0.3, pitch: 0.18, dist: 3.3, target: [0, 0, 0] };
     const geo = new T.IcosahedronGeometry(1, 30);
@@ -47,6 +61,11 @@ function sculptMake(a, r) {
         if (sign === 0) disp[i] *= 1 - w * 0.12 * strength; else disp[i] = Math.max(-0.18, Math.min(0.3, disp[i] + sign * w * 0.0065 * strength * (bi === 3 ? 1.6 : 1)));
       }
     }
+    S.strokeAt = ([x, y, z], bi, passes) => { const d = new T.Vector3(x, y, z).normalize(); for (let i = 0; i < passes; i++) stroke(d, bi, 3); };
+    S.snapshot = () => disp.slice();
+    S.restore = (d) => disp.set(d);
+    // Voxel-remesh preview: displacement snaps to 0.02 m steps (the preview keeps the vertex count).
+    S.remesh = () => { for (let i = 0; i < n; i++) disp[i] = Math.round(disp[i] / 0.02) * 0.02; };
     v.onDown = (e, p) => { hit.on = true; you.hidden = false; };
     v.onDrag = (e, p) => { v.ray.setFromCamera(p, v.camera); const hs = v.ray.intersectObject(mesh); if (hs.length) { hit.p = hs[0].point.clone().normalize(); } };
     v.onUp = () => { hit.on = false; hit.p = null; setTimeout(() => (you.hidden = true), 600); };
@@ -81,7 +100,11 @@ function sculptMake(a, r) {
     "        relative_asset_identifier=lib + brush)",
     "    agent.stroke(region)  # A: Clay Strips, B: Crease, C: Smooth",
   ] : a.ui === "zbrush" ? ["// ZScript", "[IPress, Tool:SubTool:Duplicate]", "[IPress, Brush:ClayBuildup]", "[ISet, Draw:Z Intensity, 22]", "[IPress, Brush:DamStandard]   // agent B", "[IPress, Brush:Smooth]        // agent C"] : ["// three agents, one mesh", "agentA.brush('clay').along('brow ridge')", "agentB.brush('crease').along('eye sockets')", "agentC.brush('smooth').over('cheeks')", "you.brush(picked).drag()"];
-  const el = shell(a, "sculpt", { verb: `3 agents sculpting · ${a.name}`, status: "Live", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Drag on the mesh to sculpt with the picked brush. Agents keep working around you.")), foot: [holdButton("Hold to apply Remesh", (b, t) => { t.textContent = "Remeshed · 0.02 m voxels"; burst(b); }), act("Export .glb", { cls: "ghost", ack: "Exported helmet.glb (Draco, 1.2 MB) with the three agents' strokes merged." })], summary: `Sculpted a head blockout in ${a.name} with 3 agents` });
+  const el = shell(a, "sculpt", { verb: `3 agents sculpting · ${a.name}`, status: "Live", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Drag on the mesh, or pick a brush and a Stroke region (keyboard works too), to sculpt. Agents keep working around you.")), foot: [holdButton("Hold to apply Remesh", async (b, t) => {
+    await V.ready; const before = S.snapshot?.(); S.remesh?.(); t.textContent = "Remeshed · 0.02 m voxels"; burst(b);
+    tell(el, { action: "remesh", label: "Remesh at 0.02 m voxels", entities: { voxel: "0.02" }, ack: "Snapped the surface to 0.02 m voxels; fine strokes under that size are gone. Undo restores them." });
+    if (before) undoable(el, "Remesh at 0.02 m", () => { S.restore(before); b.reset(); }, { entities: { voxel: "0.02" } });
+  }), act("Export .glb", { cls: "ghost", ack: "Exported helmet.glb (Draco, 1.2 MB) with the three agents' strokes merged." })], summary: `Sculpted a head blockout in ${a.name} with 3 agents` });
   return { el, async play(run) { stagger(brushes.children, { gap: 50 }); for (const line of script) { const s = h("div"); code.append(s); await typeText(s, line, run, 90); } }, spec: { kind: "sculpt", app: a.id, agents: AGENTS.map((g) => ({ name: g.n, brush: BRUSHES[g.brush][0], region: g.plan })), mesh: "icosphere · dyntopo" } };
 }
 
@@ -280,7 +303,15 @@ function triggerMake(a, r) {
   }[a.ui] || ["on enter(trigger, player)", "  play(door, 'open')", "  log('door opened')"];
   const bp = h("div", { class: "bp" + (a.ui === "unreal" ? " ue" : "") }, api.map((l, i) => h("div", { class: "bp-n" }, h("i", { class: "bp-pin" }), h("code", {}, l))));
   const log = h("div", { class: "trlog" });
-  let fired = 0;
+  let fired = 0, byYou = false;
+  const TR = {};
+  const WALK = [["Walk into trigger", [0, 3]], ["Walk through door", [0, -3.5]], ["Walk to start", [-5, 4.2]]];
+  const walkStat = h("span", { class: "ap-stat", "aria-live": "polite" }, "Tap the floor or use Walk");
+  const walks = h("div", { class: "row wrap tr-walk", role: "group", "aria-label": "Move the player" }, WALK.map(([label, at]) => h("button", { type: "button", class: "ap-chip", "aria-pressed": "false", onclick: async (e) => {
+    walks.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget)));
+    walkStat.textContent = `${label.replace("Walk", "Walking")}…`;
+    await V.ready; TR.walk?.(at);
+  } }, label)));
   const V = stage3d(vp, (T, v) => {
     v.shadows = true;
     v.orbit = { yaw: 0.7, pitch: 0.75, dist: 15, target: [0, 0, 0] };
@@ -295,14 +326,15 @@ function triggerMake(a, r) {
     const player = new T.Mesh(new T.CapsuleGeometry(0.35, 0.9, 6, 16), new T.MeshStandardMaterial({ color: parseInt((ui.acc || "#0070e0").slice(1), 16), roughness: 0.4 })); player.castShadow = true; v.scene.add(player);
     const path = [[-5, 4.2], [0, 4], [0, 3], [0, -0.5], [0, -3.5], [4.5, -3.5], [4.5, 3.8], [-5, 4.2]].map(([x, z]) => new T.Vector3(x, 0.8, z));
     let seg = 0, k = 0, open = 0, inside = false, goal = null;
-    v.onDown = (e, p) => { v.ray.setFromCamera(p, v.camera); const hs = v.ray.intersectObject(floor); if (hs.length) goal = hs[0].point.clone().setY(0.8); };
+    v.onDown = (e, p) => { v.ray.setFromCamera(p, v.camera); const hs = v.ray.intersectObject(floor); if (hs.length) { goal = hs[0].point.clone().setY(0.8); byYou = true; } };
+    TR.walk = ([x, z]) => { goal = new T.Vector3(x, 0.8, z); byYou = true; };
     return (dt, t) => {
       if (v.auto) v.orbit.yaw += dt * 0.08;
       v.applyOrbit();
       if (goal) { const d = goal.clone().sub(player.position); const L = d.length(); if (L < 0.05) goal = null; else player.position.add(d.multiplyScalar(Math.min(1, (dt * 3.2) / L))); }
       else { const a0 = path[seg], b0 = path[(seg + 1) % path.length]; k += (dt * 2.6) / a0.distanceTo(b0); if (k >= 1) { k = 0; seg = (seg + 1) % (path.length - 1); } player.position.lerpVectors(a0, b0, Math.min(1, k)); }
       const now = Math.abs(player.position.x - box.position.x) < 1.5 && Math.abs(player.position.z - box.position.z) < 1.1;
-      if (now && !inside) { fired++; fire(); }
+      if (now && !inside) { fired++; fire(); if (byYou) { byYou = false; walkStat.textContent = `Trigger fired (#${fired}) · door opening`; tell(el, { action: "trigger_fired", label: `You walked into the trigger (#${fired})`, entities: { trigger: "TriggerBox", event: api[0].slice(0, 60), count: fired }, quiet: true }); } }
       inside = now;
       box.material.color.setHex(inside ? 0xffa53c : 0x3cff6e);
       open += ((inside || player.position.z < 1.4 ? 1 : 0) - open) * Math.min(1, dt * 3);
@@ -316,7 +348,7 @@ function triggerMake(a, r) {
     log.prepend(row); anim(row, [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
     while (log.children.length > 3) log.lastChild.remove();
   }
-  const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Viewport", "Blueprint", "▶ PIE"] : a.ui === "godot" ? ["3D", "Script", "▶"] : [a.name, "Scene", "▶ Play"], [h("span", { class: "ap-stat" }, "Tap the floor to walk")]), h("div", { class: "ap-split tr" }, h("div", { class: "ap-vpwrap" }, vp), h("div", {}, bp, log))], { cls: "trigger" });
+  const surface = appSurface(a, [appBar(a.ui === "unreal" ? ["Viewport", "Blueprint", "▶ PIE"] : a.ui === "godot" ? ["3D", "Script", "▶"] : [a.name, "Scene", "▶ Play"], [walkStat]), h("div", { class: "ap-split tr" }, h("div", { class: "ap-vpwrap" }, vp), h("div", {}, bp, log)), walks], { cls: "trigger" });
   const el = shell(a, "trigger", { verb: "Wired a trigger volume", status: "Playing", body: surface, foot: [act("Add to level", { cls: "primary", ack: "Added the trigger to the level, wired to the door.", done: "Added ✓" }), act("Open graph", { cls: "ghost", ack: "Opened the trigger's event graph." })], summary: `Wired a door trigger in ${a.name}` });
   return { el, async play(run) { stagger(bp.children, { gap: 90 }); }, spec: { kind: "trigger", app: a.id, event: api[0], action: api[api.length - 1] } };
 }
@@ -327,8 +359,16 @@ const ROUTES = [["SFO", "HND"], ["JFK", "LHR"], ["LAX", "SYD"], ["DXB", "SIN"], 
 function globeMake(a, r) {
   const ui = uiOf(a) || {};
   const vp = h("div", { class: "vp gev" });
-  const layers = ["Flights", "Satellites", "Quakes", "Cameras"].map((n, i) => h("button", { type: "button", class: "ap-chip" + (i < 3 ? " on" : ""), "data-l": n }, n));
-  const trk = h("div", { class: "gev-trk" }, h("b", {}, "TRK —"), h("span", {}, "tap a flight"));
+  const layers = ["Flights", "Satellites", "Quakes", "Cameras"].map((n, i) => h("button", { type: "button", class: "ap-chip" + (i < 3 ? " on" : ""), "aria-pressed": String(i < 3), "data-l": n }, n));
+  const trk = h("div", { class: "gev-trk" }, h("b", {}, "TRK —"), h("span", {}, "pick a flight"));
+  const CALLS = ["UAL837", "BAW178", "QFA12", "SIA495", "DLH431", "SAA223", "KAL20", "AIC143", "AAL1392", "SWA1734"];
+  // Keyboard equivalent of clicking a flight path: a roving list of the same flights.
+  const picker = h("div", { class: "gev-pick", role: "radiogroup", "aria-label": "Follow a flight (demo traffic)" }, ROUTES.map(([f, t], i) => h("button", { type: "button", class: "ap-chip", role: "radio", "aria-checked": "false", "data-i": i }, `${CALLS[i]} ${f}→${t}`)));
+  const pickFlight = (i, quiet = false) => {
+    follow = i; showTrk();
+    picker.querySelectorAll("button").forEach((b, j) => { b.setAttribute("aria-checked", String(j === i)); if (j === i) { picker.querySelectorAll("button").forEach((x) => (x.tabIndex = -1)); b.tabIndex = 0; } });
+    if (!quiet) tell(el, { action: "select", label: `Follow ${CALLS[i]} ${ROUTES[i][0]}→${ROUTES[i][1]}`, entities: { flight: CALLS[i], from: ROUTES[i][0], to: ROUTES[i][1] }, quiet: true });
+  };
   const voice = h("div", { class: "gev-voice" }, h("i"), h("span", {}, ""));
   let G = null, follow = -1;
   const V = stage3d(vp, (T, v) => {
@@ -360,7 +400,7 @@ function globeMake(a, r) {
     const quakes = [[35.7, 139.7], [-33.4, -70.6], [37.8, -122.4], [38.3, 142.4], [-6.2, 106.8]].map(([la, lo]) => { const m = new T.Mesh(new T.RingGeometry(0.006, 0.009, 32), new T.MeshBasicMaterial({ color: 0xff4d4d, side: T.DoubleSide, transparent: true })); const p = ll(la, lo, 1.003); m.position.copy(p); m.lookAt(p.clone().multiplyScalar(2)); v.scene.add(m); return m; });
     v.scene.add(new T.AmbientLight(0x88ffbb, 0.6)); const d = new T.DirectionalLight(0xffffff, 1.2); d.position.set(5, 3, 5); v.scene.add(d);
     G = { flights, sats, quakes };
-    v.onDown = (e, p) => { v.ray.setFromCamera(p, v.camera); v.ray.params.Line = { threshold: 0.03 }; const hs = v.ray.intersectObjects(flights.map((f) => f.line)); if (hs.length) { follow = flights.findIndex((f) => f.line === hs[0].object); showTrk(); } };
+    v.onDown = (e, p) => { v.ray.setFromCamera(p, v.camera); v.ray.params.Line = { threshold: 0.03 }; const hs = v.ray.intersectObjects(flights.map((f) => f.line)); if (hs.length) pickFlight(flights.findIndex((f) => f.line === hs[0].object)); };
     const tmp = new T.Vector3();
     return (dt, t) => {
       const on = (n) => layers.find((b) => b.dataset.l === n).classList.contains("on");
@@ -375,12 +415,14 @@ function globeMake(a, r) {
       } else { if (v.auto) v.orbit.yaw += dt * 0.08; v.applyOrbit(); }
     };
   }, { bg: 0x000000, aspect: 16 / 10 });
-  function showTrk() { if (!G || follow < 0) return; const f = G.flights[follow]; trk.replaceChildren(h("b", {}, `TRK ${f.call}`), h("span", {}, `${f.from}→${f.to} · FL${f.fl} · GS ${f.gs + Math.round(Math.random() * 4)} kt`)); }
-  layers.forEach((b) => b.addEventListener("click", () => b.classList.toggle("on")));
-  V.hud.append(h("div", { class: "gev-hud" }, h("span", {}, "ORBITAL HUD"), h("span", { class: "gev-utc" }, "UTC 14:22:07"), h("span", {}, "LIVE · ADS-B · TLE · USGS")), trk, voice);
-  const surface = appSurface(a, [h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row wrap" }, ...layers, h("button", { type: "button", class: "ap-chip hot", onclick: () => { follow = (follow + 1) % 10; showTrk(); } }, "Cockpit ▶"))], { cls: "globe" });
-  const el = shell(a, "globe", { verb: "Following live traffic", status: "Live", body: surface, foot: [act("Send track to fframestudio", { cls: "primary", ack: "Sent the tracked path to fframestudio as a camera move." }), act("Export CZML", { cls: "ghost", ack: "Exported the track as CZML — it opens in Cesium with timestamps." })], summary: `Tracked ${ROUTES.length} flights on ${a.name}` });
-  return { el, async play(run) { const s = voice.querySelector("span"); voice.classList.add("on"); await typeText(s, "“follow the flight into Tokyo”", run, 30); await run.wait(500); follow = 0; showTrk(); await run.wait(2400); voice.classList.remove("on"); }, spec: { kind: "globe", app: a.id, layers: ["flights", "satellites", "quakes"], follow: "UAL837 SFO→HND", sources: "ADS-B, TLE, USGS (demo data here)" } };
+  function showTrk() { if (follow < 0) return; if (!G) { trk.replaceChildren(h("b", {}, `TRK ${CALLS[follow]}`), h("span", {}, `${ROUTES[follow][0]}→${ROUTES[follow][1]} · demo`)); return; } const f = G.flights[follow]; trk.replaceChildren(h("b", {}, `TRK ${f.call}`), h("span", {}, `${f.from}→${f.to} · FL${f.fl} · GS ${f.gs + Math.round(Math.random() * 4)} kt`)); }
+  layers.forEach((b) => b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.classList.toggle("on")))));
+  roving(picker.children, { axis: "x", onActivate: (b) => pickFlight(+b.dataset.i) });
+  picker.addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) pickFlight(+b.dataset.i); });
+  V.hud.append(h("div", { class: "gev-hud" }, h("span", {}, "ORBITAL HUD"), h("span", { class: "gev-utc" }, "UTC 14:22:07"), h("span", {}, "DEMO TRAFFIC · synthetic ADS-B · TLE · USGS")), trk, voice);
+  const surface = appSurface(a, [h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row wrap" }, ...layers, h("button", { type: "button", class: "ap-chip hot", onclick: () => pickFlight((follow + 1) % 10) }, "Cockpit ▶")), picker, h("p", { class: "eu-hint" }, "Demo traffic: positions, callsigns and quakes are synthetic, not a live feed.")], { cls: "globe" });
+  const el = shell(a, "globe", { verb: "Following demo traffic", status: "Demo", body: surface, foot: [ask("Send track to fframestudio", "primary", "send_track", () => ({ label: follow < 0 ? "Send the track to fframestudio" : `Send ${CALLS[follow]}'s track to fframestudio`, entities: follow < 0 ? {} : { flight: CALLS[follow] }, ack: follow < 0 ? "Pick a flight first; there's no track to send yet." : `Asked fframestudio to build a camera move from ${CALLS[follow]}'s demo track. It will show up there as a draft.` })), ask("Export CZML", "ghost", "export_czml", () => ({ label: "Export the track as CZML", entities: follow < 0 ? {} : { flight: CALLS[follow] }, ack: follow < 0 ? "Pick a flight first; there's no track to export yet." : `Requested a CZML export of ${CALLS[follow]}'s demo track; I'll attach it here when it's written.` }))], summary: `Tracked ${ROUTES.length} flights on ${a.name}` });
+  return { el, async play(run) { const s = voice.querySelector("span"); voice.classList.add("on"); await typeText(s, "“follow the flight into Tokyo”", run, 30); await run.wait(500); pickFlight(0, true); await run.wait(2400); voice.classList.remove("on"); }, spec: { kind: "globe", app: a.id, layers: ["flights", "satellites", "quakes"], follow: "UAL837 SFO→HND", sources: "ADS-B, TLE, USGS (demo data here)" } };
 }
 
 /* ---------------- gen3d: image/text to 3D (Meshy, TRELLIS) ---------------- */
@@ -395,8 +437,9 @@ function gen3dMake(a, r) {
   const heron = a.id === "meshy";
   const stages = heron ? ["Preview mesh", "Remesh · 175k verts", "Refine", "Texture · PBR", "Ready · heron.glb"] : trellis ? ["Image → DINOv2 features", "Sparse structure (64³)", "Structured latent (SLat)", "Decode → Gaussians + mesh", "GLB · 1.2 MB"] : a.name === "StableGen" ? ["Depth + normal passes", "SDXL + ControlNet per view", "Project to UVs", "Bake texture", "Done"] : ["Preview mesh", "Remesh · 30k tris", "Refine", "Texture · PBR", "Ready"];
   const list = h("ol", { class: "g3-st" }, stages.map((s) => h("li", {}, h("i"), s)));
-  const prompt = h("div", { class: "g3-p" }, h("span", { class: "g3-img" }), h("span", { class: "g3-t" }, ""));
-  const variants = h("div", { class: "g3-var" }, [0, 1, 2, 3].map((i) => h("button", { type: "button", class: "g3-v" + (i === 0 ? " on" : ""), "data-i": i, style: { "--h": i * 70 + 20 } }, h("i"))));
+  const promptText = trellis ? "photo of a brass robot toy → 3D" : heron ? "clockwork heron on an octagonal fountain basin, brass and verdigris" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR";
+  const prompt = h("div", { class: "g3-p" }, h("span", { class: "g3-img" }), h("span", { class: "g3-t" }, promptText));
+  const variants = h("div", { class: "g3-var", role: "group", "aria-label": "Variants" }, [0, 1, 2, 3].map((i) => h("button", { type: "button", class: "g3-v" + (i === 0 ? " on" : ""), "aria-label": `Variant ${i + 1}`, "aria-pressed": String(i === 0), "data-i": i, style: { "--h": i * 70 + 20 } }, h("i"))));
   let phase = 0, P = 0, pick = 0;
   const markStages = () => { const idx = Math.min(stages.length - 1, Math.floor(P * stages.length)); [...list.children].forEach((li, i) => { li.classList.toggle("done", i < idx || P >= 1); li.classList.toggle("on", i === idx && P < 1); }); };
   // heron: particles gather into the loaded model, it fades in, then its own six-second fountain cycle plays.
@@ -485,11 +528,11 @@ function gen3dMake(a, r) {
     };
   }, { bg: parseInt((ui.view || "#1b1b22").slice(1), 16) });
   const G3 = {};
-  variants.addEventListener("click", (e) => { const b = e.target.closest(".g3-v"); if (!b) return; variants.querySelectorAll(".g3-v").forEach((x) => x.classList.toggle("on", x === b)); G3.swap?.(+b.dataset.i); });
+  variants.addEventListener("click", (e) => { const b = e.target.closest(".g3-v"); if (!b) return; variants.querySelectorAll(".g3-v").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); }); G3.swap?.(+b.dataset.i); pick = +b.dataset.i; tell(el, { action: "select", label: `Use variant ${pick + 1}`, entities: { variant: pick + 1 }, quiet: true }); });
   const source = heron ? h("p", { class: "eu-hint" }, "Blender placeholder · not generated by Meshy") : null;
   const surface = appSurface(a, [source, prompt, h("div", { class: "ap-split g3" }, h("div", { class: "ap-vpwrap" }, vp), list), variants], { cls: "gen3d" });
-  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: heron ? "Demo" : "Generating", body: surface, foot: [act("Send to Blender", { cls: "primary", ack: heron ? "Demo only; no file was sent to Blender." : "Imported into Blender at origin, scaled to 1 m, with the PBR textures." }), act("Download .glb", { cls: "ghost", ack: heron ? "Demo only; the animated heron.glb is a bundled Blender placeholder." : "Downloaded model.glb (2.3 MB)." })], summary: heron ? "Previewed a Blender placeholder for Meshy" : `Generated a 3D asset with ${a.name}` });
-  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), trellis ? "photo of a brass robot toy → 3D" : heron ? "clockwork heron on an octagonal fountain basin, brass and verdigris" : /meshy|tripo|rodin/i.test(a.name) ? "low-poly treasure chest, hand-painted" : "weathered bronze knot sculpture, PBR", run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb", ...(heron ? { previewAsset: HERON_SAMPLE } : {}) } };
+  const el = shell(a, "gen3d", { verb: trellis ? "Image → 3D (structured latents)" : "Text → 3D", status: heron ? "Demo" : "Generating", body: surface, foot: [ask("Send to Blender", "primary", "send_to_blender", () => ({ label: `Send variant ${pick + 1} to Blender`, entities: { variant: pick + 1 }, ack: heron ? "Demo only; no file was sent to Blender." : `Requested the Blender import of variant ${pick + 1} (origin, 1 m scale, PBR textures). Nothing has been imported yet; I'll confirm here when Blender reports it.` })), ask("Request .glb", "ghost", "request_glb", () => ({ label: `Export variant ${pick + 1} as .glb`, entities: { variant: pick + 1 }, ack: heron ? "Demo only; the animated heron.glb is a bundled Blender placeholder, not a generated file." : `Requested a .glb export of variant ${pick + 1} from ${a.name}. No file has been delivered yet; it will attach here when the export finishes.` }))], summary: heron ? "Previewed a Blender placeholder for Meshy" : `Generated a 3D asset with ${a.name}` });
+  return { el, async play(run) { await typeText(prompt.querySelector(".g3-t"), promptText, run, 40); stagger(variants.children, { gap: 70, sp: "bouncy" }); }, spec: { kind: "gen3d", app: a.id, stages, variants: 4, output: "glb", ...(heron ? { previewAsset: HERON_SAMPLE } : {}) } };
 }
 
 /* ---------------- sim: robot arm pick-and-place with parallel envs ---------------- */
@@ -499,6 +542,24 @@ function simMake(a, r) {
   const reward = svg("svg", { class: "spark", viewBox: "0 0 120 32", preserveAspectRatio: "none" });
   const stat = h("span", { class: "ap-stat" }, "step 0");
   const pts = [];
+  // Honest state: this is a scripted demo run, so checkpoints carry the curve's own numbers and the
+  // export is a typed request for one checkpoint, not a file the card pretends to have.
+  let paused = false, ckpt = null, lastStep = 0, lastRw = 0;
+  const CKPTS = h("div", { class: "row wrap sim-ck", role: "radiogroup", "aria-label": "Checkpoint to export" });
+  const mark = h("button", { class: "ap-chip", type: "button", onclick: () => {
+    const id = `ckpt-${CKPTS.children.length + 1}`, step = lastStep, rw = +lastRw.toFixed(2);
+    const b = h("button", { type: "button", class: "ap-chip", role: "radio", "aria-checked": "false", "data-id": id, "data-step": step, "data-reward": rw }, `${id} · step ${step.toLocaleString()} · reward ${rw}`);
+    b.onclick = () => chooseCk(b); CKPTS.append(b); chooseCk(b, true);
+    tell(el, { action: "checkpoint", label: `Checkpoint at step ${step.toLocaleString()}`, entities: { checkpoint: id, step, reward: rw }, quiet: true });
+  } }, "Save checkpoint");
+  function chooseCk(b, quiet) { ckpt = b; CKPTS.querySelectorAll("button").forEach((x) => x.setAttribute("aria-checked", String(x === b))); setDisabled(exp, ""); exp.textContent = `Export ${b.dataset.id}`; if (!quiet) tell(el, { action: "select", label: `Use ${b.dataset.id}`, entities: { checkpoint: b.dataset.id }, quiet: true }); }
+  const pause = h("button", { class: "ap-chip", type: "button", "aria-pressed": "false", onclick: () => { paused = !paused; pause.setAttribute("aria-pressed", String(paused)); pause.textContent = paused ? "Resume demo run" : "Pause demo run"; settle(el, paused ? "Paused" : "Demo run", paused ? "paused" : null); tell(el, { action: paused ? "pause" : "resume", label: paused ? "Pause training" : "Resume training", entities: { step: lastStep }, quiet: true }); } }, "Pause demo run");
+  const exp = h("button", { class: "eu-btn primary", type: "button", onclick: () => {
+    if (!ckpt) return;
+    const { id, step, reward } = ckpt.dataset;
+    tell(el, { action: "export_policy", label: `Export ${id} as policy.pt`, entities: { checkpoint: id, step, reward }, text: JSON.stringify({ checkpoint: id, step: +step, reward: +reward, format: "pt", app: a.id }),
+      ack: `Asked ${a.name} to export ${id} (step ${(+step).toLocaleString()}, reward ${reward}) as policy.pt with its config. No file exists yet: this card's run is a scripted demo, so a real run must produce it.` });
+  } }, "Export policy");
   const V = stage3d(vp, (T, v) => {
     v.shadows = true;
     v.orbit = { yaw: 0.75, pitch: 0.55, dist: 10, target: [1.6, 0.6, -0.4] };
@@ -527,7 +588,8 @@ function simMake(a, r) {
     return (dt, t) => {
       if (v.auto) v.orbit.yaw += dt * 0.1;
       v.applyOrbit();
-      tt += dt; step += Math.round(dt * 60 * 16);
+      if (paused) return;
+      tt += dt; step += Math.round(dt * 60 * 16); lastStep = step;
       const cyc = (tt % 4) / 4;
       // box rides the belt, gets picked at 0.35, dropped in bin at 0.8
       if (cyc < 0.35) box.position.set(-2 + cyc / 0.35 * 2.2, 0.35, 1.5);
@@ -538,12 +600,13 @@ function simMake(a, r) {
       if (cyc >= 0.8) box.position.set(-1.6, 0.5 + Math.max(0, 0.9 - cyc) * 3, -0.6);
       envs.forEach((e, i) => { const c = Math.sin(tt * 1.6 + e.ph); e.j1.rotation.y = c * 1.4; e.j1.rotation.z = -0.5 + Math.sin(tt * 2 + i) * 0.3; e.j2.rotation.z = -1.3 + Math.cos(tt * 2.2 + i) * 0.4; });
       stat.textContent = `step ${step.toLocaleString()} · 16 envs · dt 1/60`;
-      rw = Math.min(1, 0.08 + (1 - Math.exp(-tt / 14)) * 0.9 + Math.sin(tt * 3) * 0.02);
+      rw = Math.min(1, 0.08 + (1 - Math.exp(-tt / 14)) * 0.9 + Math.sin(tt * 3) * 0.02); lastRw = rw;
       if (Math.floor(tt * 4) !== pts.length && pts.length < 120) { pts.push(rw); reward.innerHTML = `<polyline fill="none" stroke="currentColor" stroke-width="1.5" points="${pts.map((y, i) => `${i},${32 - y * 30}`).join(" ")}"/>`; }
     };
   }, { bg: parseInt((ui.view || "#3a3d40").slice(1), 16), shadows: true });
-  const surface = appSurface(a, [appBar(a.ui === "omni" ? ["Isaac Lab", "Stage", "Physics"] : [a.name, "Envs", "Physics"], [stat]), h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row between" }, h("span", { class: "eu-hint" }, "Reward · PPO"), reward)], { cls: "sim" });
-  const el = shell(a, "sim", { verb: "Training pick-and-place", status: "Running", body: surface, foot: [act("Export policy (.pt)", { cls: "primary", ack: "Exported the policy (policy.pt) with its config, so the run can be reproduced." }), act("Record rollout", { cls: "ghost", ack: "Recording 10 rollouts with the current policy." })], summary: `Trained a pick-and-place policy in ${a.name}` });
+  const surface = appSurface(a, [appBar(a.ui === "omni" ? ["Isaac Lab", "Stage", "Physics"] : [a.name, "Envs", "Physics"], [stat]), h("div", { class: "ap-vpwrap" }, vp), h("div", { class: "row between" }, h("span", { class: "eu-hint" }, "Reward · PPO · scripted demo curve"), reward), h("div", { class: "row wrap" }, pause, mark), CKPTS], { cls: "sim" });
+  setDisabled(exp, "save a checkpoint");
+  const el = shell(a, "sim", { verb: "Training pick-and-place", status: "Demo run", body: surface, foot: [exp, ask("Record rollout", "ghost", "record_rollout", () => ({ label: ckpt ? `Record 10 rollouts of ${ckpt.dataset.id}` : "Record 10 rollouts of the current policy", entities: ckpt ? { checkpoint: ckpt.dataset.id } : {}, ack: `Requested 10 rollouts${ckpt ? ` of ${ckpt.dataset.id}` : ""}. They'll attach here as videos when ${a.name} finishes; none are recorded yet.` }))], summary: `Trained a pick-and-place policy in ${a.name}` });
   return { el, async play() {}, spec: { kind: "sim", app: a.id, task: "pick-and-place", envs: 16, algo: "PPO", physics: a.name === "Newton" ? "Newton (Warp)" : "PhysX" } };
 }
 

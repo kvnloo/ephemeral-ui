@@ -3,7 +3,7 @@
 // stages and Anatomy figures. Terms and defaults come from each app's docs (see apps.json `docs`).
 import { h, anim, stagger, typeText, flip, Run } from "./motion.js";
 import { shell, burst, seg, holdButton, svg, avatar, PEOPLE } from "./shell.js";
-import { act, tell, why, undoable, settle, setDisabled } from "./loop.js";
+import { act, tell, why, undoable, settle, setDisabled, roving } from "./loop.js";
 import { appSurface, appBar, uiOf } from "./chrome.js";
 
 const sleep = (run, ms) => run.wait(ms);
@@ -91,15 +91,44 @@ function timelineMake(a, r) {
   const clips = [["Intro", 0, 18], ["Wide", 18, 16], ["um… pause", 34, 7], ["Detail", 41, 20], ["Outro", 61, 14]];
   const mon = h("canvas", { class: "tl-mon", width: 480, height: 270 });
   const transcript = h("div", { class: "tl-tx" }, "so the wild part is um… the light hits the water and you get this".split(" ").map((w) => h("span", {}, w + " ")));
-  const v1 = h("div", { class: "tl-tr v" }, clips.map(([n, s, d], i) => h("div", { class: "tl-c" + (i === 2 ? " gap" : ""), style: { left: `${s}%`, width: `${d}%` } }, h("span", {}, n))));
+  const tcOf = (pct) => { const f = pct * 0.75; return `00:00:${String(Math.floor(f / 3)).padStart(2, "0")}:${String(Math.floor(f * 8) % 24).padStart(2, "0")}`; };
+  const v1 = h("div", { class: "tl-tr v", role: "group", "aria-label": "V1 clips: arrow keys move, Enter marks a clip" }, clips.map(([n, s, d], i) => h("div", { class: "tl-c" + (i === 2 ? " gap" : ""), "data-clip": n, role: "button", "aria-pressed": "false", "aria-label": `${n} clip at ${tcOf(s)}`, style: { left: `${s}%`, width: `${d}%` } }, h("span", {}, n))));
   const v2 = h("div", { class: "tl-tr v2" });
   const a1 = h("div", { class: "tl-tr a" }, h("div", { class: "tl-c a", style: { left: "0%", width: "75%" } }, wave()));
   const head = h("i", { class: "tl-ph" });
   const marks = svg("svg", { class: "tl-marks", viewBox: "0 0 100 40", preserveAspectRatio: "none" });
   const tracks = h("div", { class: "tl-tracks" }, h("div", { class: "tl-lbl" }, h("span", {}, "V2"), h("span", {}, "V1"), h("span", {}, "A1")), h("div", { class: "tl-lanes" }, v2, v1, a1, head, marks));
   const voice = h("div", { class: "tl-voice" }, h("span", { class: "tl-mic" }), h("span", { class: "tl-say" }, ""));
-  const chips = h("div", { class: "tl-chips" });
+  const chips = h("div", { class: "tl-chips", "aria-live": "polite" });
   let playing = false, ph = 0, raf = 0, zoom = 1;
+  // Marking is a keyboard + pointer workflow on the clips themselves: Enter/click marks a clip and
+  // seeks the monitor to it; "Cut marked" ripple-deletes the marks (undoable) and tells the agent.
+  const marked = () => [...v1.children].filter((c) => c.getAttribute("aria-pressed") === "true");
+  const cut = h("button", { class: "eu-btn ghost sm", type: "button" }, "Cut marked");
+  const syncCut = () => { const n = marked().length; cut.textContent = n ? `Cut ${n} marked` : "Cut marked"; setDisabled(cut, n ? "" : "Mark a clip first"); };
+  function mark(c) {
+    const on = c.getAttribute("aria-pressed") !== "true";
+    c.setAttribute("aria-pressed", String(on)); c.classList.toggle("marked", on);
+    const name = c.dataset.clip, tc = tcOf(parseFloat(c.style.left));
+    chips.querySelector(`[data-mark="${CSS.escape(name)}"]`)?.remove();
+    if (on) chips.append(h("span", { class: "tl-chip", "data-mark": name }, `✎ ${name} · ${tc}`));
+    ph = parseFloat(c.style.left) * 0.75; head.style.left = `${ph / 75 * 100}%`; draw();
+    tell(el, { action: on ? "mark" : "unmark", label: `${on ? "Mark" : "Unmark"} ${name} at ${tc}`, entities: { clip: name, timecode: tc }, quiet: true });
+    syncCut();
+  }
+  cut.onclick = () => {
+    const gone = marked(); if (!gone.length) return;
+    const before = [...v1.children].map((c) => [c, c.style.left]);
+    const width = (c) => parseFloat(c.style.width);
+    for (const c of [...v1.children]) { const shift = gone.filter((g) => parseFloat(g.style.left) < parseFloat(c.style.left)).reduce((n, g) => n + width(g), 0); if (shift) c.style.left = `${parseFloat(c.style.left) - shift}%`; }
+    gone.forEach((c) => c.remove()); chips.querySelectorAll("[data-mark]").forEach((m) => m.remove()); syncCut();
+    if (v1.children.length && ![...v1.children].some((c) => c.tabIndex === 0)) v1.children[0].tabIndex = 0;
+    const names = gone.map((c) => c.dataset.clip), frames = Math.round(gone.reduce((n, c) => n + width(c), 0) * 0.75);
+    tell(el, { action: "ripple_delete", label: `Cut ${names.join(", ")}`, entities: { clip: names }, ack: `Ripple-deleted ${names.join(", ")} (−${frames} f). Later clips moved up; the audio stays in sync.` });
+    undoable(el, `Cut ${names.join(", ")}`, () => { v1.replaceChildren(...before.map(([c, left]) => { c.style.left = left; c.setAttribute("aria-pressed", "false"); c.classList.remove("marked"); return c; })); syncCut(); }, { entities: { clip: names } });
+  };
+  const initClips = () => { for (const c of v1.children) c.onclick = () => mark(c); roving(v1.children, { axis: "x", onActivate: (c) => mark(c) }); };
+  initClips(); syncCut(); requestAnimationFrame(() => draw());
   const draw = () => {
     const g = mon.getContext("2d"), W = 480, H = 270;
     const k = ph / 75;
@@ -113,7 +142,7 @@ function timelineMake(a, r) {
     g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(12, H - 30, 98, 20); g.fillStyle = "#fff"; g.font = "12px monospace"; g.fillText(`00:00:${String(Math.floor(ph / 3)).padStart(2, "0")}:${String(Math.floor(ph * 8) % 24).padStart(2, "0")}`, 18, H - 16);
   };
   const tick = () => { if (!playing) return; ph += 0.25; if (ph > 75) ph = 0; head.style.left = `${ph / 75 * 100}%`; draw(); raf = requestAnimationFrame(tick); };
-  const play = h("button", { class: "eu-btn", type: "button", onclick: () => { playing = !playing; play.textContent = playing ? "❚❚" : "▶"; if (playing) tick(); else cancelAnimationFrame(raf); } }, "▶");
+  const play = h("button", { class: "eu-btn", type: "button", "aria-label": "Play", "aria-pressed": "false", onclick: () => { playing = !playing; play.textContent = playing ? "❚❚" : "▶"; play.setAttribute("aria-pressed", String(playing)); if (playing) tick(); else cancelAnimationFrame(raf); } }, "▶");
   async function edit(run) {
     // 1. owner talks, words light up as transcribed
     const say = voice.querySelector(".tl-say"); voice.classList.add("on");
@@ -121,14 +150,15 @@ function timelineMake(a, r) {
     for (const w of transcript.children) { w.classList.add("lit"); await sleep(run, 55); }
     transcript.children[4].classList.add("cut");
     // 2. a mark circles the pause clip (✎①), like a Scrawl mark
-    const pause = v1.children[2];
+    const pause = v1.querySelector('[data-clip="um… pause"]');
+    if (!pause) { voice.classList.remove("on"); return; }
     const path = svg("path", { d: "M33 22 C 33 4, 43 4, 43 20 C 43 36, 31 36, 33 20", class: "tl-mark", pathLength: 1 });
     marks.append(path);
     anim(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 700, easing: "cubic-bezier(.65,0,.35,1)" });
     chips.append(h("span", { class: "tl-chip" }, "✎① pause · 00:00:11"));
     await sleep(run, 900);
     // 3. ripple delete: the gap closes with FLIP
-    const rest = [...v1.children].slice(3);
+    const rest = [...v1.children].filter((c) => parseFloat(c.style.left) > parseFloat(pause.style.left));
     pause.classList.add("gone"); anim(pause, [{ opacity: 1 }, { opacity: 0, transform: "scaleY(.4)" }], { duration: 300 });
     await sleep(run, 260);
     flip(rest, () => { pause.remove(); rest.forEach((c) => (c.style.left = `${parseFloat(c.style.left) - 7}%`)); }, { spring: "soft" });
@@ -136,7 +166,8 @@ function timelineMake(a, r) {
     chips.append(h("span", { class: "tl-chip" }, "Ripple delete · −7 f"));
     await sleep(run, 600);
     // 4. punch in: a zoom keyframe lands on the Detail clip and the monitor pushes in
-    const det = v1.children[2];
+    const det = v1.querySelector('[data-clip="Detail"]');
+    if (!det) { voice.classList.remove("on"); return; }
     const kf = h("i", { class: "tl-kf" }); det.append(kf); anim(kf, [{ transform: "scale(0) rotate(45deg)" }, { transform: "scale(1) rotate(45deg)" }], { spring: "bouncy" });
     const adj = h("div", { class: "tl-c adj", style: { left: det.style.left, width: det.style.width } }, h("span", {}, "Scale 120%")); v2.append(adj); anim(adj, [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
     for (let i = 0; i < 20; i++) { zoom = 1 + (i / 19) * 0.2; ph = 41 + i; draw(); await sleep(run, 30); }
@@ -144,7 +175,7 @@ function timelineMake(a, r) {
     voice.classList.remove("on");
   }
   const surface = appSurface(a, [appBar(a.ui === "premiere" ? ["Edit", "Color", "Audio", "Captions"] : a.ui === "resolve" ? ["Cut", "Edit", "Fusion", "Color", "Fairlight"] : a.ui === "ffs" ? ["Film", "Shots", "Review", "Render"] : a.ui === "descript" ? ["Script", "Scenes", "Layers"] : [a.name, "Timeline", "Export"], [play]), h("div", { class: "tl-top" }, mon, h("div", { class: "tl-side" }, voice, transcript, chips)), tracks], { cls: "timeline" });
-  const el = shell(a, "timeline", { verb: "Edited by voice and marks", status: "Editing", body: surface, foot: [act(a.ui === "ffs" ? "Render film" : "Export", { cls: "primary", ack: "Rendering at 4K in the background. This card turns into the file when it lands; keep chatting." }), act("Undo all", { cls: "ghost", ack: "Reverted all three edits. The cut is back to the original — your marks are kept if you want them again." })], summary: `Cut a pause and added a punch-in in ${a.name}` });
+  const el = shell(a, "timeline", { verb: "Edited by voice and marks", status: "Editing", body: h("div", {}, surface, h("div", { class: "tl-act" }, cut), h("p", { class: "eu-hint" }, "Click or Enter a clip to mark it (← → move between clips), then Cut marked to ripple-delete. Undo is there for 6 s.")), foot: [act(a.ui === "ffs" ? "Render film" : "Export", { cls: "primary", ack: "Rendering at 4K in the background. This card turns into the file when it lands; keep chatting." }), act("Undo all", { cls: "ghost", ack: "Reverted all three edits. The cut is back to the original — your marks are kept if you want them again." })], summary: `Cut a pause and added a punch-in in ${a.name}` });
   return { el, async play(run) { draw(); stagger(v1.children, { gap: 60 }); await sleep(run, 700); await edit(run); }, spec: { kind: "timeline", app: a.id, input: ["voice", "pen marks"], ops: ["ripple delete 00:00:11", "scale keyframe 120%"] } };
 }
 function wave() { const s = svg("svg", { viewBox: "0 0 200 20", preserveAspectRatio: "none", class: "wv" }); let d = "M0 10"; for (let i = 0; i < 200; i += 2) { const a = Math.abs(Math.sin(i * 0.31) * Math.sin(i * 0.07)) * 9 + 1; d += ` M${i} ${10 - a} L${i} ${10 + a}`; } s.append(svg("path", { d })); return s; }
@@ -154,8 +185,9 @@ function reviewMake(a, r) {
   const ui = uiOf(a) || {};
   const pic = h("div", { class: "rv-pic" }, h("div", { class: "rv-v1" }), h("div", { class: "rv-v2" }));
   const ink = svg("svg", { class: "rv-ink", viewBox: "0 0 100 56.25", preserveAspectRatio: "none" });
-  const handle = h("div", { class: "rv-cmp", hidden: true }, h("i"));
-  const frame = h("div", { class: "rv-frame" }, pic, ink, handle);
+  const handle = h("div", { class: "rv-cmp", hidden: true, tabindex: "0", role: "slider", "aria-label": "Compare v1 and v2", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "50", "aria-valuetext": "50% v2" }, h("i"));
+  const reticle = h("i", { class: "rv-ret", hidden: true, "aria-hidden": "true" });
+  const frame = h("div", { class: "rv-frame", tabindex: "0", role: "application", "aria-roledescription": "frame", "aria-label": "Annotate frame", "aria-description": "Arrow keys move the marker (Shift = fine), Enter drops a mark" }, pic, ink, reticle, handle);
   const comments = h("ul", { class: "rv-list" });
   const bar = h("div", { class: "rv-bar" });
   const bundle = h("div", { class: "rv-bundle", hidden: true });
@@ -163,18 +195,39 @@ function reviewMake(a, r) {
   const pt = (e) => { const b = frame.getBoundingClientRect(); return [((e.clientX - b.left) / b.width) * 100, ((e.clientY - b.top) / b.height) * 56.25]; };
   frame.addEventListener("pointerdown", (e) => { if (e.target.closest(".rv-cmp")) return; frame.setPointerCapture(e.pointerId); const [x, y] = pt(e); drawing = svg("path", { d: `M${x} ${y}`, class: "rv-stroke" }); ink.append(drawing); });
   frame.addEventListener("pointermove", (e) => { if (!drawing) return; const [x, y] = pt(e); drawing.setAttribute("d", drawing.getAttribute("d") + ` L${x.toFixed(1)} ${y.toFixed(1)}`); });
-  frame.addEventListener("pointerup", () => { if (!drawing) return; drawing = null; addComment("You", "Fix this area", true); });
-  function addComment(who, text, mine) {
+  frame.addEventListener("pointerup", () => { if (!drawing) return; const d = drawing.getAttribute("d").match(/^M([\d.]+) ([\d.]+)/); drawing = null; addComment("You", "Fix this area", true, d ? [+d[1], +d[2]] : null); });
+  // Keyboard annotation: a marker you steer with the arrows (Shift = fine), Enter/Space drops a ring.
+  let rx = 50, ry = 28;
+  const placeReticle = () => { reticle.style.left = `${rx}%`; reticle.style.top = `${(ry / 56.25) * 100}%`; };
+  frame.addEventListener("focus", (e) => { if (e.target === frame) { reticle.hidden = false; placeReticle(); } });
+  frame.addEventListener("blur", () => { reticle.hidden = true; });
+  frame.addEventListener("keydown", (e) => {
+    if (e.target !== frame) return;
+    const st = e.shiftKey ? 1 : 4, k = e.key;
+    if (k === "ArrowLeft") rx = Math.max(0, rx - st); else if (k === "ArrowRight") rx = Math.min(100, rx + st);
+    else if (k === "ArrowUp") ry = Math.max(0, ry - st); else if (k === "ArrowDown") ry = Math.min(56.25, ry + st);
+    else if (k === "Enter" || k === " ") { ink.append(svg("circle", { cx: rx, cy: ry, r: 5, class: "rv-stroke" })); addComment("You", "Fix this area", true, [rx, ry]); }
+    else return;
+    e.preventDefault(); reticle.hidden = false; placeReticle();
+  });
+  const mine = [];
+  function addComment(who, text, own, at2) {
     n++;
     const at = (8 + n * 9) % 60;
     const li = h("li", { class: mine ? "mine" : "" }, avatar(who, n), h("div", {}, h("b", {}, who, h("span", { class: "rv-tc" }, ` 00:00:${String(at).padStart(2, "0")}`)), h("p", {}, h("span", { class: "rv-num" }, `✎${"①②③④⑤⑥⑦⑧⑨"[n - 1] || n}`), " ", text)));
     comments.prepend(li); anim(li, [{ opacity: 0, transform: "translateX(10px)" }, { opacity: 1, transform: "none" }], { spring: "soft" });
     const pin = h("i", { style: { left: `${(at / 60) * 100}%` } }); bar.append(pin); anim(pin, [{ transform: "scale(0)" }, { transform: "scale(1)" }], { spring: "bouncy" });
+    if (own) {
+      const id = `m${n}`, where = at2 ? `${Math.round(at2[0])}%,${Math.round((at2[1] / 56.25) * 100)}%` : "frame";
+      mine.push(id);
+      tell(el, { action: "mark", label: `Mark ${n} at 00:00:${String(at).padStart(2, "0")} (${where})`, entities: { mark: id, timecode: `00:00:${String(at).padStart(2, "0")}`, region: where }, quiet: true });
+    }
   }
   const send = h("button", { class: "eu-btn primary", type: "button" }, "Send to agent");
   send.onclick = async () => {
     const run = new Run();
     setDisabled(send, "Revision requested");
+    tell(el, { action: "request_revision", label: `Fix ${n} mark${n === 1 ? "" : "s"}`, entities: { mark: mine, frame: "00:00:11" }, quiet: true });
     bundle.hidden = false;
     bundle.replaceChildren(h("b", {}, "Bundle"), h("span", {}, `contact sheet · ${n} marks · transcript · 3 keyframes`));
     anim(bundle, [{ opacity: 0, transform: "translateY(6px) scale(.96)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" });
@@ -183,14 +236,16 @@ function reviewMake(a, r) {
     handle.hidden = false; frame.classList.add("cmp");
     anim(handle, [{ left: "100%" }, { left: "50%" }], { spring: "soft" });
     frame.style.setProperty("--cmp", "50%");
-    send.textContent = "Approve v2"; setDisabled(send); send.onclick = () => { burst(send); send.textContent = "Approved ✓"; };
+    send.textContent = "Approve v2"; setDisabled(send); send.onclick = () => { burst(send); send.textContent = "Approved ✓"; setDisabled(send, "Already approved"); settle(el, "Approved v2", "ok"); tell(el, { action: "approve", label: "Approve v2", entities: { version: "v2", mark: mine }, quiet: true }); };
   };
+  const setCmp = (x) => { x = Math.max(0, Math.min(100, x)); frame.style.setProperty("--cmp", `${x}%`); handle.style.left = `${x}%`; handle.setAttribute("aria-valuenow", String(Math.round(x))); handle.setAttribute("aria-valuetext", `${Math.round(x)}% v2`); };
+  handle.addEventListener("keydown", (e) => { const now = +handle.getAttribute("aria-valuenow"); const d = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, Home: -100, End: 100 }[e.key]; if (d == null) return; e.preventDefault(); e.stopPropagation(); setCmp(now + d); });
   let dragC = false;
   handle.addEventListener("pointerdown", (e) => { dragC = true; handle.setPointerCapture(e.pointerId); });
-  handle.addEventListener("pointermove", (e) => { if (!dragC) return; const b = frame.getBoundingClientRect(); const x = Math.max(0, Math.min(100, ((e.clientX - b.left) / b.width) * 100)); frame.style.setProperty("--cmp", `${x}%`); handle.style.left = `${x}%`; });
+  handle.addEventListener("pointermove", (e) => { if (!dragC) return; const b = frame.getBoundingClientRect(); setCmp(((e.clientX - b.left) / b.width) * 100); });
   handle.addEventListener("pointerup", () => (dragC = false));
   const surface = appSurface(a, [appBar(a.ui === "frameio" ? ["Review", "Compare", "Share"] : a.ui === "dash" ? ["Annotate", "Voice", "Send"] : a.ui === "ffs" ? ["Review", "Shots", "Proposals"] : [a.name, "Review", "Versions"], [h("span", { class: "ap-stat" }, "v1 → v2")]), h("div", { class: "rv" }, h("div", {}, frame, bar, bundle), comments)], { cls: "review" });
-  const el = shell(a, "review", { verb: "Review with marks", status: "In review", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw on the frame to leave a mark; send it and drag the compare handle.")), foot: [send, act("Copy link", { cls: "ghost", ack: "Copied. The link opens this frame at 00:00:11 with both marks and the compare handle where you left it.", done: "Copied ✓" })], summary: `Reviewed a cut in ${a.name} and approved v2` });
+  const el = shell(a, "review", { verb: "Review with marks", status: "In review", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw on the frame, or focus it and use the arrows + Enter, to leave a mark. Send it, then drag or arrow the compare handle.")), foot: [send, act("Copy link", { cls: "ghost", ack: "Copied. The link opens this frame at 00:00:11 with both marks and the compare handle where you left it.", done: "Copied ✓" })], summary: `Reviewed a cut in ${a.name} and approved v2` });
   return { el, async play(run) { await sleep(run, 400); const d = svg("path", { d: "M58 20 C 70 14, 80 22, 74 32 C 68 40, 54 36, 56 26", class: "rv-stroke", pathLength: 1 }); ink.append(d); anim(d, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 800 }); await sleep(run, 800); addComment(PEOPLE[2], "Highlights clip here — pull back 1/3 stop"); await sleep(run, 500); addComment(PEOPLE[5], "Love the push-in. Hold 6 more frames."); }, spec: { kind: "review", app: a.id, marks: 2, bundle: ["contact sheet", "transcript", "keyframes"], compare: "v1↔v2" } };
 }
 
@@ -283,7 +338,7 @@ function genTile(i) { const c = h("canvas", { width: 320, height: 200 }); const 
 function cadMake(a, r) {
   const ui = uiOf(a) || {};
   const W = 600, H = 300;
-  const s = svg("svg", { class: "cad-sv", viewBox: `0 0 ${W} ${H}` });
+  const s = svg("svg", { class: "cad-sv", viewBox: `0 0 ${W} ${H}`, tabindex: "0", role: "application", "aria-roledescription": "drafting viewport", "aria-label": "Drafting viewport", "aria-description": "Arrow keys move the crosshair (Shift = 1 m), Enter places a point, Backspace removes the last, Escape ends the wall" });
   const grid = svg("g", { class: "cad-grid" }); for (let x = 0; x <= W; x += 20) grid.append(svg("line", { x1: x, y1: 0, x2: x, y2: H })); for (let y = 0; y <= H; y += 20) grid.append(svg("line", { x1: 0, y1: y, x2: W, y2: y })); s.append(grid);
   const geo = svg("g", { class: "cad-geo" }); s.append(geo);
   const dims = svg("g", { class: "cad-dim" }); s.append(dims);
@@ -302,12 +357,63 @@ function cadMake(a, r) {
   let user = null; const tip = h("div", { class: "cad-tip", hidden: true });
   const sp = (e) => { const b = s.getBoundingClientRect(); const x = Math.round(((e.clientX - b.left) / b.width) * W / 10) * 10, y = Math.round(((e.clientY - b.top) / b.height) * H / 10) * 10; return [x, y]; };
   s.addEventListener("pointermove", (e) => { const [x, y] = sp(e); cross.setAttribute("transform", `translate(${x} ${y})`); if (user) { const [px, py] = user.pts.at(-1); const ortho = Math.abs(x - px) > Math.abs(y - py) ? [x, py] : [px, y]; user.ghost.setAttribute("points", `${px},${py} ${ortho.join(",")}`); tip.hidden = false; tip.textContent = `${(Math.hypot(ortho[0] - px, ortho[1] - py) / 40).toFixed(2)} m  <${Math.abs(x - px) > Math.abs(y - py) ? "0" : "90"}°`; const b = s.getBoundingClientRect(); tip.style.translate = `${e.clientX - b.left + 12}px ${e.clientY - b.top + 12}px`; user.next = ortho; } });
-  s.addEventListener("click", (e) => { const p = user?.next || sp(e); if (!user) { user = { pts: [p], line: svg("polyline", { class: "cad-l you", "stroke-width": wallW }), ghost: svg("polyline", { class: "cad-l ghost", "stroke-width": wallW }) }; geo.append(user.line, user.ghost); cmd.querySelector(".cad-in").textContent = "Command: LINE  Specify next point or [Undo]:"; } else { user.pts.push(p); user.line.setAttribute("points", user.pts.map((q) => q.join(",")).join(" ")); } });
-  s.addEventListener("dblclick", () => { user = null; tip.hidden = true; cmd.querySelector(".cad-in").textContent = "Command: "; });
+  s.addEventListener("click", (e) => { if (e.detail === 0) return; placePoint(user?.next || sp(e)); });
+  s.addEventListener("dblclick", () => endWall());
+  // The draft is real and editable from the keyboard or the command line, not only by clicking:
+  // every placed point lands in `walls`, which feeds the length readout and the agent handoff.
+  const walls = [];
+  const m = (v) => (v / 40).toFixed(2);
+  const len = (pts) => pts.slice(1).reduce((n, q, i) => n + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0) / 40;
+  const readout = h("p", { class: "cad-read", "aria-live": "polite" }, "No walls drafted yet.");
+  const refresh = () => { const all = [...walls, ...(user ? [user.pts] : [])].filter((w) => w.length > 1); readout.textContent = all.length ? `${all.length} wall${all.length === 1 ? "" : "s"} · ${all.reduce((n, w) => n + len(w), 0).toFixed(2)} m drafted${user ? ` · drawing from ${m(user.pts.at(-1)[0])}, ${m(user.pts.at(-1)[1])} m` : ""}` : user ? `Start point ${m(user.pts[0][0])}, ${m(user.pts[0][1])} m · place the next point` : "No walls drafted yet."; setDisabled(sendDraft, all.length ? "" : "Draft a wall first"); };
+  let kx = 300, ky = 150;
+  const moveCross = (x, y) => { kx = Math.max(0, Math.min(W, x)); ky = Math.max(0, Math.min(H, y)); cross.setAttribute("transform", `translate(${kx} ${ky})`); if (user) { const [px, py] = user.pts.at(-1); user.ghost.setAttribute("points", `${px},${py} ${kx},${ky}`); user.next = [kx, ky]; } };
+  let lastPt = null;
+  function placePoint(pt) {
+    lastPt = pt;
+    if (!user) { user = { pts: [pt], line: svg("polyline", { class: "cad-l you", "stroke-width": wallW }), ghost: svg("polyline", { class: "cad-l ghost", "stroke-width": wallW }) }; geo.append(user.line, user.ghost); cmd.querySelector(".cad-in").textContent = "Command: LINE  Specify next point or [Undo]:"; }
+    else { user.pts.push(pt); user.line.setAttribute("points", user.pts.map((q) => q.join(",")).join(" ")); }
+    tell(el, { action: "point", label: `Point at ${m(pt[0])}, ${m(pt[1])} m`, entities: { point: `${m(pt[0])},${m(pt[1])}`, wall: `w${walls.length + 1}` }, quiet: true });
+    refresh();
+  }
+  function endWall() { if (user) { user.ghost.remove(); if (user.pts.length > 1) walls.push(user.pts); else user.line.remove(); } user = null; tip.hidden = true; cmd.querySelector(".cad-in").textContent = "Command: "; refresh(); }
+  function undoPoint() { if (!user) return; user.pts.pop(); if (!user.pts.length) { user.line.remove(); user.ghost.remove(); user = null; cmd.querySelector(".cad-in").textContent = "Command: "; } else user.line.setAttribute("points", user.pts.map((q) => q.join(",")).join(" ")); refresh(); }
+  s.addEventListener("keydown", (e) => {
+    const st = e.shiftKey ? 40 : 10, k = e.key;
+    if (k === "ArrowLeft") moveCross(kx - st, ky); else if (k === "ArrowRight") moveCross(kx + st, ky);
+    else if (k === "ArrowUp") moveCross(kx, ky - st); else if (k === "ArrowDown") moveCross(kx, ky + st);
+    else if (k === "Enter" || k === " ") placePoint([kx, ky]);
+    else if (k === "Backspace" || k === "Delete") undoPoint();
+    else if (k === "Escape") endWall();
+    else return;
+    e.preventDefault();
+  });
+  // Command line: "@dx,dy" (relative, metres), "x,y" (absolute, metres), "U" undo, "C" close, empty ends.
+  const cmdIn = h("input", { class: "cad-cmdin", "aria-label": "Command line", placeholder: "@4.5,0 · 2,1 · U · C", autocomplete: "off", spellcheck: "false" });
+  const run = () => {
+    const t = cmdIn.value.trim().toUpperCase(); cmdIn.value = "";
+    let mm;
+    if (!t) return endWall();
+    if (t === "U") return undoPoint();
+    if (t === "C") { if (user && user.pts.length > 2) { placePoint(user.pts[0]); endWall(); } return; }
+    if ((mm = t.match(/^(@)?(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/))) {
+      const base = mm[1] ? (user ? user.pts.at(-1) : lastPt || [0, 0]) : [0, 0];
+      const pt = [Math.round((base[0] + +mm[2] * 40) / 10) * 10, Math.round((base[1] + +mm[3] * 40) / 10) * 10];
+      if (pt[0] < 0 || pt[0] > W || pt[1] < 0 || pt[1] > H) { readout.textContent = `Not placed: ${t} is outside the ${m(W)} × ${m(H)} m sheet.`; return; }
+      moveCross(pt[0], pt[1]); return placePoint(pt);
+    }
+    readout.textContent = `Unknown command “${t}”. Try @4.5,0, 2,1, U or C.`;
+  };
+  cmdIn.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); run(); } else if (e.key === "Escape") { cmdIn.value = ""; endWall(); } });
+  const sendDraft = h("button", { class: "eu-btn ghost sm", type: "button", onclick: () => {
+    const all = [...walls, ...(user && user.pts.length > 1 ? [user.pts] : [])];
+    tell(el, { action: "use_draft", label: `Use my ${all.length} wall${all.length === 1 ? "" : "s"}`, entities: { wall: all.map((w, i) => `w${i + 1}:${w.map((q) => `${m(q[0])},${m(q[1])}`).join(">")}`.slice(0, 120)) }, ack: `Got ${all.length} wall${all.length === 1 ? "" : "s"}, ${all.reduce((n, w) => n + len(w), 0).toFixed(2)} m total. I'll dimension them and keep your points exactly where you placed them.` });
+  } }, "Send draft to agent");
   const tabs = revit ? ["Architecture", "Structure", "Annotate", "View"] : free ? ["Sketcher", "Part Design", "TechDraw"] : fusion ? ["Solid", "Surface", "Sketch"] : ["Home", "Insert", "Annotate", "Parametric"];
   const status = h("span", { class: "ap-stat" }, free ? "Under-constrained: 6 DoF" : "ORTHO · SNAP · 1:50");
-  const surface = appSurface(a, [appBar(tabs, [status]), h("div", { class: "cad-wrap" }, s, tip), cmd], { cls: "cad" + (free ? " free" : "") });
-  const el = shell(a, "cad", { verb: revit ? "Drafted walls on Level 1" : free ? "Constrained a sketch" : "Drafted a floor plan", status: "Drafting", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Click to draft walls (ortho, 0.25 m snap). Double-click to end.")), foot: [act(revit ? "Create sheet" : free ? "Pad (extrude)" : "Plot to PDF", { cls: "primary", ack: revit ? "Placed the plan on a new A1 sheet at 1:50 with the dimensions you see." : free ? "Padded the sketch 3000 mm into a solid. The constraints still drive it." : "Plotted plan.pdf at 1:50 on A3, dimensions in mm." }), act("Export DXF", { cls: "ghost", ack: "Exported plan.dxf (mm, layers kept: WALLS, DIMS, TEXT)." })], summary: `Drafted a 2-room plan in ${a.name}` });
+  const surface = appSurface(a, [appBar(tabs, [status]), h("div", { class: "cad-wrap" }, s, tip), cmd, h("div", { class: "cad-bar" }, cmdIn, sendDraft)], { cls: "cad" + (free ? " free" : "") });
+  const el = shell(a, "cad", { verb: revit ? "Drafted walls on Level 1" : free ? "Constrained a sketch" : "Drafted a floor plan", status: "Drafting", body: h("div", {}, surface, readout, h("p", { class: "eu-hint" }, "Click to draft walls (ortho, 0.25 m snap), double-click to end. Keyboard: focus the viewport, arrows + Enter, Escape to end; or type @dx,dy in metres.")), foot: [act(revit ? "Create sheet" : free ? "Pad (extrude)" : "Plot to PDF", { cls: "primary", ack: revit ? "Placed the plan on a new A1 sheet at 1:50 with the dimensions you see." : free ? "Padded the sketch 3000 mm into a solid. The constraints still drive it." : "Plotted plan.pdf at 1:50 on A3, dimensions in mm." }), act("Export DXF", { cls: "ghost", ack: "Exported plan.dxf (mm, layers kept: WALLS, DIMS, TEXT)." })], summary: `Drafted a 2-room plan in ${a.name}` });
+  refresh();
   return { el, async play(run) {
     await setCmd(run, revit ? "WA  Wall: Architectural · Generic 200mm" : free ? "Sketcher_CreatePolyline" : "PLINE  Specify start point:");
     const outer = line(plan); anim(outer, [{ strokeDasharray: "1 1", strokeDashoffset: 1 }, { strokeDasharray: "1 1", strokeDashoffset: 0 }], { duration: 1400, easing: "cubic-bezier(.65,0,.35,1)" });
@@ -328,13 +434,13 @@ function boardMake(a, r) {
   const ui = uiOf(a) || {};
   const ex = a.ui === "excalidraw";
   const W = 600, H = 300;
-  const s = svg("svg", { class: "bd-sv" + (ex ? " rough" : ""), viewBox: `0 0 ${W} ${H}` });
+  const s = svg("svg", { class: "bd-sv" + (ex ? " rough" : ""), viewBox: `0 0 ${W} ${H}`, tabindex: "0", role: "application", "aria-roledescription": "whiteboard", "aria-label": "Whiteboard", "aria-description": "Arrow keys move your cursor (Shift = fine), Enter starts and finishes a shape with the current tool, Escape cancels" });
   const cur = (name, c) => h("div", { class: "bd-cur", style: { "--c": c } }, svg("svg", { viewBox: "0 0 16 16" }, svg("path", { d: "M1 1 L1 13 L4.5 9.5 L7 15 L9 14 L6.5 8.5 L11.5 8.5 Z" })), h("span", {}, name));
   const agent = cur("Agent", "#f97316"), you = cur("You", ui.acc || "#2f80ed");
   const wrap = h("div", { class: "bd" + (ex ? " ex" : "") }, s, agent, you);
   const TOOLS = [["↖", "Select"], ["✋", "Hand"], ["✎", "Draw"], ["▭", "Rectangle"], ["◯", "Ellipse"], ["→", "Arrow"], ["T", "Text"], ["🗒", "Sticky note"]];
   let mode = "Draw";
-  const tool = h("div", { class: "bd-tools", role: "toolbar", "aria-label": "Tools" }, TOOLS.map(([t, name], i) => h("button", { type: "button", class: i === 2 ? "on" : "", "aria-label": name, title: name, "aria-pressed": i === 2 ? "true" : "false", onclick: (e) => { mode = name; tool.querySelectorAll("button").forEach((b) => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); s.dataset.mode = name; } }, t)));
+  const tool = h("div", { class: "bd-tools", role: "toolbar", "aria-label": "Tools" }, TOOLS.map(([t, name], i) => h("button", { type: "button", class: i === 2 ? "on" : "", "aria-label": name, title: name, "aria-pressed": i === 2 ? "true" : "false", onclick: (e) => { if (kshape) { kshape.path.remove(); kshape = null; delete s.dataset.state; } mode = name; tool.querySelectorAll("button").forEach((b) => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); s.dataset.mode = name; } }, t)));
   const real = h("button", { class: "bd-real", type: "button" }, a.ui === "tldraw" ? "Make Real" : ex ? "Wireframe → code" : "Generate");
   const jit = (pts) => pts.map(([x, y]) => [x + (Math.random() - 0.5) * (ex ? 2.6 : 0.6), y + (Math.random() - 0.5) * (ex ? 2.6 : 0.6)]);
   const path = (pts, close) => { const p = jit(pts); return "M" + p.map((q) => q.join(" ")).join(" L") + (close ? " Z" : ""); };
@@ -361,15 +467,40 @@ function boardMake(a, r) {
   // Each tool really draws; whatever you add is context the agent reads (it says what it understood).
   let p0 = null, mine = 0;
   const shapeOf = (x0, y0, x, y) => mode === "Rectangle" ? `M${x0} ${y0} H${x} V${y} H${x0} Z` : mode === "Ellipse" ? `M${(x0 + x) / 2} ${y0} A${Math.abs(x - x0) / 2} ${Math.abs(y - y0) / 2} 0 1 0 ${(x0 + x) / 2} ${y} A${Math.abs(x - x0) / 2} ${Math.abs(y - y0) / 2} 0 1 0 ${(x0 + x) / 2} ${y0}` : `M${x0} ${y0} L${x} ${y} M${x - 10} ${y - 6} L${x} ${y} L${x - 8} ${y + 7}`;
+  // Keyboard drawing: your cursor moves on the board; Enter anchors a shape, arrows size it, Enter commits.
+  let kx = 300, ky = 150, kshape = null;
+  const kstatus = h("p", { class: "bd-kstat", "aria-live": "polite" });
+  const showYou = () => { const b = wrap.getBoundingClientRect(); you.style.translate = `${(kx / W) * b.width}px ${(ky / H) * b.height}px`; };
+  const shapeAt = (x, y) => { let best = null; for (const g of s.querySelectorAll(".bd-sh")) { if (g.style.opacity === "0") continue; const bb = g.getBBox(); const d = Math.hypot(Math.max(bb.x - x, 0, x - bb.x - bb.width), Math.max(bb.y - y, 0, y - bb.y - bb.height)); if (d < 24 && (!best || d < best.d)) best = { g, d }; } return best?.g; };
+  function selectShape(g) { s.querySelectorAll(".bd-sh.sel").forEach((n) => n.classList.remove("sel")); g.classList.add("sel"); const t = g.querySelector("text")?.textContent || "an arrow"; tell(el, { action: "select", label: `This: ${t}`, entities: { shape: t }, ack: t === "an arrow" ? "That arrow says one thing depends on the other. Want me to label it?" : `“${t}” — I'll make that the focus of the generated UI.` }); }
+  function place(x, y) { const label = mode === "Text" ? "Quiz me" : "Due Friday"; const n = svg("text", { x, y, class: "bd-tx mine", fill: ui.acc || "#2f80ed" }, label); if (mode === "Sticky note") s.append(svg("rect", { x: x - 6, y: y - 16, width: 86, height: 24, rx: 3, fill: "#fff3bf", class: "mine" })); s.append(n); mine++; tell(el, { action: "annotate", label: `Added “${label}”`, entities: { note: label }, ack: label === "Quiz me" ? "Noted — Make Real will end in a 12-card quiz." : "Noted — I'll schedule the deck to finish by Friday." }); }
+  const commit = (path, x, y, x0, y0) => { const big = Math.hypot(x - x0, y - y0) > 18; if (big) { mine++; tell(el, { action: "draw", label: `Drew a ${mode.toLowerCase()}`, entities: { shape: `${mode.toLowerCase()}-${mine}` }, quiet: true }); } else path.remove(); return big; };
+  s.addEventListener("keydown", (e) => {
+    const st = e.shiftKey ? 5 : 20, k = e.key;
+    const move = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[k];
+    if (move) {
+      kx = Math.max(0, Math.min(W, kx + move[0])); ky = Math.max(0, Math.min(H, ky + move[1])); showYou();
+      if (kshape) { kshape.path.setAttribute("d", mode === "Draw" ? kshape.path.getAttribute("d") + ` L${kx} ${ky}` : shapeOf(kshape.x0, kshape.y0, kx, ky)); }
+    } else if (k === "Enter" || k === " ") {
+      if (mode === "Select") { const g = shapeAt(kx, ky); if (g) selectShape(g); else kstatus.textContent = "Nothing under your cursor; move it onto a shape."; }
+      else if (mode === "Hand") kstatus.textContent = "Hand pans the board; pick a drawing tool to mark.";
+      else if (mode === "Text" || mode === "Sticky note") place(kx, ky);
+      else if (!kshape) { kshape = { x0: kx, y0: ky, path: svg("path", { d: `M${kx} ${ky}`, class: "bd-pen", stroke: ui.acc || "#2f80ed", fill: "none" }) }; s.append(kshape.path); s.dataset.state = "drawing"; kstatus.textContent = `${mode}: move with the arrows, Enter to finish, Escape to cancel.`; }
+      else { const ok = commit(kshape.path, kx, ky, kshape.x0, kshape.y0); kshape = null; delete s.dataset.state; kstatus.textContent = ok ? `Added a ${mode.toLowerCase()}.` : "Too small; nothing added."; }
+    } else if (k === "Escape" && kshape) { kshape.path.remove(); kshape = null; delete s.dataset.state; kstatus.textContent = "Cancelled."; }
+    else return;
+    e.preventDefault();
+  });
+  s.addEventListener("focus", showYou);
   s.addEventListener("pointerdown", (e) => {
     const [x, y] = pt(e);
-    if (mode === "Select" || mode === "Hand") { const g = e.target.closest?.(".bd-sh"); if (g && mode === "Select") { s.querySelectorAll(".bd-sh.sel").forEach((n) => n.classList.remove("sel")); g.classList.add("sel"); const t = g.querySelector("text")?.textContent || "an arrow"; tell(el, { action: "select", label: `This: ${t}`, entities: { shape: t }, ack: t === "an arrow" ? "That arrow says one thing depends on the other. Want me to label it?" : `“${t}” — I'll make that the focus of the generated UI.` }); } return; }
-    if (mode === "Text" || mode === "Sticky note") { const label = mode === "Text" ? "Quiz me" : "Due Friday"; const n = svg("text", { x, y, class: "bd-tx mine", fill: ui.acc || "#2f80ed" }, label); if (mode === "Sticky note") s.append(svg("rect", { x: x - 6, y: y - 16, width: 86, height: 24, rx: 3, fill: "#fff3bf", class: "mine" })); s.append(n); mine++; tell(el, { action: "annotate", label: `Added “${label}”`, entities: { note: label }, ack: label === "Quiz me" ? "Noted — Make Real will end in a 12-card quiz." : "Noted — I'll schedule the deck to finish by Friday." }); return; }
+    if (mode === "Select" || mode === "Hand") { const g = e.target.closest?.(".bd-sh"); if (g && mode === "Select") selectShape(g); return; }
+    if (mode === "Text" || mode === "Sticky note") { place(x, y); return; }
     s.setPointerCapture(e.pointerId); p0 = [x, y];
     pen = svg("path", { d: `M${x} ${y}`, class: "bd-pen", stroke: ui.acc || "#2f80ed", fill: "none" }); s.append(pen);
   });
   s.addEventListener("pointermove", (e) => { const [x, y] = pt(e); const b = wrap.getBoundingClientRect(); you.style.translate = `${(x / W) * b.width}px ${(y / H) * b.height}px`; if (!pen) return; if (mode === "Draw") pen.setAttribute("d", pen.getAttribute("d") + ` L${x.toFixed(1)} ${y.toFixed(1)}`); else pen.setAttribute("d", shapeOf(p0[0], p0[1], x, y)); });
-  s.addEventListener("pointerup", (e) => { if (!pen) return; const [x, y] = pt(e); const big = Math.hypot(x - p0[0], y - p0[1]) > 18; if (big) { mine++; tell(el, { action: "draw", label: `Drew a ${mode.toLowerCase()}`, entities: { shape: `${mode.toLowerCase()}-${mine}` }, quiet: true }); } else pen.remove(); pen = null; });
+  s.addEventListener("pointerup", (e) => { if (!pen) return; const [x, y] = pt(e); if (!commit(pen, x, y, p0[0], p0[1])) { kx = x; ky = y; kstatus.textContent = `Cursor at ${Math.round(x)}, ${Math.round(y)}. Drag to ${mode === "Draw" ? "draw" : `draw a ${mode.toLowerCase()}`}, or press Enter to start here.`; } pen = null; });
   real.onclick = async () => {
     real.textContent = "Generating…"; setDisabled(real, "Generation running");
     const out = h("div", { class: "bd-out" }, h("div", { class: "bd-win" }, h("div", { class: "bd-wb" }, h("i"), h("i"), h("i")), h("div", { class: "bd-ui" }, h("b", {}, "USD composition"), h("div", { class: "bd-chips" }, ..."L I V R P S".split(" ").map((c) => h("span", {}, c))), h("div", { class: "bd-bar" }, h("i")), h("button", { type: "button" }, "Start review (12 cards)"))));
@@ -379,7 +510,7 @@ function boardMake(a, r) {
     tell(el, { action: "make_real", label: "Make it real", entities: { board: "study-map" }, ack: mine ? `Built it, including your ${mine} addition${mine > 1 ? "s" : ""}. The quiz button runs the Anki deck.` : "Built a working page from the map. The quiz button runs the Anki deck." });
   };
   const surface = appSurface(a, [h("div", { class: "bd-frame" }, wrap, tool, real)], { cls: "board" });
-  const el = shell(a, "board", { verb: "Sketching with you", status: "2 here", body: h("div", {}, surface, h("p", { class: "eu-hint" }, "Draw anywhere. The agent lays out the study map; Make Real turns it into a working UI.")), foot: [act("Export .tldr", { cls: "ghost", ack: "Saved study-map.tldr — opening it restores every shape and your strokes." }), act("Copy as PNG", { cls: "ghost", ack: "Copied a 2× PNG of the board to your clipboard.", done: "Copied ✓" })], summary: `Built a study map in ${a.name}` });
+  const el = shell(a, "board", { verb: "Sketching with you", status: "2 here", body: h("div", {}, surface, kstatus, h("p", { class: "eu-hint" }, "Draw anywhere, or focus the board: arrows move your cursor, Enter starts and finishes a shape. Make Real turns it into a working UI.")), foot: [act("Export .tldr", { cls: "ghost", ack: "Saved study-map.tldr — opening it restores every shape and your strokes." }), act("Copy as PNG", { cls: "ghost", ack: "Copied a 2× PNG of the board to your clipboard.", done: "Copied ✓" })], summary: `Built a study map in ${a.name}` });
   return { el, async play(run) {
     await sleep(run, 200);
     for (const e of els) {
@@ -401,27 +532,72 @@ function dawMake(a, r) {
   const grid = h("div", { class: "pr-grid" });
   const ph = h("i", { class: "pr-ph" });
   roll.append(keys, h("div", { class: "pr-area" }, grid, ph));
-  const scenes = h("div", { class: "sv" }, ["Drums", "Bass", "Keys", "Vox"].map((t, ti) => h("div", { class: "sv-col" }, h("b", {}, t), [0, 1, 2].map((s) => h("button", { type: "button", "aria-label": (ti + s) % 3 === 2 ? `Empty ${t} slot ${s + 1}` : `${t} ${s + 1}`, class: "sv-clip" + ((ti + s) % 3 === 2 ? " empty" : ""), style: { "--c": ["#ff764d", "#ffb532", "#7ad1ff", "#b388ff"][ti] } }, h("i"), (ti + s) % 3 === 2 ? "" : `${t} ${s + 1}`)))));
+  const scenes = h("div", { class: "sv" }, ["Drums", "Bass", "Keys", "Vox"].map((t, ti) => h("div", { class: "sv-col" }, h("b", {}, t), [0, 1, 2].map((s) => h("button", { type: "button", "aria-label": (ti + s) % 3 === 2 ? `Empty ${t} slot ${s + 1}` : `${t} ${s + 1}`, ...((ti + s) % 3 === 2 ? {} : { "aria-pressed": "false" }), class: "sv-clip" + ((ti + s) % 3 === 2 ? " empty" : ""), style: { "--c": ["#ff764d", "#ffb532", "#7ad1ff", "#b388ff"][ti] } }, h("i"), (ti + s) % 3 === 2 ? "" : `${t} ${s + 1}`)))));
   const notes = [];
-  const place = (pitch, step, len) => { const n = h("i", { class: "pr-n", style: { left: `${(step / 16) * 100}%`, width: `${(len / 16) * 100 - 0.6}%`, top: `${((71 - pitch) / 24) * 100}%` } }); grid.append(n); notes.push({ n, pitch, step, len }); return n; };
-  let ctx = null, playing = false;
-  const play = h("button", { class: "eu-btn", type: "button" }, "▶ Play");
+  const NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+  const noteName = (p) => `${NAMES[p % 12]}${Math.floor(p / 12) - 1}`;
+  const label = (x) => `${noteName(x.pitch)}, bar ${Math.floor(x.step / 4) + 1} beat ${(x.step % 4) + 1}`;
+  const layout = (x) => { Object.assign(x.n.style, { left: `${(x.step / 16) * 100}%`, width: `${(x.len / 16) * 100 - 0.6}%`, top: `${((71 - x.pitch) / 24) * 100}%` }); x.n.setAttribute("aria-label", label(x)); };
+  // Notes are editable regions: ↑/↓ transpose a semitone, ←/→ move a beat, Delete removes (undoable).
+  // Tab reaches the first note; Alt+← / Alt+→ move focus between notes.
+  const editNote = (x, what) => tell(el, { action: "edit_note", label: `${what}: ${label(x)}`, entities: { note: `${x.id}:${noteName(x.pitch)}@${x.step}` }, quiet: true });
+  const place = (pitch, step, len) => {
+    const n = h("i", { class: "pr-n", role: "button", tabindex: notes.length ? "-1" : "0", "aria-roledescription": "note" });
+    const x = { n, pitch, step, len, id: `n${notes.length + 1}` }; layout(x);
+    n.addEventListener("keydown", (e) => {
+      const live = notes.filter((q) => q.n.isConnected), i = live.indexOf(x);
+      if (e.altKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { const t = live[(i + (e.key === "ArrowRight" ? 1 : -1) + live.length) % live.length]; live.forEach((q) => (q.n.tabIndex = -1)); t.n.tabIndex = 0; t.n.focus(); e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") { x.pitch = Math.max(48, Math.min(71, x.pitch + (e.key === "ArrowUp" ? 1 : -1))); layout(x); editNote(x, "Transpose"); }
+      else if (e.key === "ArrowRight" || e.key === "ArrowLeft") { x.step = Math.max(0, Math.min(15, x.step + (e.key === "ArrowRight" ? 1 : -1))); layout(x); editNote(x, "Move"); }
+      else if (e.key === "Delete" || e.key === "Backspace") {
+        const next = live[i + 1] || live[i - 1]; n.remove(); if (next) { next.n.tabIndex = 0; next.n.focus(); }
+        editNote(x, "Delete"); undoable(el, `Deleted ${label(x)}`, () => { grid.append(n); live.forEach((q) => (q.n.tabIndex = -1)); n.tabIndex = 0; }, { entities: { note: x.id } });
+      } else if (e.key === "Enter" || e.key === " ") preview(x);
+      else return;
+      e.preventDefault();
+    });
+    n.addEventListener("click", () => { live().forEach((q) => (q.n.tabIndex = -1)); n.tabIndex = 0; n.focus(); preview(x); });
+    grid.append(n); notes.push(x); return n;
+  };
+  const live = () => notes.filter((q) => q.n.isConnected);
+  let ctx = null, playing = false, voices = [], sweep = null;
+  const audio = () => (ctx = ctx || new (window.AudioContext || window.webkitAudioContext)());
+  const tone = (pitch, at, dur) => { const c = audio(), o = c.createOscillator(), g = c.createGain(); o.type = "triangle"; o.frequency.value = 440 * Math.pow(2, (pitch - 69) / 12); g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(0.08, at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); o.connect(g).connect(c.destination); o.start(at); o.stop(at + dur + 0.05); voices.push(o); };
+  function preview(x) { status.textContent = `96 BPM · A minor · ${label(x)}`; try { tone(x.pitch, audio().currentTime + 0.01, 0.35); } catch { /* no audio device */ } }
+  const status = h("span", { class: "ap-stat", "aria-live": "polite" }, "96 BPM · A minor · stopped");
+  const play = h("button", { class: "eu-btn", type: "button", "aria-pressed": "false" }, "▶ Play");
+  const stop = () => { playing = false; voices.forEach((o) => { try { o.stop(); } catch { /* already stopped */ } }); voices = []; sweep?.cancel(); sweep = null; play.textContent = "▶ Play"; play.setAttribute("aria-pressed", "false"); status.textContent = "96 BPM · A minor · stopped"; };
   play.onclick = () => {
-    if (playing) return; playing = true; play.textContent = "❚❚ Playing"; play.setAttribute("aria-pressed", "true");
-    if (!notes.length) for (let c = 0; c < 4; c++) for (const p of chords[c][1]) place(p, c * 4, 3.6);
-    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = ctx.currentTime + 0.05, spb = 60 / 96 / 4;
-    for (const { pitch, step, len } of notes) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle"; o.frequency.value = 440 * Math.pow(2, (pitch - 69) / 12); g.gain.setValueAtTime(0, t0 + step * spb); g.gain.linearRampToValueAtTime(0.08, t0 + step * spb + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + (step + len) * spb); o.connect(g).connect(ctx.destination); o.start(t0 + step * spb); o.stop(t0 + (step + len) * spb + 0.05); }
-    anim(ph, [{ left: "0%" }, { left: "100%" }], { duration: 16 * spb * 1000, easing: "linear" }).onfinish = () => { playing = false; play.textContent = "▶ Play"; play.setAttribute("aria-pressed", "false"); };
+    if (playing) { stop(); tell(el, { action: "stop", label: "Stop playback", quiet: true }); return; }
+    playing = true; play.textContent = "■ Stop"; play.setAttribute("aria-pressed", "true");
+    const on = [...scenes.querySelectorAll(".sv-clip.on")].map((c) => c.getAttribute("aria-label"));
+    status.textContent = `96 BPM · A minor · playing ${live().length} notes${on.length ? ` + ${on.join(", ")}` : ""}`;
+    tell(el, { action: "play", label: "Play the progression", entities: { clip: on, note: live().map((x) => x.id) }, quiet: true });
+    const spb = 60 / 96 / 4;
+    try { const t0 = audio().currentTime + 0.05; for (const { pitch, step, len } of live()) tone(pitch, t0 + step * spb, len * spb); } catch { /* no audio device: the playhead still runs */ }
+    sweep = anim(ph, [{ left: "0%" }, { left: "100%" }], { duration: 16 * spb * 1000, easing: "linear" });
+    sweep.onfinish = () => { if (playing) stop(); };
   };
   scenes.addEventListener("click", (e) => {
     const c = e.target.closest(".sv-clip"); if (!c) return;
     if (c.classList.contains("empty")) { const lbl = c.getAttribute("aria-label").replace("Empty ", ""); tell(el, { action: "fill", label: `Write something for ${lbl}`, entities: { clip: lbl }, ack: `Writing a ${lbl.split(" ")[0].toLowerCase()} part over Am–F–C–G for that slot. It'll appear here in a few seconds.` }); c.classList.remove("empty"); c.classList.add("on", "pending"); c.append(lbl); return; }
-    c.classList.toggle("on");
+    const on = c.classList.toggle("on"); c.setAttribute("aria-pressed", String(on));
+    const name = c.getAttribute("aria-label");
+    tell(el, { action: on ? "launch" : "stop_clip", label: `${on ? "Launch" : "Stop"} ${name}`, entities: { clip: name }, quiet: true });
   });
-  const surface = appSurface(a, [appBar(a.ui === "ableton" ? ["Session", "Arrangement", "Clip"] : a.ui === "fl" ? ["Playlist", "Piano roll", "Mixer"] : [a.name, "Tracks", "Editor"], [h("span", { class: "ap-stat" }, "96 BPM · A minor"), play]), h("div", { class: "daw" }, scenes, roll)], { cls: "daw-w" });
+  // Existing clips can be cleared from the keyboard (Delete), with Undo, like any region.
+  scenes.addEventListener("keydown", (e) => {
+    const c = e.target.closest?.(".sv-clip"); if (!c || c.classList.contains("empty") || c.classList.contains("pending") || !(e.key === "Delete" || e.key === "Backspace")) return;
+    e.preventDefault();
+    const name = c.getAttribute("aria-label"), was = c.classList.contains("on"), kids = [...c.childNodes];
+    c.classList.remove("on"); c.classList.add("empty"); c.removeAttribute("aria-pressed"); c.setAttribute("aria-label", `Empty ${name.replace(/ (\d)$/, " slot $1")}`); c.replaceChildren(h("i"));
+    tell(el, { action: "clear_clip", label: `Clear ${name}`, entities: { clip: name }, quiet: true });
+    undoable(el, `Cleared ${name}`, () => { c.classList.remove("empty"); c.classList.toggle("on", was); c.setAttribute("aria-pressed", String(was)); c.setAttribute("aria-label", name); c.replaceChildren(...kids); }, { entities: { clip: name } });
+  });
+  for (let ci = 0; ci < 4; ci++) for (const pitch of chords[ci][1]) place(pitch, ci * 4, 3.6);
+  const surface = appSurface(a, [appBar(a.ui === "ableton" ? ["Session", "Arrangement", "Clip"] : a.ui === "fl" ? ["Playlist", "Piano roll", "Mixer"] : [a.name, "Tracks", "Editor"], [status, play]), h("div", { class: "daw" }, scenes, roll), h("p", { class: "eu-hint" }, "Enter launches or stops a clip; Delete clears it (Undo). In the piano roll, ↑↓ transpose, ←→ move, Delete removes; Alt+←→ moves between notes.")], { cls: "daw-w" });
   const el = shell(a, "daw", { verb: "Wrote a chord progression", status: "Recording", body: surface, foot: [act("Bounce stems", { cls: "primary", ack: "Bouncing 4 stems (Drums, Bass, Keys, Vox) at 48 kHz/24-bit. I'll drop them in Downloads/am-f-c-g/." }), act("Export MIDI", { cls: "ghost", ack: "Saved progression.mid — Am, F, C, G, one bar each at 96 BPM." })], summary: `Wrote Am–F–C–G in ${a.name}` });
-  return { el, async play(run) { stagger(scenes.querySelectorAll(".sv-clip"), { gap: 30 }); for (let c = 0; c < 4; c++) { for (const p of chords[c][1]) { const n = place(p, c * 4, 3.6); anim(n, [{ transform: "scaleX(0)", transformOrigin: "left" }, { transform: "none" }], { spring: "snappy" }); await sleep(run, 70); } await sleep(run, 160); } }, spec: { kind: "daw", app: a.id, bpm: 96, key: "A minor", progression: chords.map((c) => c[0]) } };
+  return { el, async play(run) { stagger(scenes.querySelectorAll(".sv-clip"), { gap: 30 }); for (const x of notes) { anim(x.n, [{ transform: "scaleX(0)", transformOrigin: "left" }, { transform: "none" }], { spring: "snappy" }); await sleep(run, x.pitch === chords[Math.floor(x.step / 4)][1][2] ? 230 : 70); } }, spec: { kind: "daw", app: a.id, bpm: 96, key: "A minor", progression: chords.map((c) => c[0]) } };
 }
 
 /* ---------------- flash: Anki review (default learning steps 1m 10m) and Quizlet flip ---------------- */

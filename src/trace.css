@@ -77,6 +77,9 @@
 .os-spans li:hover { background: var(--h-card-solid); box-shadow: 0 0 0 1px var(--os-line-2); }
 .os-spans li.nolink { cursor: default; }
 .os-go { color: var(--os-focus); font-size: 11.5px; white-space: nowrap; }
+.os-rowbtn { all: unset; box-sizing: border-box; cursor: pointer; display: inline; font: inherit; color: inherit; border-radius: 4px; }
+.os-rowbtn:focus-visible { outline: 2px solid var(--os-focus); outline-offset: 2px; }
+.os-cv:focus-visible { outline: 2px solid var(--os-focus); outline-offset: 2px; }
 .os-txd { font: 11px var(--h-mono); color: var(--os-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .os-chart { width: 100%; height: auto; display: block; }
 .os-gl { stroke: var(--os-line-1); }

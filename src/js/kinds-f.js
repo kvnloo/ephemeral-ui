@@ -15,7 +15,11 @@ const LAWS = [
   ["one_way_aisles", "aisles B and D are one-way north", "oneway"],
 ];
 function twinMake(a, r) {
-  const laws = h("ol", { class: "tw-laws" }, LAWS.map(([id, txt]) => h("li", { "data-id": id }, h("code", {}, `law ${id}`), h("span", {}, txt), h("b", { class: "tw-st" }, "proved"))));
+  // Each law is a pick-to-context row: Enter or click asks the agent about it with its typed id.
+  const laws = h("ol", { class: "tw-laws" }, LAWS.map(([id, txt]) => h("li", { "data-id": id }, h("button", { type: "button", class: "tw-law", "aria-label": `Ask about law ${id}`, onclick: () => tell(el, { action: "select", label: `Why does ${id} hold?`, entities: { law: id, policy: version }, ack: `${id}: ${txt}. bend_verify checked it against 2,048 generated cases with no counterexample; it gates every plan before a robot moves.` }) }, h("code", {}, `law ${id}`)), h("span", {}, txt), h("b", { class: "tw-st" }, "proved"))));
+  // Deployment is a typed, reversible decision against the twin: v3 → v4 changes one law's parameter.
+  let version = "v3";
+  const DIFF = { law: "speed_near_humans", from: "v ≤ 0.8 m/s within 1.5 m", to: "v ≤ 0.5 m/s within 2 m" };
   const log = h("div", { class: "tw-log" });
   const kpi = h("div", { class: "tw-kpi" }, h("span", {}, h("b", { class: "k-pick" }, "0"), " picks"), h("span", {}, h("b", { class: "k-block" }, "0"), " blocked moves"), h("span", {}, h("b", {}, "0"), " violations"));
   const vp = h("div", { class: "vp" });
@@ -78,7 +82,23 @@ function twinMake(a, r) {
   const editor = h("pre", { class: "ap-code tw-src" });
   const src = ["-- warehouse.bend · checked before any plan reaches a robot", "law no_wet_aisle(plan, map):", "  ∀ step ∈ plan.", "    robot.kind = AMR ⇒ step.aisle ∉ map.wet", "", "law dock_battery(r):", "  r.battery < 20 ⇒ next(r) = Dock", "", "$ bend_verify --verdict", "VERIFIED · 4 laws · 2,048 cases · 0 counterexamples"];
   const surface = appSurface(a, [appBar(["Twin", "Policies", "Fleet", "Replay"], [h("span", { class: "ap-stat" }, "4 robots · Bend-gated")]), h("div", { class: "ap-vpwrap" }, vp), kpi, h("div", { class: "tw-grid" }, h("div", {}, laws, log), editor)], { cls: "twin" });
-  const el = shell(a, "twin", { verb: "Fleet under proven policies", status: "Live", body: surface, foot: [holdButton("Hold to deploy policy v4", (b, t) => { t.textContent = "Deployed to 4 robots"; burst(b); }), act("Replay last shift", { cls: "ghost", ack: "Replaying the last 8 hours at 60× — watch the dock door policy kick in at 14:20." })], summary: "Ran the warehouse twin with 4 Bend-proven laws, 0 violations" });
+  const ROBOTS = ["cleaner-1", "amr-1", "amr-2", "amr-3"];
+  const decision = h("p", { class: "eu-hint tw-dec", "aria-live": "polite" }, `Running policy v3 in the twin. v4 tightens ${DIFF.law}: ${DIFF.from} → ${DIFF.to}.`);
+  const rollback = h("button", { class: "eu-btn ghost", type: "button", hidden: true }, "Roll back to v3");
+  const deploy = holdButton("Hold to deploy policy v4", (b, t) => {
+    version = "v4"; t.textContent = "v4 live in the twin"; burst(b);
+    decision.textContent = `Policy v4 deployed to ${ROBOTS.length} simulated robots (twin only, not the physical fleet). ${DIFF.law} is now ${DIFF.to}. Roll back any time.`;
+    settle(el, "v4 in twin", "ok"); rollback.hidden = false;
+    tell(el, { action: "deploy_policy", label: "Deploy policy v4 to the twin", entities: { policy: "v4", from: "v3", law: DIFF.law, robot: ROBOTS, target: "twin" }, text: JSON.stringify({ policy: "v4", from: "v3", target: "twin", robots: ROBOTS, change: DIFF }),
+      ack: "v4 is live in the twin only. I'll watch blocked moves and picks per hour against v3 for one replayed shift before suggesting the physical fleet." });
+  });
+  rollback.onclick = () => {
+    version = "v3"; rollback.hidden = true; deploy.reset();
+    decision.textContent = `Rolled back: the twin runs v3 again (${DIFF.law}: ${DIFF.from}).`;
+    settle(el, "Live", null);
+    tell(el, { action: "rollback_policy", label: "Roll back the twin to v3", entities: { policy: "v3", from: "v4", target: "twin" }, ack: "Back on v3 in the twin. v4 stays verified, so redeploying is one hold away." });
+  };
+  const el = shell(a, "twin", { verb: "Fleet under proven policies", status: "Live", body: h("div", {}, surface, decision, why(`v4 widens the slow zone around people from 1.5 m to 2 m and drops the cap from 0.8 to 0.5 m/s after near-misses in aisle C. bend_verify proved all 4 laws for v4; deploying here changes only the simulation.`)), foot: [deploy, rollback, act("Replay last shift", { cls: "ghost", ack: "Replaying the last 8 hours at 60× — watch the dock door policy kick in at 14:20." })], summary: "Ran the warehouse twin with 4 Bend-proven laws, 0 violations" });
   return { el, async play(run) { stagger(laws.children, { gap: 80 }); for (const l of src) { const d = h("div"); editor.append(d); await typeText(d, l, run, 120); } }, spec: { kind: "twin", app: a.id, robots: ["cleaner", "AMR ×3"], laws: LAWS.map((l) => l[0]), gate: "bend_verify before every plan" } };
 }
 

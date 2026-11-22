@@ -3,23 +3,23 @@
   "kinds": {
     "sculpt": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The export handoff works, but brush strokes on the mesh require a pointer and remesh only changes its label.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Named stroke regions apply the picked brush from the keyboard or pointer (typed brush + region, undoable), and Remesh really snaps the surface to 0.02 m voxels with an acknowledgement and Undo.",
       "receipts": {
         "390": {
           "fixture": "sculpt/blender",
-          "control": "Export .glb",
-          "keyboard": "event:export_glb",
-          "pointer": "event:export_glb",
+          "control": "Stroke brow ridge",
+          "keyboard": "event:stroke",
+          "pointer": "event:stroke",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "sculpt/blender",
-          "control": "Export .glb",
-          "keyboard": "event:export_glb",
-          "pointer": "event:export_glb",
+          "control": "Stroke brow ridge",
+          "keyboard": "event:stroke",
+          "pointer": "event:stroke",
           "overflow": false,
           "webgl": true
         }
@@ -123,23 +123,23 @@
     },
     "trigger": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The handoff and camera keyboard controls work, but placing the character on the floor to fire the trigger still has no keyboard equivalent.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Walk buttons move the player without a pointer; when you walk into the volume the trigger fires and emits trigger_fired with its count, and the status line reports it.",
       "receipts": {
         "390": {
           "fixture": "trigger/babylon-js",
-          "control": "Add to level",
-          "keyboard": "event:add_to_level",
-          "pointer": "event:add_to_level",
+          "control": "Walk into trigger",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "trigger/babylon-js",
-          "control": "Add to level",
-          "keyboard": "event:add_to_level",
-          "pointer": "event:add_to_level",
+          "control": "Walk into trigger",
+          "keyboard": "control state changed",
+          "pointer": "control state changed",
           "overflow": false,
           "webgl": true
         }
@@ -147,23 +147,23 @@
     },
     "globe": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Cockpit cycles demo flights, but direct flight-path picking is still pointer-only, and live labels represent demo traffic.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "A roving flight list is the keyboard equivalent of picking a path (typed flight, from, to); traffic is labelled demo/synthetic and the footer handoffs name the selected flight.",
       "receipts": {
         "390": {
           "fixture": "globe/god-s-eye-view",
-          "control": "Cockpit ▶",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "UAL837 SFO→HND",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "globe/god-s-eye-view",
-          "control": "Cockpit ▶",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "UAL837 SFO→HND",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": true
         }
@@ -171,23 +171,23 @@
     },
     "gen3d": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Orbit has keyboard input, but the download copy implies an artifact was delivered when it emits an intent only.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Variants are labelled toggles that emit a typed select; the footer requests an export or Blender import of the chosen variant and the acknowledgement says no file has been delivered yet.",
       "receipts": {
         "390": {
           "fixture": "gen3d/open3d",
-          "control": "Send to Blender",
-          "keyboard": "event:send_to_blender",
-          "pointer": "event:send_to_blender",
+          "control": "Request .glb",
+          "keyboard": "event:request_glb",
+          "pointer": "event:request_glb",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "gen3d/open3d",
-          "control": "Send to Blender",
-          "keyboard": "event:send_to_blender",
-          "pointer": "event:send_to_blender",
+          "control": "Request .glb",
+          "keyboard": "event:request_glb",
+          "pointer": "event:request_glb",
           "overflow": false,
           "webgl": true
         }
@@ -195,23 +195,23 @@
     },
     "sim": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Orbit has keyboard input, but the export intent does not retrieve a policy and training status is scripted.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The run is labelled a scripted demo and can be paused; checkpoints capture step and reward, and Export requests that checkpoint as a typed export_policy without claiming a file exists.",
       "receipts": {
         "390": {
           "fixture": "sim/isaac-sim",
-          "control": "Export policy (.pt)",
-          "keyboard": "event:export_policy_pt",
-          "pointer": "event:export_policy_pt",
+          "control": "Save checkpoint",
+          "keyboard": "event:checkpoint",
+          "pointer": "event:checkpoint",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "sim/isaac-sim",
-          "control": "Export policy (.pt)",
-          "keyboard": "event:export_policy_pt",
-          "pointer": "event:export_policy_pt",
+          "control": "Save checkpoint",
+          "keyboard": "event:checkpoint",
+          "pointer": "event:checkpoint",
           "overflow": false,
           "webgl": true
         }
@@ -963,23 +963,23 @@
     },
     "timeline": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The export works as an intent, but vision/timeline marking relies on pointer geometry.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Clips are a roving, focusable track: Enter or click marks a clip (typed clip + timecode) and seeks the monitor; Cut marked ripple-deletes with an agent acknowledgement and a 6 s Undo.",
       "receipts": {
         "390": {
           "fixture": "timeline/blender",
-          "control": "Export",
-          "keyboard": "event:export",
-          "pointer": "event:export",
+          "control": "Intro clip at 00:00:00:00",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "timeline/blender",
-          "control": "Export",
-          "keyboard": "event:export",
-          "pointer": "event:export",
+          "control": "Intro clip at 00:00:00:00",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         }
@@ -987,23 +987,23 @@
     },
     "review": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The link handoff works, but annotating a frame by drawing lacks an equivalent keyboard workflow.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The frame is focusable: arrows steer a marker and Enter drops a mark with its timecode and region, the same as drawing; Send hands the typed mark ids over, and the compare handle is a keyboard slider.",
       "receipts": {
         "390": {
           "fixture": "review/miro",
-          "control": "Copy link",
-          "keyboard": "event:copy_link",
-          "pointer": "event:copy_link",
+          "control": "Annotate frame",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "review/miro",
-          "control": "Copy link",
-          "keyboard": "event:copy_link",
-          "pointer": "event:copy_link",
+          "control": "Annotate frame",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         }
@@ -1059,23 +1059,23 @@
     },
     "cad": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The footer is a handoff, but the command/viewport is largely a scripted display rather than an editable draft.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The draft is editable: arrows + Enter place points, Backspace/Escape undo and end, and a command line takes @dx,dy metres; a live length readout and Send draft hand the typed walls to the agent.",
       "receipts": {
         "390": {
           "fixture": "cad/plasticity",
-          "control": "Plot to PDF",
-          "keyboard": "event:plot_to_pdf",
-          "pointer": "event:plot_to_pdf",
+          "control": "Drafting viewport",
+          "keyboard": "event:point",
+          "pointer": "event:point",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "cad/plasticity",
-          "control": "Plot to PDF",
-          "keyboard": "event:plot_to_pdf",
-          "pointer": "event:plot_to_pdf",
+          "control": "Drafting viewport",
+          "keyboard": "event:point",
+          "pointer": "event:point",
           "overflow": false,
           "webgl": false
         }
@@ -1083,23 +1083,23 @@
     },
     "board": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Tool choice works, but marks still require coordinate input without a keyboard alternative.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The board is focusable: arrows move your cursor, Enter starts and finishes a shape with the current tool (emits draw), Text/Sticky place notes and Select picks a shape, all without a pointer.",
       "receipts": {
         "390": {
           "fixture": "board/miro",
-          "control": "Rectangle",
+          "control": "Whiteboard",
           "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "pointer": "visible text changed",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "board/miro",
-          "control": "Rectangle",
+          "control": "Whiteboard",
           "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "pointer": "visible text changed",
           "overflow": false,
           "webgl": false
         }
@@ -1107,23 +1107,23 @@
     },
     "daw": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Empty slots hand a specific slot to the agent, but existing regions and transport do not expose equivalent editing.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Clips launch/stop with aria-pressed and a typed launch intent, Delete clears a clip with Undo; piano-roll notes are focusable (↑↓ transpose, ←→ move, Delete with Undo) and the transport plays and stops.",
       "receipts": {
         "390": {
           "fixture": "daw/ableton-live",
-          "control": "Empty Drums slot 3",
-          "keyboard": "event:fill",
-          "pointer": "event:fill",
+          "control": "Drums 1",
+          "keyboard": "event:launch",
+          "pointer": "event:launch",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "daw/ableton-live",
-          "control": "Empty Drums slot 3",
-          "keyboard": "event:fill",
-          "pointer": "event:fill",
+          "control": "Drums 1",
+          "keyboard": "event:launch",
+          "pointer": "event:launch",
           "overflow": false,
           "webgl": false
         }
@@ -1299,23 +1299,23 @@
     },
     "sandbox": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The fixture changes its label without a structured result for the branch decision.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The fork tree is real state without autoplay: forks are a radio group with their evidence, and Hold to keep returns a typed result { keep, stop[], evidence } and settles the card.",
       "receipts": {
         "390": {
           "fixture": "sandbox/cua",
-          "control": "Hold to keep winner",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "fork-b · node 26, build 19 s, tests 42/42",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "sandbox/cua",
-          "control": "Hold to keep winner",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "fork-b · node 26, build 19 s, tests 42/42",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -1323,23 +1323,23 @@
     },
     "twin": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Policy deployment changes demo text without a verifiable typed decision or rollback; a real simulator contract is separate.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Deploy is a typed decision (policy, from, law, robots, target: twin) with the v3→v4 change stated up front and a Roll back to v3 that emits rollback_policy; laws are pick-to-context buttons.",
       "receipts": {
         "390": {
           "fixture": "twin/warehouse-twin",
           "control": "Hold to deploy policy v4",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "keyboard": "event:deploy_policy",
+          "pointer": "event:deploy_policy",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "twin/warehouse-twin",
           "control": "Hold to deploy policy v4",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "keyboard": "event:deploy_policy",
+          "pointer": "event:deploy_policy",
           "overflow": false,
           "webgl": true
         }
@@ -2115,23 +2115,23 @@
     },
     "trace": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The compression control works; selecting a span from the inline canvas still lacks a focusable equivalent.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Spans are reachable without a pointer: Previous/Next span buttons and the focusable timeline (arrows, +/-, 0, Escape) select and reveal a span, open its drawer and emit a typed select (span, track, session).",
       "receipts": {
         "390": {
           "fixture": "trace/omp-stats",
-          "control": "Compress idle",
-          "keyboard": "event:change",
-          "pointer": "event:change",
+          "control": "Next span",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace/omp-stats",
-          "control": "Compress idle",
-          "keyboard": "event:change",
-          "pointer": "event:change",
+          "control": "Next span",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2211,23 +2211,23 @@
     },
     "trace-tools": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The sort is available but opening a tool row still relies on pointer input.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Each tool row has a real button (aria-expanded) that opens its spans by keyboard or pointer and emits focus_tool; span rows are buttons that emit a typed select and open the drawer.",
       "receipts": {
         "390": {
           "fixture": "trace-tools/omp-stats",
-          "control": "Errors",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "read spans",
+          "keyboard": "event:focus_tool",
+          "pointer": "event:focus_tool",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace-tools/omp-stats",
-          "control": "Errors",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "read spans",
+          "keyboard": "event:focus_tool",
+          "pointer": "event:focus_tool",
           "overflow": false,
           "webgl": false
         }
@@ -2235,23 +2235,23 @@
     },
     "trace-errors": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The request/span mode switches, but expanding rows and jumping to a span are pointer-only.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Signature rows expand from a focusable button (aria-expanded, focus kept across re-render) and emit focus_error; every \"Jump to span\" is a button that emits a typed select.",
       "receipts": {
         "390": {
           "fixture": "trace-errors/omp-stats",
-          "control": "Spans",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "protocol_error · stateful socket rejected, 171 failures",
+          "keyboard": "event:focus_error",
+          "pointer": "event:focus_error",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace-errors/omp-stats",
-          "control": "Spans",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "protocol_error · stateful socket rejected, 171 failures",
+          "keyboard": "event:focus_error",
+          "pointer": "event:focus_error",
           "overflow": false,
           "webgl": false
         }
@@ -2307,23 +2307,23 @@
     },
     "infra-architecture": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the graph edits and inspector change locally, but node selections still return no typed context.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Selecting a service emits a typed select (node, service); the inspector names its connections, asks the agent with an inline acknowledgement, and removal is undoable.",
       "receipts": {
         "390": {
           "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2331,23 +2331,23 @@
     },
     "infra-cluster": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the workload inspector is local only and the card has no typed workload handoff.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Opening a workload emits a typed select (cluster, namespace, workload); each workload has an Ask agent handoff whose acknowledgement says the snapshot is authored, not live.",
       "receipts": {
         "390": {
           "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2355,23 +2355,23 @@
     },
     "infra-iac": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the review filter works but the selection is not emitted as typed change context.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The filter emits the shown change addresses, opening a change emits a typed select, and \"Ask agent to review shown\" hands the set over with an acknowledgement that nothing is applied.",
       "receipts": {
         "390": {
           "fixture": "infra-iac/terraform",
           "control": "Destructive only",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-iac/terraform",
           "control": "Destructive only",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
           "overflow": false,
           "webgl": false
         }
@@ -2379,23 +2379,23 @@
     },
     "infra-models": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); artifact inspection is local only, with no typed stage handoff and no runtime verification.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Each stage emits a typed select (stage, runtime, step); the inspector states \"Verified: nothing yet\" and hands a stage check plan to the agent with an honest acknowledgement.",
       "receipts": {
         "390": {
           "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
