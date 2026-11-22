@@ -41,6 +41,29 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   [catalog/README.md](catalog/README.md).
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
+## Providers: OpenUI Lang and A2UI
+
+One card spec, one renderer, several wire formats. An agent can answer in an openui-v2 program
+(`Board(title, summary, [EphemeralCards(title, [{kind, app?, input?}])])`), in a Google
+[A2UI](https://a2ui.org) v0.9 or v1.0 stream (`createSurface` / `updateComponents` / `updateDataModel`
+naming the components of `src/schema/a2ui-catalog.v0.json`: `Board`, `EphemeralCards`, `EphemeralCard`),
+or in Glide's ```` ```ephemeral-ui ```` card.v0 fences. Each adapter only reads its format; all of them end in
+`normalize()` (`src/js/card-spec.js`), which checks every card against `card.v0.json` and resolves its app, so
+the kind modules draw the same card from any of them.
+
+- `src/js/a2ui.js`: the A2UI adapter (DOM-free, browser and Node). Fails closed with A2UI error codes
+  (`VALIDATION_FAILED`, `INTEGRITY_ERROR`): wrong catalog, unknown component or property, missing or cyclic
+  children, unresolved `@path`/`path` bindings, function calls, a v1.0 `theme`, v0.8 messages. Cards take
+  the host theme. `toA2UIAction()` turns a card's `eui:intent` into the A2UI `action` message.
+- `node tools/export-cards.mjs --program reply.a2ui.jsonl --out cards.html`: the same HTML export as OpenUI
+  programs (the format is detected). An A2UI export also posts `{ type: "a2ui:action", message }` to its frame.
+- `src/providers.html`: the canonical fixtures (`src/data/providers/`) drawn side by side in the browser. It
+  parses OpenUI Lang with `src/vendor/openui-lang-core.js`, the pinned `@openuidev/lang-core` bundled by
+  `node tools/vendor-openui.mjs` (`--check` in the tests).
+- Tests: `node --test tools/provider-parity.test.mjs` (same normalized spec, DOM, theme tokens and
+  interaction event from both providers; invalid payloads rejected). In Chromium:
+  `PLAYWRIGHT_FROM=<dir>/package.json [CHROMIUM=<chrome>] node tools/provider-parity.pw.mjs`.
+
 ## Ripple intent kits
 
 Three new compositions at `#intent=declare`, `#intent=operate`, and `#intent=understand`:
@@ -158,7 +181,8 @@ Motion references come from a private reference collection and
 
 ## Credits
 
-- [OpenUI](https://github.com/thesysdev/openui) by Thesys (MIT): the generative-UI language and renderer the card spec builds on.
+- [OpenUI](https://github.com/thesysdev/openui) by Thesys (MIT): the generative-UI language and renderer the card spec builds on. `src/vendor/openui-lang-core.js` bundles `@openuidev/lang-core` (MIT).
+- [A2UI](https://a2ui.org) (Google, Apache-2.0): the agent-to-UI protocol `src/js/a2ui.js` reads (spec only, no code taken).
 - [simple-icons](https://simpleicons.org) 16.36.0 (CC0 data) for brand marks and colours; marks are trademarks of their owners.
 - [three.js](https://threejs.org) r187 (MIT) for the 3D studio cards.
 - [omp-stats](https://github.com/can1357/oh-my-pi) (`@oh-my-pi/omp-stats`, MIT) for the trace card shapes and API.
