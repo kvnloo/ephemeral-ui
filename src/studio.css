@@ -329,7 +329,8 @@
 .us-tree li.sel { background: color-mix(in srgb, var(--ap-acc) 35%, transparent); }
 .us-t { font: 9px var(--h-mono); color: color-mix(in srgb, var(--ap-fg) 50%, transparent); width: 52px; overflow: hidden; text-overflow: ellipsis; }
 .us-stack { list-style: none; margin: 0; padding: 0 8px; display: flex; flex-direction: column; gap: 3px; counter-reset: l; }
-.us-stack li { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; border-radius: 4px; background: color-mix(in srgb, var(--ap-fg) 6%, transparent); font-size: 11px; cursor: pointer; transition: opacity .2s; gap: 8px; }
+.us-stack li { border-radius: 4px; background: color-mix(in srgb, var(--ap-fg) 6%, transparent); font-size: 11px; cursor: pointer; transition: opacity .2s; gap: 8px; }
+.us-stack li button { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; color: inherit; background: transparent; border: 0; border-radius: inherit; font: inherit; cursor: pointer; gap: 8px; }
 .us-stack li b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .us-stack li.us-win { box-shadow: inset 0 0 0 1.5px var(--ap-acc); }
 .us-stack li.muted { opacity: .35; text-decoration: line-through; }

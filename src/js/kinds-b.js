@@ -67,15 +67,33 @@ export const KINDS_B = {
       const fmtV = (v) => unit === "$" ? "$" + Math.round(v).toLocaleString() : unit === "%" ? v.toFixed(1) + "%" : unit ? `${Math.round(v)} ${unit}` : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : Math.round(v).toLocaleString();
       const tip = h("span", { class: "tip" });
       const wrap = h("div", { class: "sparkwrap" }, s, tip);
-      wrap.addEventListener("pointermove", (e) => { const b = s.getBoundingClientRect(); const k = Math.max(0, Math.min(cur.length - 1, Math.round(((e.clientX - b.left) / b.width) * (cur.length - 1)))); const x = (k / (cur.length - 1)) * W, y = H - (cur[k] / 100) * H; dot.setAttribute("cx", x); dot.setAttribute("cy", y); cross.setAttribute("x1", x); cross.setAttribute("x2", x); wrap.classList.add("hov"); tip.textContent = fmtV(val * (0.6 + cur[k] / 160)); tip.style.left = `${(x / W) * 100}%`; });
+      const point = h("input", { type: "range", min: 1, max: cur.length, value: 1, "aria-label": "Chart point" });
+      const pointAt = (e) => {
+        const b = s.getBoundingClientRect();
+        return Math.max(0, Math.min(cur.length - 1, Math.round((e.clientX - b.left) / b.width * (cur.length - 1))));
+      };
+      function highlight(k) {
+        const x = (k / (cur.length - 1)) * W, y = H - (cur[k] / 100) * H;
+        dot.setAttribute("cx", x); dot.setAttribute("cy", y); cross.setAttribute("x1", x); cross.setAttribute("x2", x);
+        wrap.classList.add("hov");
+        tip.textContent = fmtV(val * (0.6 + cur[k] / 160)); tip.style.left = `${(x / W) * 100}%`;
+        point.value = k + 1;
+        point.setAttribute("aria-valuetext", `Point ${k + 1}: ${tip.textContent}`);
+      }
+      point.addEventListener("input", () => highlight(Number(point.value) - 1));
+      point.addEventListener("focus", () => highlight(Number(point.value) - 1));
+      point.addEventListener("blur", () => wrap.classList.remove("hov"));
+      wrap.addEventListener("pointermove", e => highlight(pointAt(e)));
       wrap.addEventListener("pointerleave", () => wrap.classList.remove("hov"));
       const morph = (i) => { const from = cur, to = sets[i]; const t0 = performance.now(); const step = (t) => { const k = Math.min(1, (t - t0) / 520); const e = 1 - Math.pow(1 - k, 3); draw(from.map((v, j) => v + (to[j] - v) * e)); if (k < 1) requestAnimationFrame(step); else cur = to; }; requestAnimationFrame(step); countUp(big, val * [1, 3.7, 10.4][i], { from: val * [1, 3.7, 10.4][[0, 1, 2].find((q) => sets[q] === from) ?? 0], fmt: fmtV, dur: 600 }); };
       const delta = (4 + r() * 12).toFixed(1);
-      const body = h("div", { class: "metric" }, h("div", { class: "row between" }, h("div", {}, h("span", { class: "eu-hint" }, lbl), h("div", { class: "row" }, big, h("span", { class: "delta up" }, `▲ ${delta}%`))), seg(["7d", "30d", "90d"], morph, 0)), wrap);
-      // Click the chart to ask about a point: the agent gets the exact bucket, not "that dip".
-      let hoverK = null;
-      wrap.addEventListener("pointermove", (e) => { const b = s.getBoundingClientRect(); hoverK = Math.max(0, Math.min(cur.length - 1, Math.round(((e.clientX - b.left) / b.width) * (cur.length - 1)))); });
-      wrap.addEventListener("click", () => { if (hoverK == null) return; const k = hoverK; const prev = cur[Math.max(0, k - 1)]; const dir = cur[k] < prev ? "dip" : "rise"; tell(el, { action: "select", label: `Why the ${dir} at point ${k + 1}?`, entities: { metric: lbl, bucket: k }, ack: dir === "dip" ? `That ${dir} lines up with the Tuesday deploy; it recovered within a day. Want the deploy diff?` : `Mostly organic: the launch post drove it. No campaign that day.` }); });
+      function ask(k) {
+        const prev = cur[Math.max(0, k - 1)], dir = cur[k] < prev ? "dip" : "rise";
+        tell(el, { action: "select", label: `Why the ${dir} at point ${k + 1}?`, entities: { metric: lbl, bucket: k }, ack: dir === "dip" ? "That dip lines up with the Tuesday deploy; it recovered within a day. Want the deploy diff?" : "Mostly organic: the launch post drove it. No campaign that day." });
+      }
+      const askPoint = h("button", { class: "eu-btn ghost", type: "button", onclick: () => ask(Number(point.value) - 1) }, "Ask about point");
+      wrap.addEventListener("click", e => { const k = pointAt(e); highlight(k); ask(k); });
+      const body = h("div", { class: "metric" }, h("div", { class: "row between" }, h("div", {}, h("span", { class: "eu-hint" }, lbl), h("div", { class: "row" }, big, h("span", { class: "delta up" }, `▲ ${delta}%`))), seg(["7d", "30d", "90d"], morph, 0)), wrap, h("div", { class: "row wrap" }, h("label", {}, "Chart point ", point), askPoint));
       wrap.title = "Click a point to ask about it";
       let alert = null;
       const alertBtn = h("button", { class: "eu-btn ghost", type: "button", "aria-pressed": "false", onclick: () => {

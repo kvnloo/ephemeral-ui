@@ -471,11 +471,11 @@ function stageMake(a, r) {
   const prims = [["/World", 0], ["Robot", 1, "Xform"], ["base_link", 2, "Mesh"], ["arm", 2, "Xform"], ["gripper", 3, "Mesh"], ["Lights", 1, "Scope"], ["DomeLight", 2, "DomeLight"]];
   const tree = h("ul", { class: "us-tree" }, prims.map(([n, d, t], i) => h("li", { style: { "--d": d }, class: i === 4 ? "sel" : "" }, h("span", { class: "us-t" }, t || "def"), n)));
   const layers = [["session layer", null], ["shot_042.usda", "#d94b3d"], ["anim.usda", null], ["robot.usd (reference)", "#3d7ad9"], ["robot_payload.usdc", "#7a7a7a"]];
-  const stack = h("ol", { class: "us-stack" }, layers.map(([n, c], i) => h("li", { "data-i": i }, h("b", {}, n), h("span", { class: "us-op", style: { "--c": c || "transparent" } }, c ? "color" : "—"))));
+  const stack = h("ol", { class: "us-stack" }, layers.map(([n, c], i) => h("li", { "data-i": i }, h("button", { type: "button", "aria-pressed": "false", "aria-label": `Mute layer: ${n}` }, h("b", {}, n), h("span", { class: "us-op", style: { "--c": c || "transparent" } }, c ? "color" : "—")))));
   const result = h("div", { class: "us-res" });
   const variant = seg(["red", "blue", "steel"], (k) => { const cols = ["#d94b3d", "#3d7ad9", "#9aa3ad"]; stack.children[1].querySelector(".us-op").style.setProperty("--c", cols[k]); resolve(); }, 0);
   let muted = new Set();
-  stack.addEventListener("click", (e) => { const li = e.target.closest("li"); if (!li) return; const i = +li.dataset.i; muted.has(i) ? muted.delete(i) : muted.add(i); li.classList.toggle("muted"); resolve(); });
+  stack.addEventListener("click", (e) => { const control = e.target.closest("button"); if (!control) return; const li = control.closest("li"), i = +li.dataset.i; muted.has(i) ? muted.delete(i) : muted.add(i); li.classList.toggle("muted", muted.has(i)); control.setAttribute("aria-pressed", String(muted.has(i))); resolve(); });
   function resolve() {
     const win = [...stack.children].findIndex((li, i) => !muted.has(i) && li.querySelector(".us-op").textContent !== "—");
     [...stack.children].forEach((li, i) => li.classList.toggle("us-win", i === win));
