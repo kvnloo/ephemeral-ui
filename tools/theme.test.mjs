@@ -1,10 +1,13 @@
-// theme/glide.json: valid against theme/tokens.schema.json and equal to the values it was taken from, so an
-// app wearing it looks as it does today. Glide-side values are checked when a glide checkout is given:
+// Check the shared theme against its schema and the kit. With a Glide checkout,
+// also verify Glide's pin against the committed theme and catalog bytes:
 //   GLIDE_DIR=<path to kvnloo/glide> node --test tools/theme.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 
 globalThis.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
@@ -18,7 +21,6 @@ const kit = JSON.parse(file("../src/data/themes.json")).themes;
 const css = file("../src/styles.css"), html = file("../src/index.html");
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 const validate = ajv.compile(schema);
-const lc = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === "string" ? v.toLowerCase() : v]));
 
 test("glide.json validates against tokens.schema.json", () => {
   assert.ok(validate(theme), ajv.errorsText(validate.errors));
@@ -77,25 +79,38 @@ test("text reads in both schemes: fg, mutedFg on bg and primaryFg on primary at 
 });
 
 const glide = process.env.GLIDE_DIR;
-test("dark, brand, radii, type and glass match the glide checkout", { skip: !glide && "set GLIDE_DIR to a kvnloo/glide checkout" }, () => {
-  const g = (p) => fs.readFileSync(path.join(glide, p), "utf8");
-  const dash = JSON.parse(g("glide/themes/dash.json")).vars, tokens = g("glide/frontend/tokens.ts"), glass = g("glide/frontend/glass.ts");
-  const map = { bg: "background", fg: "foreground", card: "card", muted: "muted", mutedFg: "mutedForeground", accent: "accent", border: "border", input: "border",
-    primary: "primary", sidebar: "popover", sidebarBorder: "border", message: "userBubble", success: "green", successFg: "green", warning: "yellow", danger: "destructive",
-    dangerFg: "red", faint: "faint", secondary: "secondary", popover: "popover", info: "blue", magenta: "magenta", cyan: "cyan" };
-  const dark = lc(theme.color.dark);
-  for (const [k, v] of Object.entries(map)) assert.equal(dark[k], dash[v].toLowerCase(), `color.dark.${k} = dash.json ${v}`);
-  assert.deepEqual(Object.keys(dark).filter((k) => !map[k]), ["primaryFg", "messageBorder"]);
-  const obj = (name) => Function(`return (${tokens.match(new RegExp(`export const ${name} = (\\{[^}]*\\})`))[1]})`)();
-  const GOLD = obj("GOLD"), DASH = obj("DASH"), RADIUS = obj("RADIUS"), TYPE = obj("TYPE"), TRACK = obj("TRACK");
-  assert.equal(theme.color.dark.primaryFg, GOLD.ink);
-  assert.deepEqual(theme.brand.cta, GOLD);
-  assert.equal(theme.brand.accent, DASH.gold);
-  assert.ok(g("README.md").includes(theme.brand.tagline), "tagline is the README's first line");
-  for (const [k, v] of Object.entries(RADIUS)) assert.equal(theme.radius[k], v, `radius.${k}`);
-  assert.deepEqual(theme.type.size, TYPE);
-  assert.deepEqual(theme.type.tracking, TRACK);
-  assert.match(glass, new RegExp(`blur\\(${theme.glass.card.blur}px\\) saturate\\(${theme.glass.card.saturate}%\\)`));
-  assert.ok(glass.includes(`'--g-ease: ${theme.motion.easing.glass}'`));
-  assert.match(glass, new RegExp(`blur 2-${theme.glass.max.blur}px, saturation 100-${theme.glass.max.saturate}%`));
-});
+test("Glide's shared theme and catalog hashes match the pinned ephemeral-ui commit",
+  { skip: !glide && "set GLIDE_DIR to a kvnloo/glide checkout" }, (t) => {
+    const pinPath = "glide/themes/shared/PIN.json";
+    const pin = JSON.parse(fs.readFileSync(path.join(glide, pinPath), "utf8"));
+    assert.equal(pin?.repo, "kvnloo/ephemeral-ui", `${pinPath}: unexpected repo`);
+    assert.match(pin.sha ?? "", /^[0-9a-f]{40}$/, `${pinPath}: expected a full commit SHA`);
+
+    const cwd = fileURLToPath(new URL("../", import.meta.url));
+    const git = (...args) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    assert.doesNotThrow(() => git("cat-file", "-e", `${pin.sha}^{commit}`),
+      `${pinPath}: pinned commit ${pin.sha} is unavailable; fetch ephemeral-ui history and retry`);
+
+    for (const [file, recorded] of [
+      ["theme/glide.json", pin.files?.["theme/glide.json"]],
+      ["theme/tokens.schema.json", pin.files?.["theme/tokens.schema.json"]],
+      ["catalog/catalog.json", pin.catalog?.sha256],
+    ]) {
+      assert.match(recorded ?? "", /^[0-9a-f]{64}$/, `${pinPath}: missing or invalid SHA-256 for ${file}`);
+      const actual = createHash("sha256").update(git("cat-file", "blob", `${pin.sha}:${file}`)).digest("hex");
+      assert.equal(recorded, actual, `${pinPath}: SHA-256 mismatch for ${file} at ${pin.sha} (recorded vs. committed)`);
+    }
+
+    const main = git("rev-parse", "origin/main").toString().trim();
+    if (pin.sha !== main) {
+      const ancestry = spawnSync("git", ["merge-base", "--is-ancestor", pin.sha, main], { cwd });
+      if (ancestry.error) throw ancestry.error;
+      assert.ok(ancestry.status === 0 || ancestry.status === 1,
+        `Could not compare Glide's pin to origin/main: ${ancestry.stderr}`);
+      if (ancestry.status === 0) {
+        t.diagnostic(`Glide's pin ${pin.sha} is behind ephemeral-ui origin/main (${main}); pinned hashes still match.`);
+      } else {
+        t.diagnostic(`Glide's pin ${pin.sha} differs from ephemeral-ui origin/main (${main}) and is not a known ancestor.`);
+      }
+    }
+  });

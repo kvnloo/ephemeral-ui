@@ -40,5 +40,7 @@ copy next to the kit with the tag it came from; check `v === 0` before reading.
 
 Edit `glide.json`, bump its `version`, and update `sources` when a value no longer comes from where it
 says. `node --test tools/theme.test.mjs` checks the kit-side values; with a glide checkout,
-`GLIDE_DIR=<checkout> node --test tools/theme.test.mjs` also checks the dark palette, brand, radii, type
-and glass against `glide/themes/dash.json`, `glide/frontend/tokens.ts` and `glide/frontend/glass.ts`.
+`GLIDE_DIR=<checkout> node --test tools/theme.test.mjs` also checks the SHA-256 hashes in
+`glide/themes/shared/PIN.json` against the theme, schema and catalog at the pinned ephemeral-ui
+commit. Use an ephemeral-ui Git checkout with the pinned commit and an up-to-date `origin/main`;
+a valid pin behind `origin/main` is reported without failing the test.
