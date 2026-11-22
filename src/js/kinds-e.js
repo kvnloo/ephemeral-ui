@@ -71,7 +71,41 @@ function sandboxMake(a, r) {
   }, spec: { kind: "sandbox", app: a.id, base: "agent-main", forks: 3, billing: "per second, free when stopped" } };
 }
 
+// Synthetic readout, not an SDK response. Spaces can stream a desktop or an individual window.
+function spacesMake(a) {
+  const space = { id: "space-preview", name: "Release preview" };
+  const session = { id: "session-review", state: "Running" };
+  const display = { id: "display-1", name: "Primary display", resolution: "1280 × 800" };
+  const targets = [{ id: "desktop", label: "Desktop" }, { id: "window-browser", label: "Window · Browser" }];
+  const state = h("p", { class: "eu-hint", role: "status" }, "Streaming desktop · simulated");
+  const buttons = targets.map((target, i) => h("button", {
+    type: "button", class: "eu-btn", "aria-pressed": i === 0 ? "true" : "false",
+    onclick: () => {
+      if (state.dataset.target === target.id) return;
+      state.dataset.target = target.id;
+      state.textContent = i === 0 ? "Streaming desktop · simulated" : "Streaming Browser window · simulated";
+      buttons.forEach((button, j) => button.setAttribute("aria-pressed", i === j ? "true" : "false"));
+      tell(el, { action: "preview-display", label: target.label, quiet: true,
+        entities: { space: space.id, session: session.id, display: display.id, target: target.id } });
+    },
+  }, target.label));
+  state.dataset.target = targets[0].id;
+  const surface = appSurface(a, [
+    appBar(["Cua Spaces", "Display"], [h("span", { class: "ap-stat" }, "Fixture only")]),
+    h("dl", { class: "space-readout" },
+      h("dt", {}, "Space"), h("dd", {}, space.name),
+      h("dt", {}, "Session"), h("dd", {}, `${session.id} · ${session.state}`),
+      h("dt", {}, "Display"), h("dd", {}, `${display.name} · ${display.resolution}`)),
+    state,
+  ], { cls: "cua-spaces" });
+  const el = shell(a, "cua-spaces", { verb: "Cua Spaces session", status: "Fixture", body: surface,
+    foot: buttons, summary: `Previewed the display for ${space.name}` });
+  return { el, async play() {}, spec: { kind: "cua-spaces", app: a.id, simulated: true, space, session,
+    display: { ...display, state: "streaming", target: targets[0].id }, targets } };
+}
+
 export const KINDS_E = {
+  "cua-spaces": { label: "Cua Spaces", verb: () => "Inspect a Space display", make: spacesMake },
   screen: { label: "Computer-use screen", verb: () => "Agent on its own display", make: screenMake },
   sandbox: { label: "Forking sandboxes", verb: () => "Forked VMs", make: sandboxMake },
 };

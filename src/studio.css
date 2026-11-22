@@ -544,3 +544,10 @@
 .hl-src { display: flex; gap: 3px; } .hl-src span { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--ap-fg) 8%, transparent); opacity: .7; } .hl-src span.on { opacity: 1; background: var(--ap-acc); color: #fff; }
 .hl-acts { padding: 8px 10px 10px; }
 @media (max-width: 720px) { .tw-grid { grid-template-columns: minmax(0, 1fr); } .hl-top { grid-template-columns: minmax(0, 1fr); justify-items: center; } .hl-side { width: 100%; } .hl-src { display: none; } }
+
+/* Cua Spaces fixture readout */
+.space-readout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 0; padding: 10px; }
+.space-readout dt { font-weight: 600; }
+.space-readout dd { margin: 0; overflow-wrap: anywhere; }
+.cua-spaces [role="status"] { margin: 0; padding: 8px 10px; background: var(--ap-panel); }
+.k-cua-spaces [aria-pressed="true"] { border-color: var(--a); }

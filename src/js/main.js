@@ -236,7 +236,7 @@ function closeDrawer() {
 }
 
 /* ---------------- kinds gallery ---------------- */
-const SHOW_STUDIO = { twin: "warehouse-twin", health: "oura", plugin: "meshy", screen: "scrcpy", sandbox: "boat", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
+const SHOW_STUDIO = { twin: "warehouse-twin", health: "oura", plugin: "meshy", screen: "scrcpy", sandbox: "boat", "cua-spaces": "cua", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
 const SHOW = { inbox: "gmail", thread: "proton-mail", approve: "1password", chat: "discord", notify: "telegram", slots: "google-calendar", kanban: "trello", triage: "linear", file: "google-drive", graph: "obsidian", search: "yelp", feed: "bluesky", frames: "figma", sign: "docusign", context: "claude", receipt: "stripe", metric: "posthog", track: "fedex", crm: "hubspot", ride: "uber", route: "waze", boarding: "united", player: "spotify", workout: "strava", home: "philips-hue", merge: "github", ci: "github-actions", deploy: "vercel", incident: "pagerduty", migrate: "supabase" };
 function buildKinds() {
   const g = $("#kindgrid");

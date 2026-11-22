@@ -237,7 +237,7 @@ STUDIO_APPS = [
     ("Meta Ads Manager", "meta", "analytics", ["metric", "approve", "gallery"], D()),
     ("Maze", "maze", "analytics", ["review", "metric"], D()),
     # ---- agent compute: computer use, virtual displays, sandboxes
-    ("Cua", None, "agents", ["screen", "sandbox", "metric"], D(oss=True, alt=["OpenAI Operator", "Anthropic computer use VMs"], ui="code", docs="https://github.com/trycua/cua")),
+    ("Cua", None, "agents", ["screen", "sandbox", "metric", "cua-spaces"], D(oss=True, alt=["OpenAI Operator", "Anthropic computer use VMs"], ui="code", docs="https://github.com/trycua/cua")),
     ("scrcpy", None, "agents", ["screen", "review"], D(oss=True, alt=["Vysor", "Samsung DeX"], ui="code", docs="https://github.com/Genymobile/scrcpy/blob/master/doc/virtual_display.md")),
     ("boat", None, "agents", ["sandbox", "screen", "deploy"], D(alt=["E2B", "Daytona"], ui="code", docs="https://boat.dev")),
     ("E2B", None, "agents", ["sandbox", "screen"], D(oss=True, alt=["boat", "Modal sandboxes"], ui="code", docs="https://e2b.dev/docs")),

@@ -190,3 +190,12 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 - Merge motion after [@pitus_'s Generative UI #2](https://x.com/pitus_/status/2111519352503873866).
 - Type: Inter, Instrument Serif, IBM Plex Mono, Courier Prime, Caveat, and Archivo Black in the reel (SIL OFL 1.1).
 - Reel made with [fframes](https://fframes.studio); music "November Snow" by The Cynic Project / cynicmusic.com (CC0).
+
+## Cua Spaces fixture
+
+In the site's Kinds → Studio gallery, **Cua Spaces** shows a synthetic Space, running session,
+and primary display. Switch between desktop and Browser window to see a local
+`eui:intent` event with the fixture identifiers. It doesn't connect to Cua, open a stream,
+or control a native desktop. The desktop/window distinction comes from the
+[Cua Spaces streams and display reference](https://cua.ai/docs/spaces/reference/spaces#streams-and-display).
+The generic Cua screen, Boat sandbox, and scrcpy virtual-display demos remain separate.
