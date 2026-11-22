@@ -1234,16 +1234,16 @@
         "390": {
           "fixture": "work-dock/z0",
           "control": "Hold: Scrub, then land",
-          "keyboard": "event:toggle",
-          "pointer": "event:toggle",
+          "keyboard": "event:approve",
+          "pointer": "event:approve",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "work-dock/z0",
           "control": "Hold: Scrub, then land",
-          "keyboard": "event:toggle",
-          "pointer": "event:toggle",
+          "keyboard": "event:approve",
+          "pointer": "event:approve",
           "overflow": false,
           "webgl": false
         }
