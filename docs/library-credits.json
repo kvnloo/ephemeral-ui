@@ -1,0 +1,211 @@
+[
+  {
+    "id": "openui",
+    "upstream": "OpenUI",
+    "url": "https://github.com/thesysdev/openui",
+    "group": "kit",
+    "license": "MIT",
+    "version": "0.3.1",
+    "note": "By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "@openuidev/lang-core",
+        "range": "0.3.1"
+      }
+    ]
+  },
+  {
+    "id": "hermes-agent",
+    "upstream": "Hermes Agent",
+    "url": "https://github.com/NousResearch/hermes-agent",
+    "group": "kit",
+    "license": "MIT",
+    "note": "Host theme tokens.",
+    "sources": [
+      {
+        "path": "tools/vendor/hermes-themes.json"
+      }
+    ]
+  },
+  {
+    "id": "meshoptimizer",
+    "upstream": "meshoptimizer",
+    "url": "https://github.com/zeux/meshoptimizer",
+    "group": "kit",
+    "license": "MIT",
+    "version": "1.1",
+    "note": "Decodes compressed 3D meshes.",
+    "sources": [
+      {
+        "path": "src/vendor/addons/libs/meshopt_decoder.module.js"
+      }
+    ]
+  },
+  {
+    "id": "omp-stats",
+    "upstream": "omp-stats",
+    "url": "https://github.com/can1357/oh-my-pi",
+    "group": "kit",
+    "license": "MIT",
+    "note": "Trace card shapes and API from @oh-my-pi/omp-stats.",
+    "sources": [
+      {
+        "path": "src/js/stats-lib.js"
+      }
+    ]
+  },
+  {
+    "id": "simple-icons",
+    "upstream": "simple-icons",
+    "url": "https://simpleicons.org",
+    "group": "kit",
+    "license": "CC0-1.0",
+    "version": "16.36.0",
+    "note": "Brand marks and colours shipped as kit data; marks are trademarks of their owners.",
+    "sources": [
+      {
+        "packageJson": "tools/package.json",
+        "package": "simple-icons",
+        "range": "^16.36.0"
+      }
+    ]
+  },
+  {
+    "id": "t3-code",
+    "upstream": "T3 Code",
+    "url": "https://github.com/pingdotgg/t3code",
+    "group": "kit",
+    "license": "MIT",
+    "note": "Host theme tokens.",
+    "sources": [
+      {
+        "path": "tools/themes.py"
+      }
+    ]
+  },
+  {
+    "id": "tailwind-css",
+    "upstream": "Tailwind CSS",
+    "url": "https://tailwindcss.com",
+    "group": "kit",
+    "license": "MIT",
+    "note": "Colour ramps shipped in the host theme data.",
+    "sources": [
+      {
+        "path": "tools/themes.py"
+      }
+    ]
+  },
+  {
+    "id": "three",
+    "upstream": "three.js",
+    "url": "https://threejs.org",
+    "group": "kit",
+    "license": "MIT",
+    "version": "0.187.0",
+    "note": "3D studio cards and their loaders.",
+    "sources": [
+      {
+        "packageJson": "tools/package.json",
+        "package": "three",
+        "range": "^0.187.0"
+      },
+      {
+        "path": "src/vendor/addons/LICENSE"
+      },
+      {
+        "path": "src/vendor/addons/environments/RoomEnvironment.js"
+      },
+      {
+        "path": "src/vendor/addons/loaders/GLTFLoader.js"
+      },
+      {
+        "path": "src/vendor/addons/utils/BufferGeometryUtils.js"
+      },
+      {
+        "path": "src/vendor/addons/utils/SkeletonUtils.js"
+      },
+      {
+        "path": "src/vendor/three.min.js"
+      }
+    ]
+  },
+  {
+    "id": "ajv",
+    "upstream": "Ajv",
+    "url": "https://ajv.js.org",
+    "group": "tools",
+    "license": "MIT",
+    "version": "8.17.1",
+    "note": "Schema validation in tests.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "ajv",
+        "range": "8.17.1"
+      }
+    ]
+  },
+  {
+    "id": "esbuild",
+    "upstream": "esbuild",
+    "url": "https://esbuild.github.io",
+    "group": "tools",
+    "license": "MIT",
+    "version": "0.25.10",
+    "note": "Bundles exported cards.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "esbuild",
+        "range": "0.25.10"
+      }
+    ]
+  },
+  {
+    "id": "linkedom",
+    "upstream": "linkedom",
+    "url": "https://github.com/WebReflection/linkedom",
+    "group": "tools",
+    "license": "ISC",
+    "version": "0.18.13",
+    "note": "DOM implementation for tests.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "linkedom",
+        "range": "0.18.13"
+      }
+    ]
+  },
+  {
+    "id": "playwright",
+    "upstream": "Playwright",
+    "url": "https://playwright.dev",
+    "group": "tools",
+    "license": "Apache-2.0",
+    "note": "Optional browser checks and screenshot tooling; not shipped with the site.",
+    "sources": [
+      {
+        "path": "tools/credits-browser.mjs"
+      }
+    ]
+  },
+  {
+    "id": "zod",
+    "upstream": "Zod",
+    "url": "https://zod.dev",
+    "group": "tools",
+    "license": "MIT",
+    "version": "4.0.0",
+    "note": "OpenUI parser peer dependency for card export.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "zod",
+        "range": "4.0.0"
+      }
+    ]
+  }
+]
