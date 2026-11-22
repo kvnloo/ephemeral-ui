@@ -40,6 +40,7 @@
 .v3 { position: relative; width: 100%; aspect-ratio: var(--ar, 1.6); min-height: 150px; touch-action: none; overflow: hidden; cursor: grab; }
 .v3.grab { cursor: grabbing; }
 .v3-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.v3-cv:focus-visible { outline: 2px solid var(--ap-hot, currentColor); outline-offset: -3px; }
 .v3-hud { position: absolute; inset: 0; pointer-events: none; }
 .v3-tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; font: 600 10px var(--h-font); color: #fff; white-space: nowrap; transform: translate(-6px, -6px); }
 .v3-tag i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 30%, transparent); }

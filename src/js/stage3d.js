@@ -114,6 +114,26 @@ export function stage3d(host, setup, { bg = 0x1d1d1d, aspect = 16 / 10, shadows 
   const up = (e) => { if (!drag) return; drag = null; host.classList.remove("grab"); v.onUp?.(e); clearTimeout(v._resume); v._resume = setTimeout(() => (v.auto = true), 2600); };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   cv.addEventListener("wheel", (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); v.orbit.dist = Math.max(1.5, Math.min(60, v.orbit.dist * (1 + e.deltaY * 0.001))); }, { passive: false });
+  if (orbit) {
+    cv.tabIndex = 0;
+    cv.setAttribute("aria-label", "3D view: arrow keys orbit, plus and minus zoom");
+    cv.addEventListener("keydown", e => {
+      const o = v.orbit;
+      switch (e.key) {
+        case "ArrowLeft": o.yaw += 0.16; break;
+        case "ArrowRight": o.yaw -= 0.16; break;
+        case "ArrowUp": o.pitch = Math.min(1.35, o.pitch + 0.12); break;
+        case "ArrowDown": o.pitch = Math.max(-0.2, o.pitch - 0.12); break;
+        case "+": case "=": o.dist = Math.max(1.5, o.dist / 1.12); break;
+        case "-": o.dist = Math.min(60, o.dist * 1.12); break;
+        default: return;
+      }
+      e.preventDefault();
+      v.auto = false;
+      clearTimeout(v._resume);
+      v._resume = setTimeout(() => (v.auto = true), 2600);
+    });
+  }
   function ndc(e) { const b = cv.getBoundingClientRect(); return { x: ((e.clientX - b.left) / b.width) * 2 - 1, y: -((e.clientY - b.top) / b.height) * 2 + 1 }; }
   v.applyOrbit = () => {
     const o = v.orbit, [tx, ty, tz] = o.target;
