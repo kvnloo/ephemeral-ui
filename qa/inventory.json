@@ -2115,23 +2115,23 @@
     },
     "trace": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The compression control works; selecting a span from the inline canvas still lacks a focusable equivalent.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Spans are reachable without a pointer: Previous/Next span buttons and the focusable timeline (arrows, +/-, 0, Escape) select and reveal a span, open its drawer and emit a typed select (span, track, session).",
       "receipts": {
         "390": {
           "fixture": "trace/omp-stats",
-          "control": "Compress idle",
-          "keyboard": "event:change",
-          "pointer": "event:change",
+          "control": "Next span",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace/omp-stats",
-          "control": "Compress idle",
-          "keyboard": "event:change",
-          "pointer": "event:change",
+          "control": "Next span",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2211,23 +2211,23 @@
     },
     "trace-tools": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The sort is available but opening a tool row still relies on pointer input.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Each tool row has a real button (aria-expanded) that opens its spans by keyboard or pointer and emits focus_tool; span rows are buttons that emit a typed select and open the drawer.",
       "receipts": {
         "390": {
           "fixture": "trace-tools/omp-stats",
-          "control": "Errors",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "read spans",
+          "keyboard": "event:focus_tool",
+          "pointer": "event:focus_tool",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace-tools/omp-stats",
-          "control": "Errors",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "read spans",
+          "keyboard": "event:focus_tool",
+          "pointer": "event:focus_tool",
           "overflow": false,
           "webgl": false
         }
@@ -2235,23 +2235,23 @@
     },
     "trace-errors": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The request/span mode switches, but expanding rows and jumping to a span are pointer-only.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Signature rows expand from a focusable button (aria-expanded, focus kept across re-render) and emit focus_error; every \"Jump to span\" is a button that emits a typed select.",
       "receipts": {
         "390": {
           "fixture": "trace-errors/omp-stats",
-          "control": "Spans",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "protocol_error · stateful socket rejected, 171 failures",
+          "keyboard": "event:focus_error",
+          "pointer": "event:focus_error",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "trace-errors/omp-stats",
-          "control": "Spans",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "control": "protocol_error · stateful socket rejected, 171 failures",
+          "keyboard": "event:focus_error",
+          "pointer": "event:focus_error",
           "overflow": false,
           "webgl": false
         }
@@ -2307,23 +2307,23 @@
     },
     "infra-architecture": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the graph edits and inspector change locally, but node selections still return no typed context.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Selecting a service emits a typed select (node, service); the inspector names its connections, asks the agent with an inline acknowledgement, and removal is undoable.",
       "receipts": {
         "390": {
           "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-architecture/google-cloud",
           "control": "Cloud Run",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2331,23 +2331,23 @@
     },
     "infra-cluster": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the workload inspector is local only and the card has no typed workload handoff.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Opening a workload emits a typed select (cluster, namespace, workload); each workload has an Ask agent handoff whose acknowledgement says the snapshot is authored, not live.",
       "receipts": {
         "390": {
           "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-cluster/k3s",
           "control": "inference / llama-server · 1/1",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -2355,23 +2355,23 @@
     },
     "infra-iac": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); the review filter works but the selection is not emitted as typed change context.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The filter emits the shown change addresses, opening a change emits a typed select, and \"Ask agent to review shown\" hands the set over with an acknowledgement that nothing is applied.",
       "receipts": {
         "390": {
           "fixture": "infra-iac/terraform",
           "control": "Destructive only",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-iac/terraform",
           "control": "Destructive only",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:filter",
+          "pointer": "event:filter",
           "overflow": false,
           "webgl": false
         }
@@ -2379,23 +2379,23 @@
     },
     "infra-models": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Ported to main (catalog fixture); artifact inspection is local only, with no typed stage handoff and no runtime verification.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Each stage emits a typed select (stage, runtime, step); the inspector states \"Verified: nothing yet\" and hands a stage check plan to the agent with an honest acknowledgement.",
       "receipts": {
         "390": {
           "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "infra-models/unsloth",
           "control": "4 / GGUF",
-          "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
