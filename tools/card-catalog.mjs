@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const src = path.join(root, "src");
+export const DEMO_FILE = path.join(src, "data/kind-demos.json");
 export const CATALOG_FILE = path.join(root, "catalog/catalog.json");
 const rel = (f) => path.relative(root, f).split(path.sep).join("/");
 
@@ -100,9 +101,9 @@ export async function kinds() {
   return { list, owners };
 }
 
-/** The kinds src/js/main.js puts on the site (its KINDS spread). */
+/** The kinds src/js/kind-registry.js puts on the site (its KINDS spread). */
 function siteKinds(list) {
-  const main = fs.readFileSync(path.join(src, "js/main.js"), "utf8");
+  const main = fs.readFileSync(path.join(src, "js/kind-registry.js"), "utf8");
   const spread = main.match(/export const KINDS = \{([^}]*)\}/)[1].match(/KINDS_\w+/g);
   return new Set([...list].filter(([, v]) => spread.includes(v.exportName)).map(([k]) => k));
 }
@@ -180,17 +181,26 @@ export async function build() {
 
 export const serialize = (c) => JSON.stringify(c, null, 1) + "\n";
 
+// The static site serves src/ directly. Publish only the first fixture's mount information,
+// not the entire catalog of renderer props.
+export const demoIndex = ({ kinds }) => kinds.filter((entry) => entry.site).map(({ kind, label, group, apps, fixtures }) => ({
+  kind, label, group, app: apps[0], seed: fixtures[0].seed, example: fixtures[0].state === "example",
+}));
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const text = serialize(await build());
-  if (process.argv.includes("--check")) {
-    const cur = fs.existsSync(CATALOG_FILE) ? fs.readFileSync(CATALOG_FILE, "utf8") : "";
-    if (cur !== text) { console.error(`${rel(CATALOG_FILE)} is stale: run node tools/card-catalog.mjs`); process.exit(1); }
-    console.log(`${rel(CATALOG_FILE)} is up to date`);
-  } else {
-    fs.mkdirSync(path.dirname(CATALOG_FILE), { recursive: true });
-    fs.writeFileSync(CATALOG_FILE, text);
-    const c = JSON.parse(text);
-    console.log(`wrote ${rel(CATALOG_FILE)}: ${c.count.kinds} kinds, ${c.count.fixtures} fixtures, version ${c.version}`);
+  const catalog = await build();
+  for (const [file, content] of [[CATALOG_FILE, catalog], [DEMO_FILE, demoIndex(catalog)]]) {
+    const text = serialize(content);
+    if (process.argv.includes("--check")) {
+      const cur = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+      if (cur !== text) { console.error(`${rel(file)} is stale: run node tools/card-catalog.mjs`); process.exit(1); }
+      console.log(`${rel(file)} is up to date`);
+    } else {
+      fs.writeFileSync(file, text);
+      console.log(`wrote ${rel(file)}: ${file === CATALOG_FILE
+        ? `${catalog.count.kinds} kinds, ${catalog.count.fixtures} fixtures, version ${catalog.version}`
+        : `${content.length} demos`}`);
+    }
   }
   process.exit(0); // cards leave timers (loops, tickers) behind
 }

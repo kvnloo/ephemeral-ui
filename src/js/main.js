@@ -2,28 +2,13 @@
 import { h, anim, flip, stagger, countUp, typeText, Run, quiet, motion, rng } from "./motion.js";
 import { loadThemes, state as T, setTheme, setOver, setBrand, setLogos, setSpeed, exportCSS, exportJSON, current } from "./themes.js";
 import { loadApps, catalog, icon, svg, seg, dissolve, burst } from "./shell.js";
-import { KINDS_A } from "./kinds-a.js";
-import { KINDS_B } from "./kinds-b.js";
-import { KINDS_C } from "./kinds-c.js";
-import { KINDS_3D } from "./kinds-3d.js";
-import { KINDS_E } from "./kinds-e.js";
-import { KINDS_P } from "./kinds-p.js";
-import { KINDS_F } from "./kinds-f.js";
-import { KINDS_H } from "./kinds-h.js";
-import { KINDS_K } from "./kinds-k.js";
-import { KINDS_T } from "./kinds-t.js";
-import { KINDS_I } from "./kinds-i.js";
 import { buildIntent, INTENT_KITS } from "./intent-kits.js";
 import { buildAsk } from "./ask.js";
 import { buildCombos, COMBOS } from "./combos.js";
-import { KINDS_OPS } from "./kinds-ops.js";
-import { KINDS_FLEET } from "./kinds-fleet.js";
-import { KINDS_INFRA, buildInfrastructure } from "./kinds-infra.js";
-import { KINDS_INTEL } from "./kinds-intel.js";
+import { buildInfrastructure } from "./kinds-infra.js";
 import { translate, themeFor, profileOf } from "./host-bridge.js";
-
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_K, ...KINDS_H, ...KINDS_T, ...KINDS_I, ...KINDS_INFRA, ...KINDS_OPS, ...KINDS_FLEET, ...KINDS_INTEL };
-const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P), ...Object.keys(KINDS_F), ...Object.keys(KINDS_K)]);
+import { KINDS, STUDIO } from "./kind-registry.js";
+export { KINDS };
 /** Agent host profiles (data/hosts.json): skins, declared tiers and bridges. Every preview is a simulation. */
 export const HOSTS = { list: [], fixture: null, tiers: {} };
 const prof = (t = current()) => profileOf(HOSTS.list, t) || HOSTS.list[0];

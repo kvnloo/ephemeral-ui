@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { build, serialize, kinds, render, propsOf, CATALOG_FILE } from "./card-catalog.mjs";
+import { build, serialize, kinds, render, propsOf, demoIndex, DEMO_FILE, CATALOG_FILE } from "./card-catalog.mjs";
 
 const read = (p) => JSON.parse(fs.readFileSync(new URL(p, import.meta.url), "utf8"));
 const text = fs.readFileSync(CATALOG_FILE, "utf8");
@@ -14,6 +14,12 @@ const all = catalog.kinds.flatMap((k) => k.fixtures.map((f) => [k, f]));
 
 test("catalog/catalog.json is what tools/card-catalog.mjs generates (run it after changing a kind)", async () => {
   assert.equal(text, serialize(await build()));
+});
+
+test("the public demo index is fresh and covers every catalog kind", () => {
+  const index = fs.readFileSync(DEMO_FILE, "utf8");
+  assert.equal(index, serialize(demoIndex(catalog)));
+  assert.deepEqual(JSON.parse(index).map(({ kind }) => kind), catalog.kinds.map(({ kind }) => kind));
 });
 
 test("catalog validates against catalog/catalog.schema.json", () => {
