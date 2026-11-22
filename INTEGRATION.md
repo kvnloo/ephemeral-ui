@@ -48,9 +48,12 @@ host renders them natively. One shared definition, per-host renderers:
    WebViews): `node tools/export-cards.mjs --program reply.openui --host-vars --out cards.html` parses
    the model's `Board(… [EphemeralCards(title, [{kind, app?, input?}])])` fence with the real
    `@openuidev/lang-core` (`OPENUI_FROM=<package.json next to it>`) and fails closed on bad programs.
-   Kinds listed in `card.v0.json` `$defs.appInput` (now: `merge`) draw the given data; every other kind
+   Kinds listed in `card.v0.json` `$defs.appInput` (now: `merge`, `infra-architecture`) draw the given data; every other kind
    draws sample data and rejects `input`. `--catalog-prompt merge,ci` prints the minimal catalog text
    for just those kinds instead of the whole catalog.
+   **A2UI hosts** (CopilotKit, Google ADK/A2A agents) send the same cards as an A2UI v0.9/v1.0 stream
+   against `src/schema/a2ui-catalog.v0.json`; `--program` detects it and renders it through the same spec
+   and export, and the export answers card interactions with A2UI `action` messages (README, Providers).
 3. **Proof per host**: the stock parser accepts the literal fence; the component matches the
    Tier 0 reference at desktop/phone width; a real model turn emits it and it renders in that client.
    Everything lands on each repo's nightly branch first.

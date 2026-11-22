@@ -11,14 +11,16 @@ const json = path => JSON.parse(read(path));
 // the respective lockfiles; an unclassified package fails generation.
 const npmCredits = {
   '@openuidev/lang-core': ['openui', 'OpenUI', 'https://github.com/thesysdev/openui', 'kit',
-    'By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.'],
+    'By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core; src/vendor/openui-lang-core.js bundles it for the browser.'],
   'simple-icons': ['simple-icons', 'simple-icons', 'https://simpleicons.org', 'kit',
     'Brand marks and colours shipped as kit data; marks are trademarks of their owners.'],
   three: ['three', 'three.js', 'https://threejs.org', 'kit', '3D studio cards and their loaders.'],
   ajv: ['ajv', 'Ajv', 'https://ajv.js.org', 'tools', 'Schema validation in tests.'],
   esbuild: ['esbuild', 'esbuild', 'https://esbuild.github.io', 'tools', 'Bundles exported cards.'],
   linkedom: ['linkedom', 'linkedom', 'https://github.com/WebReflection/linkedom', 'tools', 'DOM implementation for tests.'],
-  zod: ['zod', 'Zod', 'https://zod.dev', 'tools', 'OpenUI parser peer dependency for card export.'],
+  playwright: ['playwright', 'Playwright', 'https://playwright.dev', 'tools',
+    'Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.'],
+  zod: ['zod', 'Zod', 'https://zod.dev', 'kit', 'OpenUI parser peer dependency; bundled into src/vendor/openui-lang-core.js.'],
 };
 
 export function collectLibraries() {
@@ -58,6 +60,7 @@ export function collectLibraries() {
     'src/vendor/addons/utils/BufferGeometryUtils.js': 'three',
     'src/vendor/addons/utils/SkeletonUtils.js': 'three',
     [decoder]: 'meshoptimizer',
+    'src/vendor/openui-lang-core.js': 'openui',
   };
   const vendorFiles = readdirSync(file('src/vendor/'), { recursive: true, withFileTypes: true })
     .filter(entry => !entry.isDirectory())
@@ -77,10 +80,12 @@ export function collectLibraries() {
       'Host theme tokens.', 'tools/themes.py'],
     ['hermes-agent', 'Hermes Agent', 'https://github.com/NousResearch/hermes-agent', 'kit', 'MIT',
       'Host theme tokens.', 'tools/vendor/hermes-themes.json'],
+    ['a2ui', 'A2UI', 'https://a2ui.org', 'kit', 'Apache-2.0',
+      'By Google; the agent-to-UI protocol src/js/a2ui.js reads (spec only, no code taken).', 'src/js/a2ui.js'],
+    ['ci-info', 'ci-info', 'https://github.com/watson/ci-info', 'kit', 'MIT',
+      'An @openuidev/lang-core dependency, bundled into src/vendor/openui-lang-core.js.', 'src/vendor/openui-lang-core.js'],
     ['tailwind-css', 'Tailwind CSS', 'https://tailwindcss.com', 'kit', 'MIT',
       'Colour ramps shipped in the host theme data.', 'tools/themes.py'],
-    ['playwright', 'Playwright', 'https://playwright.dev', 'tools', 'Apache-2.0',
-      'Optional browser checks and screenshot tooling; not shipped with the site.', 'tools/credits-browser.mjs'],
   ];
   for (const [id, upstream, url, group, license, note, path] of references) {
     entries.set(id, { id, upstream, url, group, license, note, sources: [{ path }] });

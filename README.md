@@ -53,6 +53,57 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   [catalog/README.md](catalog/README.md).
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
+## Standalone card demos
+
+Use **Live demos** from the kit, or open [the demo index](src/demos.html) at `/demos.html` on
+the site. Every catalog kind has a shareable URL: `/demos.html?kind=<kind>`, for example
+`/demos.html?kind=cua-action`, `/demos.html?kind=gev-contacts`, and
+`/demos.html?kind=work-dock`. No host picker or agent session is required. The cards
+use sample or sanitized data; controls do not run real app actions. **Replay demo**
+resets the card to its initial state. The catalog generator also updates the public demo index.
+
+Use **Bare (host only)** for host-colored controls, neutral monograms and host editor chrome.
+**Full brand** restores the app accent, tinted heading and top rule, brand tile (where verified),
+and the app’s editor palette where present. The switch does not remount the card. Apps with
+no verified brand color keep a neutral tile and use a muted accent in Full brand.
+
+Fixed skins: the eight `trace*` cards keep the omp-stats dark surface and chart palette;
+`cua-action` keeps its dark driver/evidence HUD, and `gev-contacts` keeps its dark radar HUD.
+Their shared header switches modes too, but their dedicated surfaces and status colors do not.
+Semantic chart lanes, status colors, and preview media (such as a 3D viewport or radar plot)
+are content, not app branding.
+
+Browser check (run the server in a separate terminal):
+
+    npm ci
+    npx playwright install chromium
+    python3 -m http.server --directory src
+    node tools/kind-demos.spec.mjs http://localhost:8000/
+
+Set `EUI_CHROMIUM` to an installed Chromium or Chrome executable to use that instead.
+## Providers: OpenUI Lang and A2UI
+
+One card spec, one renderer, several wire formats. An agent can answer in an openui-v2 program
+(`Board(title, summary, [EphemeralCards(title, [{kind, app?, input?}])])`), in a Google
+[A2UI](https://a2ui.org) v0.9 or v1.0 stream (`createSurface` / `updateComponents` / `updateDataModel`
+naming the components of `src/schema/a2ui-catalog.v0.json`: `Board`, `EphemeralCards`, `EphemeralCard`),
+or in Glide's ```` ```ephemeral-ui ```` card.v0 fences. Each adapter only reads its format; all of them end in
+`normalize()` (`src/js/card-spec.js`), which checks every card against `card.v0.json` and resolves its app, so
+the kind modules draw the same card from any of them.
+
+- `src/js/a2ui.js`: the A2UI adapter (DOM-free, browser and Node). Fails closed with A2UI error codes
+  (`VALIDATION_FAILED`, `INTEGRITY_ERROR`): wrong catalog, unknown component or property, missing or cyclic
+  children, unresolved `@path`/`path` bindings, function calls, a v1.0 `theme`, v0.8 messages. Cards take
+  the host theme. `toA2UIAction()` turns a card's `eui:intent` into the A2UI `action` message.
+- `node tools/export-cards.mjs --program reply.a2ui.jsonl --out cards.html`: the same HTML export as OpenUI
+  programs (the format is detected). An A2UI export also posts `{ type: "a2ui:action", message }` to its frame.
+- `src/providers.html`: the canonical fixtures (`src/data/providers/`) drawn side by side in the browser. It
+  parses OpenUI Lang with `src/vendor/openui-lang-core.js`, the pinned `@openuidev/lang-core` bundled by
+  `node tools/vendor-openui.mjs` (`--check` in the tests).
+- Tests: `node --test tools/provider-parity.test.mjs` (same normalized spec, DOM, theme tokens and
+  interaction event from both providers; invalid payloads rejected). In Chromium:
+  `PLAYWRIGHT_FROM=<dir>/package.json [CHROMIUM=<chrome>] node tools/provider-parity.pw.mjs`.
+
 ## Ripple intent kits
 
 Three new compositions at `#intent=declare`, `#intent=operate`, and `#intent=understand`:
@@ -156,6 +207,7 @@ run the leak check. DOM suite: `EUI_DOM_MODULE=<linkedom>/worker.js node --test 
     python3 tools/themes.py tools/vendor/hermes-themes.json > src/data/themes.json
     node tools/card-catalog.mjs                                                # catalog/catalog.json (--check in CI)
     node --test tools/*.test.mjs                                               # all suites
+    EUI_BROWSER_URL=http://127.0.0.1:<port> PLAYWRIGHT_FROM=<dir>/package.json node --test tools/infra.test.mjs  # + Chromium infra pass
     python3 -m http.server 0 --bind 127.0.0.1 --directory src                  # any free port
     node tools/shot.mjs http://127.0.0.1:<port>/ out/shots --theme hermes-nous  # screenshots + page errors
     tools/deploy.sh                                                            # dist/ -> production
@@ -178,7 +230,9 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 <!-- BEGIN LIBRARY CREDITS -->
 ### Kit libraries and data
 
-- [OpenUI](https://github.com/thesysdev/openui) (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.
+- [OpenUI](https://github.com/thesysdev/openui) (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core; src/vendor/openui-lang-core.js bundles it for the browser.
+- [A2UI](https://a2ui.org) (Apache-2.0): By Google; the agent-to-UI protocol src/js/a2ui.js reads (spec only, no code taken).
+- [ci-info](https://github.com/watson/ci-info) (MIT): An @openuidev/lang-core dependency, bundled into src/vendor/openui-lang-core.js.
 - [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT): Host theme tokens.
 - [meshoptimizer](https://github.com/zeux/meshoptimizer) (1.1; MIT): Decodes compressed 3D meshes.
 - [omp-stats](https://github.com/can1357/oh-my-pi) (MIT): Trace card shapes and API from @oh-my-pi/omp-stats.
@@ -186,14 +240,14 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 - [T3 Code](https://github.com/pingdotgg/t3code) (MIT): Host theme tokens.
 - [Tailwind CSS](https://tailwindcss.com) (MIT): Colour ramps shipped in the host theme data.
 - [three.js](https://threejs.org) (0.187.0; MIT): 3D studio cards and their loaders.
+- [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency; bundled into src/vendor/openui-lang-core.js.
 
 ### Tool-only libraries
 
 - [Ajv](https://ajv.js.org) (8.17.1; MIT): Schema validation in tests.
 - [esbuild](https://esbuild.github.io) (0.25.10; MIT): Bundles exported cards.
 - [linkedom](https://github.com/WebReflection/linkedom) (0.18.13; ISC): DOM implementation for tests.
-- [Playwright](https://playwright.dev) (Apache-2.0): Optional browser checks and screenshot tooling; not shipped with the site.
-- [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency for card export.
+- [Playwright](https://playwright.dev) (1.65.1; Apache-2.0): Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.
 <!-- END LIBRARY CREDITS -->
 
 ### Media and design

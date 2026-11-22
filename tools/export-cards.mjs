@@ -9,6 +9,7 @@
 //   node tools/export-cards.mjs --cards ripple:intent-declare,z0intelligence:intel-value --theme t3-dark --out x.html
 //   node tools/export-cards.mjs --program reply.md   (```ephemeral-ui card.v0 fences, the Glide contract)
 //   node tools/export-cards.mjs --program reply.openui --theme hermes-nous --host-vars --out x.html   (OPENUI_FROM=<dir with @openuidev/lang-core>/package.json)
+//   node tools/export-cards.mjs --program reply.a2ui.jsonl --out x.html   (A2UI v0.9/v1.0 stream, catalog src/schema/a2ui-catalog.v0.json)
 //   node tools/export-cards.mjs --catalog-prompt merge,ci   (prints the minimal catalog prompt for those kinds)
 //   options: --title <text>  --host-vars (map --h-* onto the host page's own CSS vars, for T3 html_render)
 //            --max-bytes <n> (default 512000, T3's html_render limit; fails instead of truncating)
@@ -17,67 +18,23 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execFileSync } from "node:child_process";
+import { fromProgram, APP_INPUT, MAX_CARDS } from "./card-spec.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const src = path.join(root, "src");
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1]; };
 const flag = (k) => process.argv.includes(`--${k}`);
 
-// ---- --program: an openui-v2 program (T3's EphemeralCards contract) parsed by the real @openuidev/lang-core
-// (resolved from OPENUI_FROM=<package.json>), each card's input checked against card.v0.json $defs.appInput.
-// The model writes ~300 tokens; this turns them into the self-contained page.
-const CARD = JSON.parse(fs.readFileSync(path.join(src, "schema/card.v0.json"), "utf8"));
-const APP_INPUT = CARD.$defs.appInput, KINDS_ENUM = CARD.properties.kind.enum, MAX_CARDS = 12;
-const FENCE = { properties: { Board: {}, EphemeralCards: {} }, $defs: {
-  Board: { type: "object", properties: { title: { type: "string" }, summary: { type: "string" }, panels: { type: "array", items: {} } }, required: ["title", "summary", "panels"] },
-  EphemeralCards: { type: "object", properties: { title: { type: "string" }, cards: { type: "array", items: {} } }, required: ["title", "cards"] } } };
-function check(v, s, at) { // the JSON Schema subset appInput uses; first problem wins
-  const t = Array.isArray(v) ? "array" : Number.isInteger(v) ? "integer" : typeof v;
-  if (s.enum) return s.enum.includes(v) ? null : `${at} must be one of ${s.enum.join("|")}`;
-  if (s.type && !(s.type === t || (s.type === "number" && t === "integer"))) return `${at} must be ${s.type}`;
-  if (t === "string" && (v.length < (s.minLength ?? 0) || v.length > (s.maxLength ?? Infinity) || (s.pattern && !new RegExp(s.pattern).test(v)))) return `${at} has a bad length or format`;
-  if (t === "integer" && (v < (s.minimum ?? -Infinity) || v > (s.maximum ?? Infinity))) return `${at} is out of range`;
-  if (t === "array") { if (v.length > (s.maxItems ?? Infinity)) return `${at} has more than ${s.maxItems} items`; for (const [i, x] of v.entries()) { const e = check(x, s.items, `${at}[${i}]`); if (e) return e; } }
-  if (t === "object" && s.properties) {
-    for (const k of s.required ?? []) if (!(k in v)) return `${at}.${k} is required`;
-    for (const [k, x] of Object.entries(v)) { if (!s.properties[k]) return `${at}.${k} is not allowed`; const e = check(x, s.properties[k], `${at}.${k}`); if (e) return e; }
-  }
-  return null;
-}
-const RULES = { merge: (p) => p.state === "conflict" && p.conflicts < 1 ? "conflict state needs conflicts >= 1" : !["open", "conflict"].includes(p.state) && p.conflicts ? "only open/conflict PRs have conflicts" : p.state === "ready" && p.checks.some((c) => c.status === "fail" || c.status === "running") ? "ready needs every check passed" : p.url && !p.url.endsWith(`/pull/${p.number}`) ? "url does not match number" : null };
-async function fromProgram(text) {
-  // Glide's contract (glide ephemeral_cards.py): one ```ephemeral-ui fence per card, holding a card.v0 object.
-  // The agent writes the same fence in every host; HTML-only hosts (Hermex) get it through this export.
-  const fences = [...text.matchAll(/```ephemeral-ui[^\n]*\n([\s\S]*?)\n```/g)];
-  if (fences.length) return cardsToItems(fences.map((m, i) => { try { return JSON.parse(m[1]); } catch (e) { throw Error(`--program: ephemeral-ui fence ${i + 1} is not JSON: ${e.message}`); } }));
-  const { createRequire } = await import("node:module");
-  const from = process.env.OPENUI_FROM || path.join(root, "package.json");
-  const { createParser } = await import(createRequire(from).resolve("@openuidev/lang-core"));
-  const source = text.replace(/^\s*```[\w-]*\s*\n|\n```\s*$/g, "");
-  const parse = (rt) => createParser(FENCE, rt).parse(source);
-  let r = parse("Board"); if (r.root?.typeName !== "Board") r = parse("EphemeralCards");
-  const bad = r.meta.incomplete ? "program is incomplete" : r.meta.unresolved.length ? `unresolved: ${r.meta.unresolved}` : r.meta.errors.length ? JSON.stringify(r.meta.errors[0]) : !r.root ? "no root" : null;
-  if (bad) throw Error(`--program: ${bad}`);
-  const panels = r.root.typeName === "Board" ? r.root.props.panels.filter((p) => p?.typeName === "EphemeralCards") : [r.root];
-  title ??= r.root.props.title;
-  return cardsToItems(panels.flatMap((p) => p.props.cards));
-}
-function cardsToItems(cards) {
-  if (!cards.length || cards.length > MAX_CARDS) throw Error(`--program: need 1..${MAX_CARDS} cards, got ${cards.length}`);
-  const apps = JSON.parse(fs.readFileSync(path.join(src, "data/apps.json"), "utf8")).apps;
-  return cards.map((c, i) => {
-    const at = `cards[${i}]`;
-    if (!KINDS_ENUM.includes(c?.kind)) throw Error(`--program: ${at}.kind ${c?.kind} is not a card.v0 kind`);
-    const app = c.app ?? apps.find((a) => a.kinds?.includes(c.kind))?.id ?? (c.kind.startsWith("trace") ? "omp-stats" : null);
-    if (c.input !== undefined && !c.kind.startsWith("trace")) {
-      if (!APP_INPUT[c.kind]) throw Error(`--program: ${at} ${c.kind} draws sample data and takes no input (input kinds: ${Object.keys(APP_INPUT).filter((k) => k !== "description")})`);
-      const e = check(c.input, APP_INPUT[c.kind], `${at}.input`) ?? RULES[c.kind]?.(c.input);
-      if (e) throw Error(`--program: ${e}`);
-    }
-    if (c.title !== undefined && (typeof c.title !== "string" || c.title.length > 200)) throw Error(`--program: ${at}.title must be a string up to 200 chars`);
-    if (c.title && cards.length === 1) title ??= c.title;
-    return [app, c.kind, c.input];
-  });
+// ---- --program: the agent's reply in any provider's format, through the one card spec (tools/card-spec.mjs):
+// ```ephemeral-ui card.v0 fences (Glide), an openui-v2 program (T3's EphemeralCards contract, parsed by the real
+// @openuidev/lang-core resolved from OPENUI_FROM=<package.json>) or an A2UI v0.9/v1.0 stream (src/js/a2ui.js).
+// Every card's input is checked against card.v0.json $defs.appInput, so all three fail the same way.
+let source = null;
+async function fromProgramFile(text) {
+  const spec = await fromProgram(text);
+  source = spec.source;
+  title ??= spec.title ?? (spec.cards.length === 1 ? spec.cards[0].title : undefined);
+  return spec.cards.map((c) => [c.app, c.kind, c.input]);
 }
 if (arg("catalog-prompt")) { // the minimal catalog text for the kinds in play (the whole catalog costs ~922 input tokens)
   const ks = arg("catalog-prompt").split(",");
@@ -97,7 +54,7 @@ if (arg("playlist")) {
   const pl = JSON.parse(b);
   items = pl.items.map(([app, kind, note]) => { notes[`${app}/${kind}`] = note || ""; return [app, kind]; });
   title ??= pl.t; themeId ??= pl.th;
-} else if (arg("program")) items = await fromProgram(fs.readFileSync(arg("program") === "-" ? 0 : arg("program"), "utf8"));
+} else if (arg("program")) items = await fromProgramFile(fs.readFileSync(arg("program") === "-" ? 0 : arg("program"), "utf8"));
 else items = (arg("cards") || "").split(",").filter(Boolean).map((s) => s.split(":"));
 if (!items.length) throw Error("no cards: pass --playlist, --program or --cards app:kind,…");
 themeId ??= "hermes-nous"; title ??= "ephemeral-ui cards";
@@ -127,13 +84,23 @@ const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), "eui-exp
 const J = (p) => JSON.stringify(path.join(src, "js", p));
 // --host-vars: kit token -> the host page's own CSS variable (shadcn names: T3 html_render, Hermex HTML reports).
 const HOST_VARS = [["bg", "--background"], ["fg", "--foreground"], ["card", "--card"], ["card-solid", "--card"], ["mutedFg", "--muted-foreground"], ["muted", "--muted", "color-mix(in srgb, var(--card) 88%, var(--foreground))"], ["border", "--border"], ["primary", "--primary"], ["primaryFg", "--primary-foreground"], ["success", "--success"], ["warning", "--warning"], ["danger", "--destructive"], ["font", "--font-sans"], ["mono", "--font-mono"]];
+// A2UI programs: each card answers its eui:intent with the renderer-to-agent action message for its
+// EphemeralCard (window.__a2uiActions, and postMessage({ type: "a2ui:action", message }) to a framing host).
+const a2uiWire = source?.provider !== "a2ui" ? "" : `
+    const A2UI = ${JSON.stringify({ version: source.version, surfaceId: source.surfaceId, componentIds: source.componentIds })}, sourceComponentId = A2UI.componentIds[idx];
+    cell.dataset.a2uiComponent = sourceComponentId;
+    cell.addEventListener("eui:intent", (e) => {
+      const message = toA2UIAction(e.detail, { version: A2UI.version, surfaceId: A2UI.surfaceId, sourceComponentId });
+      (window.__a2uiActions ??= []).push(message);
+      if (window.parent && window.parent !== window) window.parent.postMessage({ type: "a2ui:action", message }, "*");
+    });`;
 const entry = `
 const DATA = ${JSON.stringify(data)};
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (u) => { const k = String(u).replace(/^\\.?\\//, "").split("?")[0]; if (k in DATA) return new Response(JSON.stringify(DATA[k]), { headers: { "content-type": "application/json" } }); return realFetch ? realFetch(u) : Promise.reject(Error("offline: " + k)); };
 import { loadThemes, state, apply } from ${J("themes.js")};
 import { loadApps, catalog } from ${J("shell.js")};
-import { Run, rng } from ${J("motion.js")};
+import { Run, rng } from ${J("motion.js")};${source?.provider === "a2ui" ? `\nimport { toA2UIAction } from ${J("a2ui.js")};` : ""}
 ${mods.map((m, i) => `import { ${owner[Object.keys(owner).find((k) => owner[k][0] === m)][1]} as K${i} } from ${J(m + ".js")};`).join("\n")}
 const KINDS = Object.assign({}, ${mods.map((_, i) => `K${i}`).join(", ")});
 const ITEMS = ${JSON.stringify(items)}, NOTES = ${JSON.stringify(notes)};
@@ -158,12 +125,12 @@ const ITEMS = ${JSON.stringify(items)}, NOTES = ${JSON.stringify(notes)};
   const grid = document.getElementById("cards");
   const settled = [];
   let failed = 0;
-  for (const [app, kind, input] of ITEMS) {
+  for (const ${source?.provider === "a2ui" ? "[idx, [app, kind, input]] of ITEMS.entries()" : "[app, kind, input] of ITEMS"}) {
     const c = KINDS[kind].make(catalog.byId[app], rng(app + kind), input);
     const note = NOTES[app + "/" + kind];
     const cell = document.createElement("div"); cell.className = "xc-cell"; cell.dataset.kind = kind;
     if (note) { const n = document.createElement("p"); n.className = "xc-note"; n.textContent = note; cell.append(n); }
-    cell.append(c.el); grid.append(cell);
+    cell.append(c.el); grid.append(cell);${a2uiWire}
     settled.push(Promise.resolve(c.done).then(() => c.play?.(new Run())).catch((e) => { failed++; cell.append(Object.assign(document.createElement("p"), { className: "xc-note", textContent: "Card failed: " + e.message })); }));
   }
   await Promise.all(settled);

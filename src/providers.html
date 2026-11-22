@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ephemeral-ui · OpenUI Lang and A2UI</title><link rel="icon" href="data:,">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="trace.css"><link rel="stylesheet" href="intent.css"><link rel="stylesheet" href="fleet.css"><link rel="stylesheet" href="intel.css">
+<style>body{margin:0;padding:20px;background:var(--h-bg);color:var(--h-fg);font-family:var(--h-font,system-ui)}
+#stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:20px;align-items:start}
+.pv-col{min-width:0}.pv-tag{margin:0 0 4px;font:600 12px var(--h-mono);color:var(--h-mutedFg);text-transform:uppercase;letter-spacing:.04em}
+.pv-title{margin:0;font:600 17px var(--h-font)}.pv-sum{margin:4px 0 12px;font:13px/1.5 var(--h-font);color:var(--h-mutedFg)}
+.pv-cards{display:grid;gap:14px}.pv-cell .eu-card{width:100%;max-width:none}.pv-err{color:var(--h-danger)}</style>
+</head><body>
+<h1 style="font:600 15px var(--h-font);margin:0 0 14px">One card program, two providers: OpenUI Lang and A2UI, same kit renderer</h1>
+<div id="stage"></div>
+<script type="module" src="js/providers.js"></script>
+</body></html>

@@ -1,9 +1,10 @@
 # Replaying EU-024 receipts
 
 `inventory.json` is the per-kind grade sheet. It covers the generated catalog (including
-host-only kinds) and the four deployment-only kinds in `pages.json`. The latter pins
-the audited Pages revision and the infra module hash. When U07 brings a Pages kind into
-the catalog, switch that row to a catalog fixture and regrade it against main.
+host-only kinds) and any deployment-only kinds in `pages.json`. The latter pins the
+audited Pages revision and the infra module hash. When a Pages kind lands in the catalog,
+its row switches to a catalog fixture and is regraded against main; the four infra kinds
+did so with U07, so `pages.json` currently adds no Pages-only receipts.
 
 - **S / A:** the core demo interaction clears the [UX audit rubric](../UX-AUDIT.md).
   The receipt is a regression sample, not proof that every control, fixture variant,

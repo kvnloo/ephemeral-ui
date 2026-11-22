@@ -2,25 +2,13 @@
 import { h, anim, flip, stagger, countUp, typeText, Run, quiet, motion, rng } from "./motion.js";
 import { loadThemes, state as T, setTheme, setOver, setBrand, setLogos, setSpeed, exportCSS, exportJSON, current } from "./themes.js";
 import { loadApps, catalog, icon, svg, seg, dissolve, burst } from "./shell.js";
-import { KINDS_A } from "./kinds-a.js";
-import { KINDS_B } from "./kinds-b.js";
-import { KINDS_C } from "./kinds-c.js";
-import { KINDS_3D } from "./kinds-3d.js";
-import { KINDS_E } from "./kinds-e.js";
-import { KINDS_P } from "./kinds-p.js";
-import { KINDS_F } from "./kinds-f.js";
-import { KINDS_T } from "./kinds-t.js";
-import { KINDS_I } from "./kinds-i.js";
 import { buildIntent, INTENT_KITS } from "./intent-kits.js";
 import { buildAsk } from "./ask.js";
 import { buildCombos, COMBOS } from "./combos.js";
-import { KINDS_OPS } from "./kinds-ops.js";
-import { KINDS_FLEET } from "./kinds-fleet.js";
-import { KINDS_INTEL } from "./kinds-intel.js";
+import { buildInfrastructure } from "./kinds-infra.js";
 import { translate, themeFor, profileOf } from "./host-bridge.js";
-
-export const KINDS = { ...KINDS_A, ...KINDS_B, ...KINDS_3D, ...KINDS_C, ...KINDS_E, ...KINDS_P, ...KINDS_F, ...KINDS_T, ...KINDS_I, ...KINDS_OPS, ...KINDS_FLEET, ...KINDS_INTEL };
-const STUDIO = new Set([...Object.keys(KINDS_3D), ...Object.keys(KINDS_C), ...Object.keys(KINDS_E), ...Object.keys(KINDS_P), ...Object.keys(KINDS_F)]);
+import { KINDS, STUDIO } from "./kind-registry.js";
+export { KINDS };
 /** Agent host profiles (data/hosts.json): skins, declared tiers and bridges. Every preview is a simulation. */
 export const HOSTS = { list: [], fixture: null, tiers: {} };
 const prof = (t = current()) => profileOf(HOSTS.list, t) || HOSTS.list[0];
@@ -240,8 +228,8 @@ function closeDrawer() {
 }
 
 /* ---------------- kinds gallery ---------------- */
-const SHOW_STUDIO = { twin: "warehouse-twin", health: "oura", plugin: "meshy", screen: "scrcpy", sandbox: "boat", "cua-spaces": "cua", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
-const SHOW = { inbox: "gmail", thread: "proton-mail", approve: "1password", chat: "discord", notify: "telegram", slots: "google-calendar", kanban: "trello", triage: "linear", file: "google-drive", graph: "obsidian", search: "yelp", feed: "bluesky", frames: "figma", sign: "docusign", context: "claude", receipt: "stripe", metric: "posthog", track: "fedex", crm: "hubspot", ride: "uber", route: "waze", boarding: "united", player: "spotify", workout: "strava", home: "philips-hue", merge: "github", ci: "github-actions", deploy: "vercel", incident: "pagerduty", migrate: "supabase" };
+const SHOW_STUDIO = { twin: "warehouse-twin", "ace-facility": "ace", "form-check": "ace", swing: "ace", health: "oura", plugin: "meshy", screen: "scrcpy", sandbox: "boat", "cua-spaces": "cua", sculpt: "blender", city: "unreal-engine", fly: "unreal-engine", fpv: "betaflight", light: "blender", trigger: "godot-engine", globe: "god-s-eye-view", gen3d: "trellis", sim: "isaac-sim", nodes: "comfyui", timeline: "fframestudio", review: "frame-io", layers: "photoshop", gallery: "anatomy", cad: "autocad", board: "tldraw", daw: "ableton-live", flash: "anki", stage: "openusd", anatomy: "anatomy" };
+const SHOW = { inbox: "gmail", thread: "proton-mail", approve: "1password", chat: "discord", notify: "telegram", slots: "google-calendar", kanban: "trello", triage: "linear", file: "google-drive", graph: "obsidian", search: "yelp", feed: "bluesky", frames: "figma", sign: "docusign", context: "claude", receipt: "stripe", metric: "posthog", track: "fedex", crm: "hubspot", ride: "uber", route: "waze", boarding: "united", player: "spotify", workout: "strava", "health-activity": "google-fit", "health-recovery": "whoop", "health-nutrition": "lifesum", home: "philips-hue", merge: "github", ci: "github-actions", deploy: "vercel", incident: "pagerduty", migrate: "supabase" };
 function buildKinds() {
   const g = $("#kindgrid");
   const io = new IntersectionObserver((es) => es.forEach((en) => { if (!en.isIntersecting) return; io.unobserve(en.target); const c = en.target._c; quiet(c.play(new Run())); }), { threshold: 0.25 });
@@ -421,10 +409,10 @@ function buildPalette() {
   let items = [], sel = 0;
   const all = () => [
     ...catalog.apps.map((a) => ({ type: "App", label: a.name, sub: catLabel(a.cat), ico: a, go: () => openDrawer(a.id) })),
-    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.intent ? "intent" : v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); if (v.intent) window.__intent?.pick(INTENT_KITS.find(kit => kit.kinds.includes(k)).id); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
+    ...Object.entries(KINDS).map(([k, v]) => ({ type: "Card kind", label: v.label, sub: k, go: () => { document.getElementById(v.infra ? "infrastructure" : v.intent ? "intent" : v.trace ? "ask" : "kinds").scrollIntoView({ behavior: "smooth" }); if (v.intent) window.__intent?.pick(INTENT_KITS.find(kit => kit.kinds.includes(k)).id); const cell = $(`#kindgrid .eu-card[data-kind="${k}"], #tracekinds .tkcell[data-kind="${k}"]`)?.closest(".kcell, .tkcell"); setTimeout(() => cell && anim(cell, [{ boxShadow: "0 0 0 0 var(--h-primary)" }, { boxShadow: "0 0 0 6px transparent" }], { duration: 900, delay: 500 }), 10); } })),
     ...T.themes.map((t) => ({ type: "Theme", label: `${t.label} · ${t.sub}`, sub: t.host, go: () => setTheme(t.id) })),
     ...COMBOS.map((c, i) => ({ type: "Combo", label: c.label, sub: c.tag, go: () => { document.getElementById("combos").scrollIntoView({ behavior: "smooth" }); document.querySelectorAll(".cb-tab")[i]?.click(); } })),
-    ...[["Kit", "kit"], ["Hosts", "hosts"], ["Combos", "combos"], ["Intent kits", "intent"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
+    ...[["Kit", "kit"], ["Hosts", "hosts"], ["Combos", "combos"], ["Intent kits", "intent"], ["Cloud & local infrastructure", "infrastructure"], ["Ask the trace", "ask"], ["Open source", "oss"], ["Card kinds", "kinds"], ["Theme engine", "theme"], ["Flows", "flows"], ["Spec", "spec"]].map(([l, id]) => ({ type: "Go to", label: l, sub: "#" + id, go: () => document.getElementById(id).scrollIntoView({ behavior: "smooth" }) })),
   ];
   const render = () => {
     const q = inp.value.trim().toLowerCase();
@@ -490,6 +478,7 @@ async function boot() {
   buildCombos({ catalog, icon, openDrawer });
   buildAsk({ catalog, setSpec });
   buildIntent({ catalog, setSpec });
+  buildInfrastructure({ catalog, setSpec });
   const pairs = catalog.apps.reduce((n, a) => n + a.kinds.length, 0);
   $$("[data-count=\"310\"]").forEach((e) => (e.dataset.count = catalog.apps.length));
   $("#ninter") && ($("#ninter").dataset.count = pairs);

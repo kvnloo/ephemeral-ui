@@ -35,7 +35,7 @@
       "properties": {
         "kind": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "label": { "type": "string", "minLength": 1 },
-        "group": { "enum": ["app", "studio", "trace", "intent", "intel", "ops", "fleet", "agent"], "description": "Gallery section." },
+        "group": { "enum": ["app", "studio", "trace", "intent", "intel", "ops", "fleet", "agent", "infra"], "description": "Gallery section." },
         "module": { "type": "string", "pattern": "^src/js/kinds-[\\w-]+\\.js$" },
         "export": { "type": "string", "pattern": "^KINDS_[A-Z0-9_]+$" },
         "site": { "type": "boolean", "description": "Shown on the site's gallery (src/js/main.js KINDS)." },

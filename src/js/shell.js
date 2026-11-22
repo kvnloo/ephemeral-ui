@@ -113,16 +113,20 @@ function ttlRing() {
   return { b, c };
 }
 
+const shellApps = new WeakMap();
+
 /**
  * Every card: brand accent from the app, surfaces and type from the host theme.
  * body: element; foot: array of elements; summary: what the card leaves behind when it dissolves.
  */
 export function shell(a, kind, { verb, status, body, foot = [], summary, cls = "" }) {
   const ring = ttlRing();
-  const card = h("article", { class: `eu-card k-${kind} ${cls}`, "data-kind": kind, "data-app": a.id, style: { "--a": brandOn(a.hex), "--a-ink": inkOn(brandOn(a.hex)), "--a-raw": a.hex || "var(--h-mutedFg)" } },
+  const accent = brandOn(a.hex);
+  const card = h("article", { class: `eu-card k-${kind} ${cls}`, "data-kind": kind, "data-app": a.id, style: { "--a": accent, "--a-ink": inkOn(accent), "--a-raw": a.hex || "var(--h-mutedFg)" } },
     h("header", { class: "eu-h" }, icon(a, 26), h("div", { class: "eu-t" }, h("b", {}, a.name), h("span", { class: "eu-verb" }, verb)), status ? h("span", { class: "eu-status" }, status) : null, ring.b),
     h("div", { class: "eu-b" }, body),
     foot.length ? h("footer", { class: "eu-f" }, ...foot) : null);
+  shellApps.set(card, a);
   card.summary = summary || `${a.name} · ${verb}`;
   let pinned = false, ttlAnim = null;
   ring.b.addEventListener("click", () => {
@@ -158,8 +162,11 @@ export async function dissolve(card) {
 
 window.addEventListener("theme", () => {
   document.querySelectorAll(".eu-card[data-app]").forEach((c) => {
-    const a = catalog.byId[c.dataset.app];
-    if (a) { c.style.setProperty("--a", brandOn(a.hex)); c.style.setProperty("--a-ink", inkOn(brandOn(a.hex))); }
+    const a = shellApps.get(c);
+    if (!a) return;
+    const accent = brandOn(a.hex);
+    c.style.setProperty("--a", accent);
+    c.style.setProperty("--a-ink", inkOn(accent));
   });
 });
 

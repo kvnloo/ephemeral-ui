@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ephemeralui.vercel.app/schema/a2ui-catalog.v0.json",
+  "catalogId": "https://ephemeralui.vercel.app/schema/a2ui-catalog.v0.json",
+  "title": "ephemeral-ui A2UI catalog v0",
+  "instructions": "Render ephemeral-ui cards. root is a Board (title, one-sentence summary, children = EphemeralCards ids) or an EphemeralCards (title, children = EphemeralCard ids), 1..12 cards in all. An EphemeralCard names a card.v0 kind and optionally its catalog app and a title. Kinds in card.v0.json $defs.appInput (now: merge, infra-architecture) take input, best bound to the data model ({\"@path\": \"/pr\"} in v1.0, {\"path\": \"/pr\"} in v0.9); every other kind draws sample data and rejects input. Use only values from the conversation or tool results; never invent data. Cards are read-only: no function calls, no actions. Do not send theme: cards take the host's theme.",
+  "components": {
+    "Board": {
+      "type": "object",
+      "description": "Same as OpenUI Board(title, summary, panels).",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "summary",
+        "children"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "common_types.json#/$defs/DynamicString"
+        },
+        "summary": {
+          "$ref": "common_types.json#/$defs/DynamicString"
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "EphemeralCards component ids (static array; templates are not supported)."
+        }
+      }
+    },
+    "EphemeralCards": {
+      "type": "object",
+      "description": "Same as OpenUI EphemeralCards(title, cards).",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "children"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "common_types.json#/$defs/DynamicString"
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "EphemeralCard component ids (static array)."
+        }
+      }
+    },
+    "EphemeralCard": {
+      "type": "object",
+      "description": "One card: the {kind, app?, title?, input?} object of an OpenUI EphemeralCards list.",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "inbox",
+            "thread",
+            "approve",
+            "chat",
+            "notify",
+            "slots",
+            "kanban",
+            "triage",
+            "file",
+            "graph",
+            "search",
+            "feed",
+            "frames",
+            "sign",
+            "context",
+            "receipt",
+            "metric",
+            "track",
+            "crm",
+            "ride",
+            "route",
+            "boarding",
+            "player",
+            "workout",
+            "home",
+            "merge",
+            "ci",
+            "deploy",
+            "incident",
+            "migrate",
+            "trace",
+            "trace-span",
+            "trace-summary",
+            "trace-usage",
+            "trace-tools",
+            "trace-errors",
+            "trace-compare",
+            "trace-frustration",
+            "intent-declare",
+            "intent-contract",
+            "intent-work",
+            "intent-proof",
+            "intel-decisions",
+            "intel-value",
+            "intel-context",
+            "intel-health",
+            "infra-architecture",
+            "infra-cluster",
+            "infra-iac",
+            "infra-models",
+            "fleet-hosts",
+            "fleet-portfolio",
+            "fleet-factory",
+            "intel-suite"
+          ]
+        },
+        "app": {
+          "$ref": "common_types.json#/$defs/DynamicString",
+          "description": "Catalog app id (src/data/apps.json), e.g. github. Defaults to the first app that lists the kind."
+        },
+        "title": {
+          "$ref": "common_types.json#/$defs/DynamicString"
+        },
+        "input": {
+          "description": "Real data for kinds in card.v0.json $defs.appInput: a literal object or a data binding. Checked against that schema before the card draws."
+        }
+      }
+    }
+  }
+}

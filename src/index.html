@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="studio.css">
 <link rel="stylesheet" href="trace.css">
 <link rel="stylesheet" href="intent.css">
+<link rel="stylesheet" href="infra.css">
 <link rel="stylesheet" href="fleet.css"><link rel="stylesheet" href="fleet-hosts.css"><link rel="stylesheet" href="fleet-pm.css"><link rel="stylesheet" href="fleet-factory.css"><link rel="stylesheet" href="intel.css">
 <link rel="stylesheet" href="stats.css">
 <link rel="stylesheet" href="ops.css">
@@ -29,7 +30,7 @@
   <div class="bar">
     <a class="wm" href="#top" aria-label="ephemeral-ui home"><span class="wm-card"><i></i><i></i></span><span>ephemeral</span><span>-ui</span></a>
     <nav class="nav">
-      <a href="#kit">Kit</a><a href="#hosts">Hosts</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="#ask">Ask</a><a href="#stats">Stats</a><a href="#intent">Intent</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
+      <a href="#kit">Kit</a><a href="#hosts">Hosts</a><a href="#combos">Combos</a><a href="#kinds">Kinds</a><a href="demos.html">Live demos</a><a href="#ask">Ask</a><a href="#stats">Stats</a><a href="#intent">Intent</a><a href="#infrastructure">Cloud + local</a><a href="#oss">OSS</a><a href="#theme">Themes</a><a href="#flows">Flows</a><a href="#spec">Spec</a>
     </nav>
     <span class="grow"></span>
     <button class="search open-palette" type="button"><span>Search <b id="napps">490</b> apps</span><kbd>⌘K</kbd></button>
@@ -97,9 +98,13 @@
 </section>
 
 <section id="kinds" class="sec">
-  <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Fifty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme.</p></div></div>
+  <div class="sechead"><div><span class="kicker">Card kinds</span><h2>Fifty ways to show work, not tool calls.</h2><p class="dim">Every kind is interactive: hold to confirm, drag to pick a time, swipe to archive, turn the knob, untangle the graph, resolve then merge. Each runs on any app in the kit and any host theme. <a href="demos.html">Browse a standalone live demo for every kind.</a></p></div></div>
   <div id="kindbar" class="kindbar"></div>
   <div id="kindgrid" class="kindgrid"></div>
+</section>
+
+<section id="infrastructure" class="sec" aria-label="Cloud and local infrastructure kit">
+  <div class="sechead"><div><span class="kicker">Cloud × Kubernetes × local ML</span><h2>Connect services. Keep the boundaries.</h2><p class="dim">Compose AWS, GCP, Lambda GPU Cloud, NVIDIA Brev and local services into one architecture. Inspect K3s, kind and managed Kubernetes examples, review IaC changes, and trace Unsloth training artifacts into local inference. Authored examples only: no cloud access, credentials or deployment.</p></div></div>
 </section>
 
 <section id="intent" class="sec" aria-label="Ripple intent kits">
@@ -203,7 +208,9 @@
     <!-- BEGIN LIBRARY CREDITS -->
     <div data-credit-group="kit"><b>Kit libraries and data</b>
     <ul>
-      <li><a href="https://github.com/thesysdev/openui">OpenUI</a> (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.</li>
+      <li><a href="https://github.com/thesysdev/openui">OpenUI</a> (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core; src/vendor/openui-lang-core.js bundles it for the browser.</li>
+      <li><a href="https://a2ui.org">A2UI</a> (Apache-2.0): By Google; the agent-to-UI protocol src/js/a2ui.js reads (spec only, no code taken).</li>
+      <li><a href="https://github.com/watson/ci-info">ci-info</a> (MIT): An @openuidev/lang-core dependency, bundled into src/vendor/openui-lang-core.js.</li>
       <li><a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a> (MIT): Host theme tokens.</li>
       <li><a href="https://github.com/zeux/meshoptimizer">meshoptimizer</a> (1.1; MIT): Decodes compressed 3D meshes.</li>
       <li><a href="https://github.com/can1357/oh-my-pi">omp-stats</a> (MIT): Trace card shapes and API from @oh-my-pi/omp-stats.</li>
@@ -211,6 +218,7 @@
       <li><a href="https://github.com/pingdotgg/t3code">T3 Code</a> (MIT): Host theme tokens.</li>
       <li><a href="https://tailwindcss.com">Tailwind CSS</a> (MIT): Colour ramps shipped in the host theme data.</li>
       <li><a href="https://threejs.org">three.js</a> (0.187.0; MIT): 3D studio cards and their loaders.</li>
+      <li><a href="https://zod.dev">Zod</a> (4.0.0; MIT): OpenUI parser peer dependency; bundled into src/vendor/openui-lang-core.js.</li>
     </ul></div>
 
     <div data-credit-group="tools"><b>Tool-only libraries</b>
@@ -218,8 +226,7 @@
       <li><a href="https://ajv.js.org">Ajv</a> (8.17.1; MIT): Schema validation in tests.</li>
       <li><a href="https://esbuild.github.io">esbuild</a> (0.25.10; MIT): Bundles exported cards.</li>
       <li><a href="https://github.com/WebReflection/linkedom">linkedom</a> (0.18.13; ISC): DOM implementation for tests.</li>
-      <li><a href="https://playwright.dev">Playwright</a> (Apache-2.0): Optional browser checks and screenshot tooling; not shipped with the site.</li>
-      <li><a href="https://zod.dev">Zod</a> (4.0.0; MIT): OpenUI parser peer dependency for card export.</li>
+      <li><a href="https://playwright.dev">Playwright</a> (1.65.1; Apache-2.0): Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.</li>
     </ul></div>
 <!-- END LIBRARY CREDITS -->
     <b>Media and design</b>
