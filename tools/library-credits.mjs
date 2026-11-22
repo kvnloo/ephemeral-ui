@@ -18,6 +18,8 @@ const npmCredits = {
   ajv: ['ajv', 'Ajv', 'https://ajv.js.org', 'tools', 'Schema validation in tests.'],
   esbuild: ['esbuild', 'esbuild', 'https://esbuild.github.io', 'tools', 'Bundles exported cards.'],
   linkedom: ['linkedom', 'linkedom', 'https://github.com/WebReflection/linkedom', 'tools', 'DOM implementation for tests.'],
+  playwright: ['playwright', 'Playwright', 'https://playwright.dev', 'tools',
+    'Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.'],
   zod: ['zod', 'Zod', 'https://zod.dev', 'tools', 'OpenUI parser peer dependency for card export.'],
 };
 
@@ -79,8 +81,6 @@ export function collectLibraries() {
       'Host theme tokens.', 'tools/vendor/hermes-themes.json'],
     ['tailwind-css', 'Tailwind CSS', 'https://tailwindcss.com', 'kit', 'MIT',
       'Colour ramps shipped in the host theme data.', 'tools/themes.py'],
-    ['playwright', 'Playwright', 'https://playwright.dev', 'tools', 'Apache-2.0',
-      'Optional browser checks and screenshot tooling; not shipped with the site.', 'tools/credits-browser.mjs'],
   ];
   for (const [id, upstream, url, group, license, note, path] of references) {
     entries.set(id, { id, upstream, url, group, license, note, sources: [{ path }] });

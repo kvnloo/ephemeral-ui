@@ -185,10 +185,13 @@
     "url": "https://playwright.dev",
     "group": "tools",
     "license": "Apache-2.0",
-    "note": "Optional browser checks and screenshot tooling; not shipped with the site.",
+    "version": "1.65.1",
+    "note": "Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.",
     "sources": [
       {
-        "path": "tools/credits-browser.mjs"
+        "packageJson": "package.json",
+        "package": "playwright",
+        "range": "1.65.1"
       }
     ]
   },

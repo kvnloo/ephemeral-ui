@@ -192,7 +192,7 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 - [Ajv](https://ajv.js.org) (8.17.1; MIT): Schema validation in tests.
 - [esbuild](https://esbuild.github.io) (0.25.10; MIT): Bundles exported cards.
 - [linkedom](https://github.com/WebReflection/linkedom) (0.18.13; ISC): DOM implementation for tests.
-- [Playwright](https://playwright.dev) (Apache-2.0): Optional browser checks and screenshot tooling; not shipped with the site.
+- [Playwright](https://playwright.dev) (1.65.1; Apache-2.0): Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.
 - [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency for card export.
 <!-- END LIBRARY CREDITS -->
 
