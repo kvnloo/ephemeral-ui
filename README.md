@@ -41,6 +41,24 @@ Live: https://ephemeralui.vercel.app (Vercel project `ephemeral-ui`, scope kvnlo
   [catalog/README.md](catalog/README.md).
 - ⌘K palette over apps, kinds, themes and sections. `#theme=<id>` and `#app=<id>` deep-link.
 
+## Standalone card demos
+
+Use **Live demos** from the kit, or open [the demo index](src/demos.html) at `/demos.html` on
+the site. Every catalog kind has a shareable URL: `/demos.html?kind=<kind>`, for example
+`/demos.html?kind=cua-action`, `/demos.html?kind=gev-contacts`, and
+`/demos.html?kind=work-dock`. No host picker or agent session is required. The cards
+use sample or sanitized data; controls do not run real app actions. **Replay demo**
+resets the card to its initial state. The catalog generator also updates the public demo index.
+
+Browser check (run the server in a separate terminal):
+
+    npm ci
+    npx playwright install chromium
+    python3 -m http.server --directory src
+    node tools/kind-demos.spec.mjs http://localhost:8000/
+
+Set `EUI_CHROMIUM` to an installed Chromium or Chrome executable to use that instead.
+
 ## Ripple intent kits
 
 Three new compositions at `#intent=declare`, `#intent=operate`, and `#intent=understand`:

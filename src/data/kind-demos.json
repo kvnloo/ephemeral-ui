@@ -1,0 +1,1070 @@
+[
+ {
+  "kind": "sculpt",
+  "label": "Multi-agent sculpt",
+  "group": "studio",
+  "app": {
+   "id": "blender",
+   "name": "Blender",
+   "inCatalog": true
+  },
+  "seed": "blendersculpt",
+  "example": false
+ },
+ {
+  "kind": "city",
+  "label": "City blockout (PCG)",
+  "group": "studio",
+  "app": {
+   "id": "blender",
+   "name": "Blender",
+   "inCatalog": true
+  },
+  "seed": "blendercity",
+  "example": false
+ },
+ {
+  "kind": "fly",
+  "label": "Camera flythrough",
+  "group": "studio",
+  "app": {
+   "id": "spline",
+   "name": "Spline",
+   "inCatalog": true
+  },
+  "seed": "splinefly",
+  "example": false
+ },
+ {
+  "kind": "fpv",
+  "label": "FPV drone run",
+  "group": "studio",
+  "app": {
+   "id": "unreal-engine",
+   "name": "Unreal Engine",
+   "inCatalog": true
+  },
+  "seed": "unreal-enginefpv",
+  "example": false
+ },
+ {
+  "kind": "light",
+  "label": "Lighting rig",
+  "group": "studio",
+  "app": {
+   "id": "spline",
+   "name": "Spline",
+   "inCatalog": true
+  },
+  "seed": "splinelight",
+  "example": false
+ },
+ {
+  "kind": "trigger",
+  "label": "Game trigger",
+  "group": "studio",
+  "app": {
+   "id": "babylon-js",
+   "name": "Babylon.js",
+   "inCatalog": true
+  },
+  "seed": "babylon-jstrigger",
+  "example": false
+ },
+ {
+  "kind": "globe",
+  "label": "Live globe",
+  "group": "studio",
+  "app": {
+   "id": "god-s-eye-view",
+   "name": "God's Eye View",
+   "inCatalog": true
+  },
+  "seed": "god-s-eye-viewglobe",
+  "example": false
+ },
+ {
+  "kind": "gen3d",
+  "label": "Image / text → 3D",
+  "group": "studio",
+  "app": {
+   "id": "open3d",
+   "name": "Open3D",
+   "inCatalog": true
+  },
+  "seed": "open3dgen3d",
+  "example": false
+ },
+ {
+  "kind": "sim",
+  "label": "Robot sim",
+  "group": "studio",
+  "app": {
+   "id": "isaac-sim",
+   "name": "Isaac Sim",
+   "inCatalog": true
+  },
+  "seed": "isaac-simsim",
+  "example": false
+ },
+ {
+  "kind": "inbox",
+  "label": "Inbox search",
+  "group": "app",
+  "app": {
+   "id": "gmail",
+   "name": "Gmail",
+   "inCatalog": true
+  },
+  "seed": "gmailinbox",
+  "example": false
+ },
+ {
+  "kind": "thread",
+  "label": "Message + summary",
+  "group": "app",
+  "app": {
+   "id": "gmail",
+   "name": "Gmail",
+   "inCatalog": true
+  },
+  "seed": "gmailthread",
+  "example": false
+ },
+ {
+  "kind": "approve",
+  "label": "Just-in-time permission",
+  "group": "app",
+  "app": {
+   "id": "snyk",
+   "name": "Snyk",
+   "inCatalog": true
+  },
+  "seed": "snykapprove",
+  "example": false
+ },
+ {
+  "kind": "chat",
+  "label": "Channel catch-up",
+  "group": "app",
+  "app": {
+   "id": "replit",
+   "name": "Replit",
+   "inCatalog": true
+  },
+  "seed": "replitchat",
+  "example": false
+ },
+ {
+  "kind": "notify",
+  "label": "Notification stack",
+  "group": "app",
+  "app": {
+   "id": "snyk",
+   "name": "Snyk",
+   "inCatalog": true
+  },
+  "seed": "snyknotify",
+  "example": false
+ },
+ {
+  "kind": "slots",
+  "label": "Find a time",
+  "group": "app",
+  "app": {
+   "id": "google-calendar",
+   "name": "Google Calendar",
+   "inCatalog": true
+  },
+  "seed": "google-calendarslots",
+  "example": false
+ },
+ {
+  "kind": "kanban",
+  "label": "Board move",
+  "group": "app",
+  "app": {
+   "id": "miro",
+   "name": "Miro",
+   "inCatalog": true
+  },
+  "seed": "mirokanban",
+  "example": false
+ },
+ {
+  "kind": "triage",
+  "label": "Issue triage",
+  "group": "app",
+  "app": {
+   "id": "github",
+   "name": "GitHub",
+   "inCatalog": true
+  },
+  "seed": "githubtriage",
+  "example": false
+ },
+ {
+  "kind": "file",
+  "label": "File preview",
+  "group": "app",
+  "app": {
+   "id": "replit",
+   "name": "Replit",
+   "inCatalog": true
+  },
+  "seed": "replitfile",
+  "example": false
+ },
+ {
+  "kind": "graph",
+  "label": "Linked notes graph",
+  "group": "app",
+  "app": {
+   "id": "notion",
+   "name": "Notion",
+   "inCatalog": true
+  },
+  "seed": "notiongraph",
+  "example": false
+ },
+ {
+  "kind": "search",
+  "label": "Search results",
+  "group": "app",
+  "app": {
+   "id": "npm",
+   "name": "npm",
+   "inCatalog": true
+  },
+  "seed": "npmsearch",
+  "example": false
+ },
+ {
+  "kind": "feed",
+  "label": "Post composer",
+  "group": "app",
+  "app": {
+   "id": "stack-overflow",
+   "name": "Stack Overflow",
+   "inCatalog": true
+  },
+  "seed": "stack-overflowfeed",
+  "example": false
+ },
+ {
+  "kind": "frames",
+  "label": "Design review",
+  "group": "app",
+  "app": {
+   "id": "figma",
+   "name": "Figma",
+   "inCatalog": true
+  },
+  "seed": "figmaframes",
+  "example": false
+ },
+ {
+  "kind": "sign",
+  "label": "Sign a document",
+  "group": "app",
+  "app": {
+   "id": "docusign",
+   "name": "DocuSign",
+   "inCatalog": true
+  },
+  "seed": "docusignsign",
+  "example": false
+ },
+ {
+  "kind": "context",
+  "label": "Context window",
+  "group": "app",
+  "app": {
+   "id": "claude",
+   "name": "Claude",
+   "inCatalog": true
+  },
+  "seed": "claudecontext",
+  "example": false
+ },
+ {
+  "kind": "receipt",
+  "label": "Pay + receipt",
+  "group": "app",
+  "app": {
+   "id": "stripe",
+   "name": "Stripe",
+   "inCatalog": true
+  },
+  "seed": "stripereceipt",
+  "example": false
+ },
+ {
+  "kind": "metric",
+  "label": "Metric + sparkline",
+  "group": "app",
+  "app": {
+   "id": "npm",
+   "name": "npm",
+   "inCatalog": true
+  },
+  "seed": "npmmetric",
+  "example": false
+ },
+ {
+  "kind": "track",
+  "label": "Order tracking",
+  "group": "app",
+  "app": {
+   "id": "shopify",
+   "name": "Shopify",
+   "inCatalog": true
+  },
+  "seed": "shopifytrack",
+  "example": false
+ },
+ {
+  "kind": "crm",
+  "label": "Deal pipeline",
+  "group": "app",
+  "app": {
+   "id": "salesforce",
+   "name": "Salesforce",
+   "inCatalog": true
+  },
+  "seed": "salesforcecrm",
+  "example": false
+ },
+ {
+  "kind": "ride",
+  "label": "Choose a ride",
+  "group": "app",
+  "app": {
+   "id": "uber",
+   "name": "Uber",
+   "inCatalog": true
+  },
+  "seed": "uberride",
+  "example": false
+ },
+ {
+  "kind": "route",
+  "label": "Route on a map",
+  "group": "app",
+  "app": {
+   "id": "fedex",
+   "name": "FedEx",
+   "inCatalog": true
+  },
+  "seed": "fedexroute",
+  "example": false
+ },
+ {
+  "kind": "boarding",
+  "label": "Boarding pass",
+  "group": "app",
+  "app": {
+   "id": "expedia",
+   "name": "Expedia",
+   "inCatalog": true
+  },
+  "seed": "expediaboarding",
+  "example": false
+ },
+ {
+  "kind": "player",
+  "label": "Now playing",
+  "group": "app",
+  "app": {
+   "id": "spotify",
+   "name": "Spotify",
+   "inCatalog": true
+  },
+  "seed": "spotifyplayer",
+  "example": false
+ },
+ {
+  "kind": "workout",
+  "label": "Activity rings",
+  "group": "app",
+  "app": {
+   "id": "strava",
+   "name": "Strava",
+   "inCatalog": true
+  },
+  "seed": "stravaworkout",
+  "example": false
+ },
+ {
+  "kind": "home",
+  "label": "Device control",
+  "group": "app",
+  "app": {
+   "id": "tailscale",
+   "name": "Tailscale",
+   "inCatalog": true
+  },
+  "seed": "tailscalehome",
+  "example": false
+ },
+ {
+  "kind": "merge",
+  "label": "PR merge (after @pitus_)",
+  "group": "app",
+  "app": {
+   "id": "github",
+   "name": "GitHub",
+   "inCatalog": true
+  },
+  "seed": "githubmerge",
+  "example": false
+ },
+ {
+  "kind": "ci",
+  "label": "CI checks timeline",
+  "group": "app",
+  "app": {
+   "id": "github",
+   "name": "GitHub",
+   "inCatalog": true
+  },
+  "seed": "githubci",
+  "example": false
+ },
+ {
+  "kind": "deploy",
+  "label": "Deploy",
+  "group": "app",
+  "app": {
+   "id": "npm",
+   "name": "npm",
+   "inCatalog": true
+  },
+  "seed": "npmdeploy",
+  "example": false
+ },
+ {
+  "kind": "incident",
+  "label": "Incident",
+  "group": "app",
+  "app": {
+   "id": "snyk",
+   "name": "Snyk",
+   "inCatalog": true
+  },
+  "seed": "snykincident",
+  "example": false
+ },
+ {
+  "kind": "migrate",
+  "label": "Data migration",
+  "group": "app",
+  "app": {
+   "id": "supabase",
+   "name": "Supabase",
+   "inCatalog": true
+  },
+  "seed": "supabasemigrate",
+  "example": false
+ },
+ {
+  "kind": "nodes",
+  "label": "Node graph",
+  "group": "studio",
+  "app": {
+   "id": "spline",
+   "name": "Spline",
+   "inCatalog": true
+  },
+  "seed": "splinenodes",
+  "example": false
+ },
+ {
+  "kind": "timeline",
+  "label": "Voice + mark edit",
+  "group": "studio",
+  "app": {
+   "id": "blender",
+   "name": "Blender",
+   "inCatalog": true
+  },
+  "seed": "blendertimeline",
+  "example": false
+ },
+ {
+  "kind": "review",
+  "label": "Frame review",
+  "group": "studio",
+  "app": {
+   "id": "miro",
+   "name": "Miro",
+   "inCatalog": true
+  },
+  "seed": "miroreview",
+  "example": false
+ },
+ {
+  "kind": "layers",
+  "label": "Generative layers",
+  "group": "studio",
+  "app": {
+   "id": "mudbox",
+   "name": "Mudbox",
+   "inCatalog": true
+  },
+  "seed": "mudboxlayers",
+  "example": false
+ },
+ {
+  "kind": "gallery",
+  "label": "Media gallery",
+  "group": "studio",
+  "app": {
+   "id": "dribbble",
+   "name": "Dribbble",
+   "inCatalog": true
+  },
+  "seed": "dribbblegallery",
+  "example": false
+ },
+ {
+  "kind": "cad",
+  "label": "CAD drafting",
+  "group": "studio",
+  "app": {
+   "id": "plasticity",
+   "name": "Plasticity",
+   "inCatalog": true
+  },
+  "seed": "plasticitycad",
+  "example": false
+ },
+ {
+  "kind": "board",
+  "label": "Whiteboard",
+  "group": "studio",
+  "app": {
+   "id": "miro",
+   "name": "Miro",
+   "inCatalog": true
+  },
+  "seed": "miroboard",
+  "example": false
+ },
+ {
+  "kind": "daw",
+  "label": "DAW",
+  "group": "studio",
+  "app": {
+   "id": "ableton-live",
+   "name": "Ableton Live",
+   "inCatalog": true
+  },
+  "seed": "ableton-livedaw",
+  "example": false
+ },
+ {
+  "kind": "flash",
+  "label": "Flashcards",
+  "group": "studio",
+  "app": {
+   "id": "readwise",
+   "name": "Readwise",
+   "inCatalog": true
+  },
+  "seed": "readwiseflash",
+  "example": false
+ },
+ {
+  "kind": "stage",
+  "label": "USD stage",
+  "group": "studio",
+  "app": {
+   "id": "openusd",
+   "name": "OpenUSD",
+   "inCatalog": true
+  },
+  "seed": "openusdstage",
+  "example": false
+ },
+ {
+  "kind": "anatomy",
+  "label": "Anatomy figure",
+  "group": "studio",
+  "app": {
+   "id": "anatomy",
+   "name": "Anatomy",
+   "inCatalog": true
+  },
+  "seed": "anatomyanatomy",
+  "example": false
+ },
+ {
+  "kind": "cua-action",
+  "label": "Cua Driver action",
+  "group": "agent",
+  "app": {
+   "id": "cua",
+   "name": "Cua",
+   "inCatalog": true
+  },
+  "seed": "cuacua-action",
+  "example": false
+ },
+ {
+  "kind": "work-dock",
+  "label": "Work dock",
+  "group": "agent",
+  "app": {
+   "id": "z0",
+   "name": "z0",
+   "inCatalog": false
+  },
+  "seed": "z0work-dock",
+  "example": false
+ },
+ {
+  "kind": "screen",
+  "label": "Computer-use screen",
+  "group": "studio",
+  "app": {
+   "id": "cua",
+   "name": "Cua",
+   "inCatalog": true
+  },
+  "seed": "cuascreen",
+  "example": false
+ },
+ {
+  "kind": "sandbox",
+  "label": "Forking sandboxes",
+  "group": "studio",
+  "app": {
+   "id": "cua",
+   "name": "Cua",
+   "inCatalog": true
+  },
+  "seed": "cuasandbox",
+  "example": false
+ },
+ {
+  "kind": "twin",
+  "label": "Digital twin + policies",
+  "group": "studio",
+  "app": {
+   "id": "warehouse-twin",
+   "name": "Warehouse twin",
+   "inCatalog": true
+  },
+  "seed": "warehouse-twintwin",
+  "example": false
+ },
+ {
+  "kind": "health",
+  "label": "Health brief",
+  "group": "studio",
+  "app": {
+   "id": "apple-health",
+   "name": "Apple Health",
+   "inCatalog": true
+  },
+  "seed": "apple-healthhealth",
+  "example": false
+ },
+ {
+  "kind": "fleet-hosts",
+  "label": "Hosts & k3s",
+  "group": "fleet",
+  "app": {
+   "id": "k3s",
+   "name": "k3s",
+   "inCatalog": false
+  },
+  "seed": "k3sfleet-hosts",
+  "example": true
+ },
+ {
+  "kind": "fleet-portfolio",
+  "label": "Product portfolio",
+  "group": "fleet",
+  "app": {
+   "id": "dash",
+   "name": "Dash",
+   "inCatalog": true
+  },
+  "seed": "dashfleet-portfolio",
+  "example": true
+ },
+ {
+  "kind": "fleet-factory",
+  "label": "Agent factory graph",
+  "group": "fleet",
+  "app": {
+   "id": "aodl",
+   "name": "AODL",
+   "inCatalog": true
+  },
+  "seed": "aodlfleet-factory",
+  "example": true
+ },
+ {
+  "kind": "gev-contacts",
+  "label": "GEV contacts",
+  "group": "agent",
+  "app": {
+   "id": "god-s-eye-view",
+   "name": "God's Eye View",
+   "inCatalog": true
+  },
+  "seed": "god-s-eye-viewgev-contacts",
+  "example": false
+ },
+ {
+  "kind": "intent-declare",
+  "label": "Intent declaration",
+  "group": "intent",
+  "app": {
+   "id": "ripple",
+   "name": "Ripple",
+   "inCatalog": true
+  },
+  "seed": "rippleintent-declare",
+  "example": false
+ },
+ {
+  "kind": "intent-contract",
+  "label": "Intent contract",
+  "group": "intent",
+  "app": {
+   "id": "aodl",
+   "name": "AODL",
+   "inCatalog": true
+  },
+  "seed": "aodlintent-contract",
+  "example": false
+ },
+ {
+  "kind": "intent-work",
+  "label": "Intent work graph",
+  "group": "intent",
+  "app": {
+   "id": "aodl",
+   "name": "AODL",
+   "inCatalog": true
+  },
+  "seed": "aodlintent-work",
+  "example": false
+ },
+ {
+  "kind": "intent-proof",
+  "label": "Intent proof",
+  "group": "intent",
+  "app": {
+   "id": "aodl",
+   "name": "AODL",
+   "inCatalog": true
+  },
+  "seed": "aodlintent-proof",
+  "example": false
+ },
+ {
+  "kind": "intel-decisions",
+  "label": "Intelligence decisions",
+  "group": "intent",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceintel-decisions",
+  "example": false
+ },
+ {
+  "kind": "intel-value",
+  "label": "Intelligence value",
+  "group": "intent",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceintel-value",
+  "example": false
+ },
+ {
+  "kind": "intel-context",
+  "label": "Intelligence context",
+  "group": "intent",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceintel-context",
+  "example": false
+ },
+ {
+  "kind": "intel-health",
+  "label": "Intelligence health",
+  "group": "intent",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceintel-health",
+  "example": false
+ },
+ {
+  "kind": "intel-suite",
+  "label": "Intelligence",
+  "group": "intel",
+  "app": {
+   "id": "glide",
+   "name": "glide",
+   "inCatalog": false
+  },
+  "seed": "glideintel-suite",
+  "example": true
+ },
+ {
+  "kind": "ops-burn",
+  "label": "Ops · subscription burn lanes",
+  "group": "ops",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceops-burn",
+  "example": false
+ },
+ {
+  "kind": "ops-alive",
+  "label": "Ops · is it still running?",
+  "group": "ops",
+  "app": {
+   "id": "hermes-agent",
+   "name": "Hermes Agent",
+   "inCatalog": true
+  },
+  "seed": "hermes-agentops-alive",
+  "example": false
+ },
+ {
+  "kind": "ops-incidents",
+  "label": "Ops · incident timeline",
+  "group": "ops",
+  "app": {
+   "id": "prometheus",
+   "name": "Prometheus",
+   "inCatalog": true
+  },
+  "seed": "prometheusops-incidents",
+  "example": false
+ },
+ {
+  "kind": "ops-fleet",
+  "label": "Ops · hosts and k3s",
+  "group": "ops",
+  "app": {
+   "id": "k3s",
+   "name": "k3s",
+   "inCatalog": false
+  },
+  "seed": "k3sops-fleet",
+  "example": false
+ },
+ {
+  "kind": "ops-slow",
+  "label": "Ops · why was it slow?",
+  "group": "ops",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statsops-slow",
+  "example": false
+ },
+ {
+  "kind": "ops-models",
+  "label": "Ops · model mix",
+  "group": "ops",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statsops-models",
+  "example": false
+ },
+ {
+  "kind": "ops-tokens",
+  "label": "Ops · tokens, cache and cost",
+  "group": "ops",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statsops-tokens",
+  "example": false
+ },
+ {
+  "kind": "ops-context",
+  "label": "Ops · context pressure",
+  "group": "ops",
+  "app": {
+   "id": "hermes-agent",
+   "name": "Hermes Agent",
+   "inCatalog": true
+  },
+  "seed": "hermes-agentops-context",
+  "example": false
+ },
+ {
+  "kind": "ops-tools",
+  "label": "Ops · tool-call health",
+  "group": "ops",
+  "app": {
+   "id": "hermes-agent",
+   "name": "Hermes Agent",
+   "inCatalog": true
+  },
+  "seed": "hermes-agentops-tools",
+  "example": false
+ },
+ {
+  "kind": "ops-routing",
+  "label": "Ops · routing lanes",
+  "group": "ops",
+  "app": {
+   "id": "z0intelligence",
+   "name": "z0intelligence",
+   "inCatalog": true
+  },
+  "seed": "z0intelligenceops-routing",
+  "example": false
+ },
+ {
+  "kind": "ops-sources",
+  "label": "Ops · what we measure",
+  "group": "ops",
+  "app": {
+   "id": "grafana",
+   "name": "Grafana",
+   "inCatalog": true
+  },
+  "seed": "grafanaops-sources",
+  "example": false
+ },
+ {
+  "kind": "plugin",
+  "label": "Hermes plugin chain",
+  "group": "studio",
+  "app": {
+   "id": "google-meet",
+   "name": "Google Meet",
+   "inCatalog": true
+  },
+  "seed": "google-meetplugin",
+  "example": false
+ },
+ {
+  "kind": "trace",
+  "label": "Trace timeline",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace",
+  "example": false
+ },
+ {
+  "kind": "trace-span",
+  "label": "Span drawer",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-span",
+  "example": false
+ },
+ {
+  "kind": "trace-summary",
+  "label": "Trace summary strip",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-summary",
+  "example": false
+ },
+ {
+  "kind": "trace-usage",
+  "label": "Model · provider · cost",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-usage",
+  "example": false
+ },
+ {
+  "kind": "trace-tools",
+  "label": "Tool latency & failures",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-tools",
+  "example": false
+ },
+ {
+  "kind": "trace-errors",
+  "label": "Error signatures",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-errors",
+  "example": false
+ },
+ {
+  "kind": "trace-compare",
+  "label": "Session compare",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-compare",
+  "example": false
+ },
+ {
+  "kind": "trace-frustration",
+  "label": "Frustration",
+  "group": "trace",
+  "app": {
+   "id": "omp-stats",
+   "name": "omp stats",
+   "inCatalog": true
+  },
+  "seed": "omp-statstrace-frustration",
+  "example": false
+ }
+]
