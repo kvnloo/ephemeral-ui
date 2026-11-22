@@ -963,23 +963,23 @@
     },
     "timeline": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The export works as an intent, but vision/timeline marking relies on pointer geometry.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Clips are a roving, focusable track: Enter or click marks a clip (typed clip + timecode) and seeks the monitor; Cut marked ripple-deletes with an agent acknowledgement and a 6 s Undo.",
       "receipts": {
         "390": {
           "fixture": "timeline/blender",
-          "control": "Export",
-          "keyboard": "event:export",
-          "pointer": "event:export",
+          "control": "Intro clip at 00:00:00:00",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "timeline/blender",
-          "control": "Export",
-          "keyboard": "event:export",
-          "pointer": "event:export",
+          "control": "Intro clip at 00:00:00:00",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         }
@@ -987,23 +987,23 @@
     },
     "review": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The link handoff works, but annotating a frame by drawing lacks an equivalent keyboard workflow.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The frame is focusable: arrows steer a marker and Enter drops a mark with its timecode and region, the same as drawing; Send hands the typed mark ids over, and the compare handle is a keyboard slider.",
       "receipts": {
         "390": {
           "fixture": "review/miro",
-          "control": "Copy link",
-          "keyboard": "event:copy_link",
-          "pointer": "event:copy_link",
+          "control": "Annotate frame",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "review/miro",
-          "control": "Copy link",
-          "keyboard": "event:copy_link",
-          "pointer": "event:copy_link",
+          "control": "Annotate frame",
+          "keyboard": "event:mark",
+          "pointer": "event:mark",
           "overflow": false,
           "webgl": false
         }
@@ -1059,23 +1059,23 @@
     },
     "cad": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The footer is a handoff, but the command/viewport is largely a scripted display rather than an editable draft.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The draft is editable: arrows + Enter place points, Backspace/Escape undo and end, and a command line takes @dx,dy metres; a live length readout and Send draft hand the typed walls to the agent.",
       "receipts": {
         "390": {
           "fixture": "cad/plasticity",
-          "control": "Plot to PDF",
-          "keyboard": "event:plot_to_pdf",
-          "pointer": "event:plot_to_pdf",
+          "control": "Drafting viewport",
+          "keyboard": "event:point",
+          "pointer": "event:point",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "cad/plasticity",
-          "control": "Plot to PDF",
-          "keyboard": "event:plot_to_pdf",
-          "pointer": "event:plot_to_pdf",
+          "control": "Drafting viewport",
+          "keyboard": "event:point",
+          "pointer": "event:point",
           "overflow": false,
           "webgl": false
         }
@@ -1083,23 +1083,23 @@
     },
     "board": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Tool choice works, but marks still require coordinate input without a keyboard alternative.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The board is focusable: arrows move your cursor, Enter starts and finishes a shape with the current tool (emits draw), Text/Sticky place notes and Select picks a shape, all without a pointer.",
       "receipts": {
         "390": {
           "fixture": "board/miro",
-          "control": "Rectangle",
+          "control": "Whiteboard",
           "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "pointer": "visible text changed",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "board/miro",
-          "control": "Rectangle",
+          "control": "Whiteboard",
           "keyboard": "control state changed",
-          "pointer": "control state changed",
+          "pointer": "visible text changed",
           "overflow": false,
           "webgl": false
         }
@@ -1107,23 +1107,23 @@
     },
     "daw": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Empty slots hand a specific slot to the agent, but existing regions and transport do not expose equivalent editing.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Clips launch/stop with aria-pressed and a typed launch intent, Delete clears a clip with Undo; piano-roll notes are focusable (↑↓ transpose, ←→ move, Delete with Undo) and the transport plays and stops.",
       "receipts": {
         "390": {
           "fixture": "daw/ableton-live",
-          "control": "Empty Drums slot 3",
-          "keyboard": "event:fill",
-          "pointer": "event:fill",
+          "control": "Drums 1",
+          "keyboard": "event:launch",
+          "pointer": "event:launch",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "daw/ableton-live",
-          "control": "Empty Drums slot 3",
-          "keyboard": "event:fill",
-          "pointer": "event:fill",
+          "control": "Drums 1",
+          "keyboard": "event:launch",
+          "pointer": "event:launch",
           "overflow": false,
           "webgl": false
         }
@@ -1299,23 +1299,23 @@
     },
     "sandbox": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "The fixture changes its label without a structured result for the branch decision.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "The fork tree is real state without autoplay: forks are a radio group with their evidence, and Hold to keep returns a typed result { keep, stop[], evidence } and settles the card.",
       "receipts": {
         "390": {
           "fixture": "sandbox/cua",
-          "control": "Hold to keep winner",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "fork-b · node 26, build 19 s, tests 42/42",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         },
         "1280": {
           "fixture": "sandbox/cua",
-          "control": "Hold to keep winner",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "control": "fork-b · node 26, build 19 s, tests 42/42",
+          "keyboard": "event:select",
+          "pointer": "event:select",
           "overflow": false,
           "webgl": false
         }
@@ -1323,23 +1323,23 @@
     },
     "twin": {
       "surface": "catalog",
-      "grade": "B",
-      "status": "below-bar",
-      "reason": "Policy deployment changes demo text without a verifiable typed decision or rollback; a real simulator contract is separate.",
+      "grade": "A",
+      "status": "qualified",
+      "reason": "Deploy is a typed decision (policy, from, law, robots, target: twin) with the v3→v4 change stated up front and a Roll back to v3 that emits rollback_policy; laws are pick-to-context buttons.",
       "receipts": {
         "390": {
           "fixture": "twin/warehouse-twin",
           "control": "Hold to deploy policy v4",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "keyboard": "event:deploy_policy",
+          "pointer": "event:deploy_policy",
           "overflow": false,
           "webgl": true
         },
         "1280": {
           "fixture": "twin/warehouse-twin",
           "control": "Hold to deploy policy v4",
-          "keyboard": "visible text changed",
-          "pointer": "visible text changed",
+          "keyboard": "event:deploy_policy",
+          "pointer": "event:deploy_policy",
           "overflow": false,
           "webgl": true
         }

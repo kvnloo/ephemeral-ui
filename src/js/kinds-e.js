@@ -43,32 +43,77 @@ function screenMake(a, r) {
 }
 
 /* boat-style sandboxes: fork a running VM per experiment, keep the winner, stop the rest */
+// Fixture results (synthetic): the decision is the user's; the card shows the evidence and returns a
+// typed result { keep, stop[], evidence } rather than only relabelling itself.
+const FORKS = [
+  { id: "fork-a", runtime: "bun", build: 41, tests: "42/42", y: 20 },
+  { id: "fork-b", runtime: "node 26", build: 19, tests: "42/42", y: 80 },
+  { id: "fork-c", runtime: "deno", build: 33, tests: "40/42", y: 140 },
+];
 function sandboxMake(a, r) {
   const W = 560, H = 180;
   const sv = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   sv.setAttribute("viewBox", `0 0 ${W} ${H}`); sv.setAttribute("class", "sb-sv"); sv.setAttribute("preserveAspectRatio", "none");
   const tree = h("div", { class: "sb" }, sv);
-  const vm = (x, y, name, st) => { const n = h("div", { class: "sb-vm " + st, style: { left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` } }, h("i"), h("b", {}, name), h("span", {}, st)); tree.append(n); return n; };
-  const wire = (x1, y1, x2, y2) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", `M${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}`); p.setAttribute("class", "sb-w"); p.setAttribute("pathLength", 1); sv.append(p); anim(p, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 500 }); };
+  const vm = (x, y, name, st, tag = "div", attrs = {}) => { const n = h(tag, { class: "sb-vm " + st, style: { left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }, ...attrs }, h("i"), h("b", {}, name), h("span", {}, st)); tree.append(n); return n; };
+  const wire = (x1, y1, x2, y2) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", `M${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}`); p.setAttribute("class", "sb-w"); p.setAttribute("pathLength", 1); sv.append(p); return p; };
   const cost = h("b", {}, "$0.000");
   const meter = h("span", { class: "ap-stat" }, "per-second billing · ", cost);
   const term = h("pre", { class: "ap-code sb-term" });
-  let secs = 0, alive = 1, tm = 0;
+  let secs = 0, alive = 4, tm = 0, pick = "fork-b", decided = null;
   const tick = () => { secs += alive; cost.textContent = "$" + (secs * 0.000011).toFixed(4); tm = setTimeout(tick, 250); };
-  const keep = holdButton("Hold to keep winner", (b, t) => { t.textContent = "Kept fork-b · others stopped"; burst(b); tree.querySelectorAll(".sb-vm.running").forEach((n) => { if (!n.textContent.includes("fork-b")) { n.className = "sb-vm stopped"; n.lastChild.textContent = "stopped · $0"; } }); alive = 2; });
-  const surface = appSurface(a, [appBar(["Machines", "Snapshots", "SSH"], [meter]), tree, term], { cls: "sandbox" });
+  const fastest = [...FORKS].sort((p, q) => p.build - q.build)[0];
+  // The tree is the real state from the start (no autoplay needed); play() only animates it in.
+  const root = vm(20, 70, "agent-main", "running");
+  const wires = FORKS.map((f) => wire(150, 88, 330, f.y + 16));
+  const picks = h("div", { class: "sb-picks", role: "radiogroup", "aria-label": "Fork to keep" });
+  const nodes = FORKS.map((f) => {
+    const n = vm(330, f.y, `${f.id} · ${f.runtime}`, "running", "button", { type: "button", role: "radio", "aria-checked": String(f.id === pick), "aria-label": `${f.id} · ${f.runtime}, build ${f.build} s, tests ${f.tests}`, "data-fork": f.id });
+    n.lastChild.textContent = `build ${f.build} s · ${f.tests}`;
+    n.onclick = () => choose(f.id);
+    return n;
+  });
+  const lbl = () => keep.querySelector(".lbl");
+  function choose(id, quiet = false) {
+    if (decided) return;
+    pick = id;
+    nodes.forEach((n) => { const on = n.dataset.fork === id; n.setAttribute("aria-checked", String(on)); n.tabIndex = on ? 0 : -1; n.classList.toggle("sb-win", on); });
+    const f = FORKS.find((x) => x.id === id);
+    lbl().textContent = `Hold to keep ${id}`;
+    note.textContent = id === fastest.id ? `${id} is the fastest build (${f.build} s) with ${f.tests} tests passing.` : `${id} is ${f.build - fastest.build} s slower than ${fastest.id}${f.tests !== "42/42" ? ` and has ${f.tests} tests passing` : ""}.`;
+    if (!quiet) tell(el, { action: "select", label: `Consider ${id}`, entities: { fork: id }, quiet: true });
+  }
+  nodes.forEach((n, i) => n.addEventListener("keydown", (e) => {
+    const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]; if (d == null) return;
+    e.preventDefault(); const t = nodes[(i + d + nodes.length) % nodes.length]; choose(t.dataset.fork); t.focus();
+  }));
+  const note = h("p", { class: "eu-hint sb-note", "aria-live": "polite" });
+  const result = h("pre", { class: "ap-code sb-result", hidden: true, "aria-label": "Decision result" });
+  const keep = holdButton("Hold to keep fork-b", (b, t) => {
+    const stop = FORKS.filter((f) => f.id !== pick).map((f) => f.id), f = FORKS.find((x) => x.id === pick);
+    decided = { keep: pick, stop, evidence: { build_s: f.build, tests: f.tests, fastest: fastest.id } };
+    t.textContent = `Kept ${pick} · ${stop.length} stopped`; burst(b);
+    nodes.forEach((n) => { n.disabled = true; if (n.dataset.fork !== pick) { n.className = "sb-vm stopped"; n.lastChild.textContent = "stopped · $0"; } });
+    alive = 2;
+    result.hidden = false; result.textContent = JSON.stringify(decided, null, 1);
+    settle(el, `Kept ${pick}`, "ok");
+    tell(el, { action: "keep_fork", label: `Keep ${pick}, stop ${stop.join(" and ")}`, entities: { keep: pick, stop }, text: JSON.stringify(decided),
+      ack: `Stopping ${stop.join(" and ")} now; billing for them ends when they halt. ${pick} keeps running with its memory and disk, and its snapshot is the new base.` });
+  });
+  const surface = appSurface(a, [appBar(["Machines", "Snapshots", "SSH"], [meter]), tree, note, why(`All three forks ran the same build and test command from one snapshot of agent-main. ${fastest.id} finished first; fork-c failed 2 tests on deno. Pick a different fork if speed is not what matters.`), term, result], { cls: "sandbox" });
   const el = shell(a, "sandbox", { verb: "Forked a VM per experiment", status: "3 running", body: surface, foot: [keep, act("ssh fork-b", { cls: "ghost", ack: "Here's the command: ssh fork-b.sandbox — it expires with the sandbox in 2 h." })], summary: `Forked 3 sandboxes in ${a.name}, kept the fastest` });
+  const lines = ["$ boat create agent-main --docker", "$ boat fork agent-main ×3   # 1.4 s, memory copied", ...FORKS.map((f) => `${f.id}  build ${f.build} s  tests ${f.tests}${f.id === fastest.id ? "  ← fastest" : ""}`)];
+  term.textContent = lines.join("\n");
+  choose(pick, true);
   return { el, async play(run) {
     clearTimeout(tm); tick();
-    const root = vm(20, 70, "agent-main", "running");
-    for (const l of ["$ boat create agent-main --docker", "$ boat fork agent-main ×3   # 1.4 s, memory copied"]) { const d = h("div"); term.append(d); await typeText(d, l, run, 60); }
-    const ys = [20, 80, 140], names = ["fork-a · bun", "fork-b · node 26", "fork-c · deno"];
-    for (let i = 0; i < 3; i++) { await run.wait(260); wire(150, 88, 330, ys[i] + 16); const n = vm(330, ys[i], names[i], "running"); anim(n, [{ opacity: 0, transform: "translateX(-20px)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" }); alive++; }
+    term.replaceChildren();
+    nodes.forEach((n) => (n.style.opacity = 0)); wires.forEach((p) => (p.style.opacity = 0));
+    for (const l of lines.slice(0, 2)) { const d = h("div"); term.append(d); await typeText(d, l, run, 60); }
+    for (let i = 0; i < nodes.length; i++) { await run.wait(260); wires[i].style.opacity = ""; anim(wires[i], [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 500 }); nodes[i].style.opacity = ""; anim(nodes[i], [{ opacity: 0, transform: "translateX(-20px)" }, { opacity: 1, transform: "none" }], { spring: "bouncy" }); }
     await run.wait(500);
-    const res = ["fork-a  build 41 s", "fork-b  build 19 s  ← fastest", "fork-c  build 33 s"];
-    for (const l of res) { const d = h("div"); term.append(d); await typeText(d, l, run, 70); }
-    tree.querySelectorAll(".sb-vm")[2]?.classList.add("win");
-  }, spec: { kind: "sandbox", app: a.id, base: "agent-main", forks: 3, billing: "per second, free when stopped" } };
+    for (const l of lines.slice(2)) { const d = h("div"); term.append(d); await typeText(d, l, run, 70); }
+  }, spec: { kind: "sandbox", app: a.id, base: "agent-main", forks: FORKS.length, billing: "per second, free when stopped", result: "keep_fork { keep, stop[], evidence }" } };
 }
 
 // Synthetic readout, not an SDK response. Spaces can stream a desktop or an individual window.
