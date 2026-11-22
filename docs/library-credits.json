@@ -6,12 +6,41 @@
     "group": "kit",
     "license": "MIT",
     "version": "0.3.1",
-    "note": "By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.",
+    "note": "By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core; src/vendor/openui-lang-core.js bundles it for the browser.",
     "sources": [
       {
         "packageJson": "package.json",
         "package": "@openuidev/lang-core",
         "range": "0.3.1"
+      },
+      {
+        "path": "src/vendor/openui-lang-core.js"
+      }
+    ]
+  },
+  {
+    "id": "a2ui",
+    "upstream": "A2UI",
+    "url": "https://a2ui.org",
+    "group": "kit",
+    "license": "Apache-2.0",
+    "note": "By Google; the agent-to-UI protocol src/js/a2ui.js reads (spec only, no code taken).",
+    "sources": [
+      {
+        "path": "src/js/a2ui.js"
+      }
+    ]
+  },
+  {
+    "id": "ci-info",
+    "upstream": "ci-info",
+    "url": "https://github.com/watson/ci-info",
+    "group": "kit",
+    "license": "MIT",
+    "note": "An @openuidev/lang-core dependency, bundled into src/vendor/openui-lang-core.js.",
+    "sources": [
+      {
+        "path": "src/vendor/openui-lang-core.js"
       }
     ]
   },
@@ -132,6 +161,22 @@
     ]
   },
   {
+    "id": "zod",
+    "upstream": "Zod",
+    "url": "https://zod.dev",
+    "group": "kit",
+    "license": "MIT",
+    "version": "4.0.0",
+    "note": "OpenUI parser peer dependency; bundled into src/vendor/openui-lang-core.js.",
+    "sources": [
+      {
+        "packageJson": "package.json",
+        "package": "zod",
+        "range": "4.0.0"
+      }
+    ]
+  },
+  {
     "id": "ajv",
     "upstream": "Ajv",
     "url": "https://ajv.js.org",
@@ -192,22 +237,6 @@
         "packageJson": "package.json",
         "package": "playwright",
         "range": "1.65.1"
-      }
-    ]
-  },
-  {
-    "id": "zod",
-    "upstream": "Zod",
-    "url": "https://zod.dev",
-    "group": "tools",
-    "license": "MIT",
-    "version": "4.0.0",
-    "note": "OpenUI parser peer dependency for card export.",
-    "sources": [
-      {
-        "packageJson": "package.json",
-        "package": "zod",
-        "range": "4.0.0"
       }
     ]
   }

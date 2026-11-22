@@ -81,6 +81,28 @@ Browser check (run the server in a separate terminal):
     node tools/kind-demos.spec.mjs http://localhost:8000/
 
 Set `EUI_CHROMIUM` to an installed Chromium or Chrome executable to use that instead.
+## Providers: OpenUI Lang and A2UI
+
+One card spec, one renderer, several wire formats. An agent can answer in an openui-v2 program
+(`Board(title, summary, [EphemeralCards(title, [{kind, app?, input?}])])`), in a Google
+[A2UI](https://a2ui.org) v0.9 or v1.0 stream (`createSurface` / `updateComponents` / `updateDataModel`
+naming the components of `src/schema/a2ui-catalog.v0.json`: `Board`, `EphemeralCards`, `EphemeralCard`),
+or in Glide's ```` ```ephemeral-ui ```` card.v0 fences. Each adapter only reads its format; all of them end in
+`normalize()` (`src/js/card-spec.js`), which checks every card against `card.v0.json` and resolves its app, so
+the kind modules draw the same card from any of them.
+
+- `src/js/a2ui.js`: the A2UI adapter (DOM-free, browser and Node). Fails closed with A2UI error codes
+  (`VALIDATION_FAILED`, `INTEGRITY_ERROR`): wrong catalog, unknown component or property, missing or cyclic
+  children, unresolved `@path`/`path` bindings, function calls, a v1.0 `theme`, v0.8 messages. Cards take
+  the host theme. `toA2UIAction()` turns a card's `eui:intent` into the A2UI `action` message.
+- `node tools/export-cards.mjs --program reply.a2ui.jsonl --out cards.html`: the same HTML export as OpenUI
+  programs (the format is detected). An A2UI export also posts `{ type: "a2ui:action", message }` to its frame.
+- `src/providers.html`: the canonical fixtures (`src/data/providers/`) drawn side by side in the browser. It
+  parses OpenUI Lang with `src/vendor/openui-lang-core.js`, the pinned `@openuidev/lang-core` bundled by
+  `node tools/vendor-openui.mjs` (`--check` in the tests).
+- Tests: `node --test tools/provider-parity.test.mjs` (same normalized spec, DOM, theme tokens and
+  interaction event from both providers; invalid payloads rejected). In Chromium:
+  `PLAYWRIGHT_FROM=<dir>/package.json [CHROMIUM=<chrome>] node tools/provider-parity.pw.mjs`.
 
 ## Ripple intent kits
 
@@ -208,7 +230,9 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 <!-- BEGIN LIBRARY CREDITS -->
 ### Kit libraries and data
 
-- [OpenUI](https://github.com/thesysdev/openui) (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core.
+- [OpenUI](https://github.com/thesysdev/openui) (0.3.1; MIT): By Thesys; the generative UI language and renderer these cards build on. The export tool parses programs with @openuidev/lang-core; src/vendor/openui-lang-core.js bundles it for the browser.
+- [A2UI](https://a2ui.org) (Apache-2.0): By Google; the agent-to-UI protocol src/js/a2ui.js reads (spec only, no code taken).
+- [ci-info](https://github.com/watson/ci-info) (MIT): An @openuidev/lang-core dependency, bundled into src/vendor/openui-lang-core.js.
 - [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT): Host theme tokens.
 - [meshoptimizer](https://github.com/zeux/meshoptimizer) (1.1; MIT): Decodes compressed 3D meshes.
 - [omp-stats](https://github.com/can1357/oh-my-pi) (MIT): Trace card shapes and API from @oh-my-pi/omp-stats.
@@ -216,6 +240,7 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 - [T3 Code](https://github.com/pingdotgg/t3code) (MIT): Host theme tokens.
 - [Tailwind CSS](https://tailwindcss.com) (MIT): Colour ramps shipped in the host theme data.
 - [three.js](https://threejs.org) (0.187.0; MIT): 3D studio cards and their loaders.
+- [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency; bundled into src/vendor/openui-lang-core.js.
 
 ### Tool-only libraries
 
@@ -223,7 +248,6 @@ The [library manifest](docs/library-credits.json) covers direct kit, vendored an
 - [esbuild](https://esbuild.github.io) (0.25.10; MIT): Bundles exported cards.
 - [linkedom](https://github.com/WebReflection/linkedom) (0.18.13; ISC): DOM implementation for tests.
 - [Playwright](https://playwright.dev) (1.65.1; Apache-2.0): Chromium QA receipts, browser specs and screenshot tooling; not shipped with the site.
-- [Zod](https://zod.dev) (4.0.0; MIT): OpenUI parser peer dependency for card export.
 <!-- END LIBRARY CREDITS -->
 
 ### Media and design
